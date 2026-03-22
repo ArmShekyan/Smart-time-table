@@ -38,8 +38,11 @@ class Assignment:
 DB_FILE = "smart_timetable_final.json"
 DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
+# 🔥 Ավելացվեցին նոր Default օգտատերերը՝ փորձարկման համար
 DEFAULT_OWNER = {"username": "armshekyan", "password": "123", "role": "owner"}
 DEFAULT_ADMIN = {"username": "arsoo", "password": "123", "role": "admin"}
+DEFAULT_SUB_EDIT = {"username": "sub", "password": "123", "role": "subject_editor"}
+DEFAULT_TEACH_EDIT = {"username": "teach", "password": "123", "role": "teacher_editor"}
 DEFAULT_USER = {"username": "user", "password": "123", "role": "user"}
 
 
@@ -106,7 +109,6 @@ def save_to_disk():
 
 
 def manual_refresh():
-    # 1. Բեռնում ենք թարմ տվյալները SQL-ից (կամ տեղական ֆայլից, եթե ինտերնետ չկա)
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
@@ -114,8 +116,6 @@ def manual_refresh():
                 parse_data(data)
         except Exception:
             pass
-            
-    # 🔥 2. Հրահանգում ենք Streamlit-ին վերագործարկել էջը (Refresh)
     st.rerun()
 
 
@@ -141,7 +141,7 @@ def load_from_disk():
         except Exception:
             pass
     
-    st.session_state.users_list = [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_USER]
+    st.session_state.users_list = [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_SUB_EDIT, DEFAULT_TEACH_EDIT, DEFAULT_USER]
 
 
 def parse_data(data):
@@ -152,13 +152,12 @@ def parse_data(data):
     st.session_state.schedule = data.get("schedule", None)
     st.session_state.subj_pool = data.get("subj_pool", [])
     st.session_state.teacher_pool = data.get("teacher_pool", [])
-    st.session_state.users_list = data.get("users_list", [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_USER])
+    st.session_state.users_list = data.get("users_list", [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_SUB_EDIT, DEFAULT_TEACH_EDIT, DEFAULT_USER])
 
 
 # --- INITIALIZATION ---
 st.set_page_config(page_title="Smart Time Table", layout="wide")
 
-# Ստեղծում ենք բոլոր փոփոխականները սկզբից, որպեսզի AttributeError չտա
 if "subjects" not in st.session_state:
     st.session_state.update({
         "subjects": [], 
@@ -170,7 +169,7 @@ if "subjects" not in st.session_state:
         "teacher_pool": [], 
         "users_list": [DEFAULT_OWNER],
         "logged_in": False,       
-        "username": "",          
+        "username": "",           
         "user_role": "",         
         "active_page": "normal"  
     })
@@ -204,7 +203,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 
-# --- 🛠️ ՀԻՄՆԱԿԱՆ ԾՐԱԳԻՐ (Մուտքից հետո) ---
+# --- 🛠️ ՀԻՄՆԱԿԱՆ ԾՐԱԳԻՐ ---
 
 def get_subj_name(sid):
     return next((s.name for s in st.session_state.subjects if s.id == sid), "Անհայտ")
@@ -225,7 +224,7 @@ if st.sidebar.button("🔄 Թարմացնել Տվյալները", use_container
 
 st.sidebar.divider()
 
-# 1. Սովորական Էջերի ցուցակ
+# 1. Նավիգացիայի էջերի ճիշտ բաշխում՝ ըստ պաշտոնի
 available_pages = ["📊 Վահանակ"]
 
 if st.session_state.user_role in ['owner', 'admin', 'subject_editor']:
@@ -240,7 +239,6 @@ if st.session_state.user_role in ['owner', 'admin']:
 available_pages.extend(["📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական"])
 
 
-# 💡 ՈՒՇԱԴՐՈՒԹՅՈՒՆ. Այստեղ ստուգում ենք՝ եթե օգտատերը սեղմել է radio-ի վրա, փոխում ենք էջը "normal"-ի
 def on_page_change():
     st.session_state.active_page = "normal"
 
@@ -256,7 +254,7 @@ if st.sidebar.button("💾 Պահպանել Բոլորը", width='stretch', type
 st.sidebar.divider()
 
 
-# 2. ՀԱՏՈՒԿ ԷՋ՝ Օգտատերերի Կառավարում (Առանձնացված ամենաներքևում)
+# 2. ՀԱՏՈՒԿ ԷՋ՝ Օգտատերերի Կառավարում (Միայն Owner և Admin-ի համար)
 if st.session_state.user_role in ['owner', 'admin']:
     if st.sidebar.button("👥 Օգտատերերի Կառավարում", width='stretch'):
         st.session_state.active_page = "👥 Օգտատերեր"
@@ -264,7 +262,6 @@ if st.session_state.user_role in ['owner', 'admin']:
 
 # --- ԷՋԵՐԻ ՄԱՐՄԻՆԸ ---
 
-# Եթե Օգտատերերի էջն է ընտրված
 if st.session_state.active_page == "👥 Օգտատերեր" and st.session_state.user_role in ['owner', 'admin']:
     st.title("👥 Օգտատերերի և Իրավունքների Կառավարում")
     
@@ -275,7 +272,8 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
             new_u = st.text_input("Username")
             new_p = st.text_input("Password")
             
-            roles_list = ["subject_editor", "teacher_editor", "admin"]
+            # 🔥 Ավելացվեց նաև 'user'-ի և մյուսների դերերը
+            roles_list = ["user", "subject_editor", "teacher_editor", "admin"]
             
             new_r = st.selectbox("Դերը", roles_list)
             
@@ -297,21 +295,18 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
         c2.write(f"🎭 Դերը՝ `{u['role']}`")
         
         can_delete = True
-        
         if u['username'] == st.session_state.username:
             can_delete = False 
         elif u['role'] == 'owner':
             can_delete = False 
-        elif u['role'] == 'admin':
-            if st.session_state.user_role != 'owner':
-                can_delete = False
+        elif u['role'] == 'admin' and st.session_state.user_role != 'owner':
+            can_delete = False
                 
         if can_delete:
             if c3.button("🗑️", key=f"del_user_{i}"):
                 st.session_state.users_list.pop(i)
                 st.rerun()
 
-# Սովորական Էջեր
 elif st.session_state.active_page == "normal":
 
     if page == "📊 Վահանակ":
@@ -549,6 +544,3 @@ elif st.session_state.active_page == "normal":
                 st.dataframe(pivot, width='stretch')
             else: st.warning("Այս ուսուցչի համար դեռևս դասեր չկան բաշխված։")
         else: st.info("Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
-
-# py -m streamlit run app.py
-# ctrl c - cancel
