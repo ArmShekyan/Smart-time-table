@@ -272,16 +272,29 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
             new_u = st.text_input("Username")
             new_p = st.text_input("Password")
             
-            # 🔥 Ավելացվեց նաև 'user'-ի և մյուսների դերերը
+            # 🔥 Ավելացրինք նաև սովորական 'user'-ը ցուցակում
             roles_list = ["user", "subject_editor", "teacher_editor", "admin"]
-            
             new_r = st.selectbox("Դերը", roles_list)
             
             if st.form_submit_button("Ավելացնել Օգտատեր", width='stretch'):
                 if new_u and new_p:
                     if not any(u['username'] == new_u for u in st.session_state.users_list):
-                        st.session_state.users_list.append({"username": new_u, "password": new_p, "role": new_r})
-                        st.success(f"✅ {new_u}-ն ավելացվեց ցուցակում:")
+                        
+                        new_user_data = {"username": new_u, "password": new_p, "role": new_r}
+                        
+                        # 1️⃣ Ավելացնում ենք ժամանակավոր Python ցուցակում
+                        st.session_state.users_list.append(new_user_data)
+                        
+                        # 🔥 2️⃣ Ուղարկում ենք Supabase SQL-ի users աղյուսակ (REST API-ով)
+                        headers = get_supabase_headers()
+                        if headers:
+                            try:
+                                url = f"{st.secrets['supabase_url']}/rest/v1/users"
+                                requests.post(url, headers=headers, data=json.dumps(new_user_data))
+                                st.success(f"✅ {new_u}-ն հաջողությամբ ավելացվեց SQL-ում և ցուցակում:")
+                            except Exception:
+                                st.warning("⚠️ Տեղական ցուցակում ավելացավ, բայց SQL Cloud չհասավ:")
+                        
                         st.rerun()
                     else:
                         st.error("❌ Այս անունով օգտատեր արդեն կա:")
@@ -544,3 +557,7 @@ elif st.session_state.active_page == "normal":
                 st.dataframe(pivot, width='stretch')
             else: st.warning("Այս ուսուցչի համար դեռևս դասեր չկան բաշխված։")
         else: st.info("Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
+        
+
+# py -m streamlit run app.py
+# ctrl c - cancel
