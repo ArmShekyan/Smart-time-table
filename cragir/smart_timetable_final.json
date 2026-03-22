@@ -1,0 +1,540 @@
+{
+    "subjects": [
+        {
+            "id": "39115ffd-db66-454a-93ec-749fc5e2567d",
+            "name": "hanr",
+            "complexity": 5
+        },
+        {
+            "id": "2b5c2819-f561-4d12-8467-d840e35ab9c5",
+            "name": "erkr",
+            "complexity": 3
+        },
+        {
+            "id": "73c8a2ad-40a5-4bb1-8e4a-83b3662baff5",
+            "name": "fizika",
+            "complexity": 4
+        },
+        {
+            "id": "12d154a3-294d-4cb0-865a-fc92ef8bebfe",
+            "name": "python",
+            "complexity": 4
+        },
+        {
+            "id": "4a8ce19a-ae94-46a3-92e9-fb1cb818ca21",
+            "name": "hasarak",
+            "complexity": 2
+        }
+    ],
+    "teachers": [
+        {
+            "id": "c7b4594a-5848-4232-a420-89bb3fc81e09",
+            "name": "axajanyan",
+            "subject_ids": [
+                "39115ffd-db66-454a-93ec-749fc5e2567d",
+                "2b5c2819-f561-4d12-8467-d840e35ab9c5"
+            ]
+        },
+        {
+            "id": "c6c04edd-f748-48b8-8a95-72522b674fcc",
+            "name": "martirosyan",
+            "subject_ids": [
+                "2b5c2819-f561-4d12-8467-d840e35ab9c5",
+                "73c8a2ad-40a5-4bb1-8e4a-83b3662baff5"
+            ]
+        },
+        {
+            "id": "12525b12-7974-432a-b9c1-9c6173c854e0",
+            "name": "saxatelyan",
+            "subject_ids": [
+                "73c8a2ad-40a5-4bb1-8e4a-83b3662baff5"
+            ]
+        },
+        {
+            "id": "3b3d1f2c-8e52-483e-9633-a1aee6f205bb",
+            "name": "hakobyan",
+            "subject_ids": [
+                "39115ffd-db66-454a-93ec-749fc5e2567d"
+            ]
+        },
+        {
+            "id": "d81e10a4-3b08-4a1d-870e-3615c7e4ea57",
+            "name": "grigoryan",
+            "subject_ids": [
+                "4a8ce19a-ae94-46a3-92e9-fb1cb818ca21"
+            ]
+        },
+        {
+            "id": "2957399d-dc9c-4868-849f-fc24e146e46a",
+            "name": "zohrabyan",
+            "subject_ids": [
+                "12d154a3-294d-4cb0-865a-fc92ef8bebfe"
+            ]
+        }
+    ],
+    "classes": [
+        {
+            "id": "d86f50ec-4e9a-4c91-8bef-42a5e77a7f6e",
+            "grade": "Ab",
+            "section": "1"
+        },
+        {
+            "id": "3c44b3ad-1642-4b0f-8f48-8491b0952468",
+            "grade": "Ab",
+            "section": "2"
+        },
+        {
+            "id": "6d40938c-8529-42db-903e-fce310d26bd1",
+            "grade": "Ab",
+            "section": "3"
+        }
+    ],
+    "assignments": [
+        {
+            "id": "650a98c7-f016-4a70-a306-7543c317c470",
+            "teacher_id": "c7b4594a-5848-4232-a420-89bb3fc81e09",
+            "subject_id": "2b5c2819-f561-4d12-8467-d840e35ab9c5",
+            "class_id": "d86f50ec-4e9a-4c91-8bef-42a5e77a7f6e",
+            "lessons_per_week": 3
+        },
+        {
+            "id": "eb70d180-2803-4e0a-a980-f2155499a2f4",
+            "teacher_id": "c7b4594a-5848-4232-a420-89bb3fc81e09",
+            "subject_id": "2b5c2819-f561-4d12-8467-d840e35ab9c5",
+            "class_id": "6d40938c-8529-42db-903e-fce310d26bd1",
+            "lessons_per_week": 3
+        },
+        {
+            "id": "4d82bd49-46f0-4bc9-97ac-a8dffde75790",
+            "teacher_id": "c7b4594a-5848-4232-a420-89bb3fc81e09",
+            "subject_id": "39115ffd-db66-454a-93ec-749fc5e2567d",
+            "class_id": "3c44b3ad-1642-4b0f-8f48-8491b0952468",
+            "lessons_per_week": 6
+        },
+        {
+            "id": "3086cf04-80f7-4d6d-beeb-c7b5eb8bafea",
+            "teacher_id": "c6c04edd-f748-48b8-8a95-72522b674fcc",
+            "subject_id": "73c8a2ad-40a5-4bb1-8e4a-83b3662baff5",
+            "class_id": "d86f50ec-4e9a-4c91-8bef-42a5e77a7f6e",
+            "lessons_per_week": 4
+        },
+        {
+            "id": "7108d518-d49a-4c19-9018-79a8c6446298",
+            "teacher_id": "c6c04edd-f748-48b8-8a95-72522b674fcc",
+            "subject_id": "73c8a2ad-40a5-4bb1-8e4a-83b3662baff5",
+            "class_id": "6d40938c-8529-42db-903e-fce310d26bd1",
+            "lessons_per_week": 4
+        },
+        {
+            "id": "992a3568-a381-402a-b639-2598c1466a56",
+            "teacher_id": "c6c04edd-f748-48b8-8a95-72522b674fcc",
+            "subject_id": "2b5c2819-f561-4d12-8467-d840e35ab9c5",
+            "class_id": "3c44b3ad-1642-4b0f-8f48-8491b0952468",
+            "lessons_per_week": 3
+        },
+        {
+            "id": "1b75ebb3-d2ba-4ee7-ac45-f1ad7d14dd95",
+            "teacher_id": "12525b12-7974-432a-b9c1-9c6173c854e0",
+            "subject_id": "73c8a2ad-40a5-4bb1-8e4a-83b3662baff5",
+            "class_id": "3c44b3ad-1642-4b0f-8f48-8491b0952468",
+            "lessons_per_week": 4
+        },
+        {
+            "id": "0c788859-8e90-4866-afea-b6002e5b8948",
+            "teacher_id": "3b3d1f2c-8e52-483e-9633-a1aee6f205bb",
+            "subject_id": "39115ffd-db66-454a-93ec-749fc5e2567d",
+            "class_id": "d86f50ec-4e9a-4c91-8bef-42a5e77a7f6e",
+            "lessons_per_week": 6
+        },
+        {
+            "id": "80b8b8cb-d3cd-4ad4-9b95-d35b1107fd0c",
+            "teacher_id": "3b3d1f2c-8e52-483e-9633-a1aee6f205bb",
+            "subject_id": "39115ffd-db66-454a-93ec-749fc5e2567d",
+            "class_id": "6d40938c-8529-42db-903e-fce310d26bd1",
+            "lessons_per_week": 6
+        },
+        {
+            "id": "d3fa9f80-218e-46d4-a91d-876a56c811bf",
+            "teacher_id": "d81e10a4-3b08-4a1d-870e-3615c7e4ea57",
+            "subject_id": "4a8ce19a-ae94-46a3-92e9-fb1cb818ca21",
+            "class_id": "d86f50ec-4e9a-4c91-8bef-42a5e77a7f6e",
+            "lessons_per_week": 2
+        },
+        {
+            "id": "2382c22f-e4ec-4b0b-82d4-164996ec7766",
+            "teacher_id": "d81e10a4-3b08-4a1d-870e-3615c7e4ea57",
+            "subject_id": "4a8ce19a-ae94-46a3-92e9-fb1cb818ca21",
+            "class_id": "3c44b3ad-1642-4b0f-8f48-8491b0952468",
+            "lessons_per_week": 2
+        },
+        {
+            "id": "b9c556e4-945b-4fe8-8880-e6dcf49d9b8e",
+            "teacher_id": "d81e10a4-3b08-4a1d-870e-3615c7e4ea57",
+            "subject_id": "4a8ce19a-ae94-46a3-92e9-fb1cb818ca21",
+            "class_id": "6d40938c-8529-42db-903e-fce310d26bd1",
+            "lessons_per_week": 2
+        },
+        {
+            "id": "b57586ec-ea01-41dc-8618-b17854608501",
+            "teacher_id": "2957399d-dc9c-4868-849f-fc24e146e46a",
+            "subject_id": "12d154a3-294d-4cb0-865a-fc92ef8bebfe",
+            "class_id": "d86f50ec-4e9a-4c91-8bef-42a5e77a7f6e",
+            "lessons_per_week": 3
+        },
+        {
+            "id": "dbc2ac50-0ce7-48cd-a562-d2dc8c1b8913",
+            "teacher_id": "2957399d-dc9c-4868-849f-fc24e146e46a",
+            "subject_id": "12d154a3-294d-4cb0-865a-fc92ef8bebfe",
+            "class_id": "3c44b3ad-1642-4b0f-8f48-8491b0952468",
+            "lessons_per_week": 3
+        },
+        {
+            "id": "cd98b7f7-7cf3-47b4-b557-a566d8b86cb3",
+            "teacher_id": "2957399d-dc9c-4868-849f-fc24e146e46a",
+            "subject_id": "12d154a3-294d-4cb0-865a-fc92ef8bebfe",
+            "class_id": "6d40938c-8529-42db-903e-fce310d26bd1",
+            "lessons_per_week": 3
+        }
+    ],
+    "schedule": [
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Հինգշաբթի",
+            "Ժամ": 1,
+            "Առարկա": "hanr (hakobyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Չորեքշաբթի",
+            "Ժամ": 1,
+            "Առարկա": "hanr (hakobyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Ուրբաթ",
+            "Ժամ": 1,
+            "Առարկա": "hanr (hakobyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Երեքշաբթի",
+            "Ժամ": 1,
+            "Առարկա": "hanr (hakobyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Երկուշաբթի",
+            "Ժամ": 1,
+            "Առարկա": "hanr (hakobyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Ուրբաթ",
+            "Ժամ": 2,
+            "Առարկա": "hanr (hakobyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Երկուշաբթի",
+            "Ժամ": 2,
+            "Առարկա": "fizika (martirosyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Հինգշաբթի",
+            "Ժամ": 2,
+            "Առարկա": "fizika (martirosyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Չորեքշաբթի",
+            "Ժամ": 2,
+            "Առարկա": "fizika (martirosyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Երեքշաբթի",
+            "Ժամ": 2,
+            "Առարկա": "fizika (martirosyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Ուրբաթ",
+            "Ժամ": 3,
+            "Առարկա": "python (zohrabyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Երեքշաբթի",
+            "Ժամ": 3,
+            "Առարկա": "python (zohrabyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Երկուշաբթի",
+            "Ժամ": 3,
+            "Առարկա": "python (zohrabyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Հինգշաբթի",
+            "Ժամ": 3,
+            "Առարկա": "erkr (axajanyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Չորեքշաբթի",
+            "Ժամ": 3,
+            "Առարկա": "erkr (axajanyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Չորեքշաբթի",
+            "Ժամ": 4,
+            "Առարկա": "hasarak (grigoryan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Երկուշաբթի",
+            "Ժամ": 4,
+            "Առարկա": "erkr (axajanyan)"
+        },
+        {
+            "Դասարան": "Ab1",
+            "Օր": "Հինգշաբթի",
+            "Ժամ": 4,
+            "Առարկա": "hasarak (grigoryan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Ուրբաթ",
+            "Ժամ": 1,
+            "Առարկա": "hanr (axajanyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Երկուշաբթի",
+            "Ժամ": 1,
+            "Առարկա": "hanr (axajanyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Երեքշաբթի",
+            "Ժամ": 1,
+            "Առարկա": "hanr (axajanyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Չորեքշաբթի",
+            "Ժամ": 1,
+            "Առարկա": "hanr (axajanyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Հինգշաբթի",
+            "Ժամ": 1,
+            "Առարկա": "hanr (axajanyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Ուրբաթ",
+            "Ժամ": 2,
+            "Առարկա": "hanr (axajanyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Հինգշաբթի",
+            "Ժամ": 2,
+            "Առարկա": "fizika (saxatelyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Չորեքշաբթի",
+            "Ժամ": 2,
+            "Առարկա": "fizika (saxatelyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Երկուշաբթի",
+            "Ժամ": 2,
+            "Առարկա": "fizika (saxatelyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Երեքշաբթի",
+            "Ժամ": 2,
+            "Առարկա": "fizika (saxatelyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Երեքշաբթի",
+            "Ժամ": 3,
+            "Առարկա": "erkr (martirosyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Հինգշաբթի",
+            "Ժամ": 3,
+            "Առարկա": "python (zohrabyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Ուրբաթ",
+            "Ժամ": 3,
+            "Առարկա": "erkr (martirosyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Չորեքշաբթի",
+            "Ժամ": 3,
+            "Առարկա": "python (zohrabyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Երկուշաբթի",
+            "Ժամ": 3,
+            "Առարկա": "erkr (martirosyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Ուրբաթ",
+            "Ժամ": 4,
+            "Առարկա": "python (zohrabyan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Երեքշաբթի",
+            "Ժամ": 4,
+            "Առարկա": "hasarak (grigoryan)"
+        },
+        {
+            "Դասարան": "Ab2",
+            "Օր": "Երկուշաբթի",
+            "Ժամ": 4,
+            "Առարկա": "hasarak (grigoryan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Ուրբաթ",
+            "Ժամ": 1,
+            "Առարկա": "fizika (martirosyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Հինգշաբթի",
+            "Ժամ": 1,
+            "Առարկա": "fizika (martirosyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Երեքշաբթի",
+            "Ժամ": 1,
+            "Առարկա": "fizika (martirosyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Չորեքշաբթի",
+            "Ժամ": 1,
+            "Առարկա": "fizika (martirosyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Երկուշաբթի",
+            "Ժամ": 1,
+            "Առարկա": "python (zohrabyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Չորեքշաբթի",
+            "Ժամ": 2,
+            "Առարկա": "hanr (hakobyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Հինգշաբթի",
+            "Ժամ": 2,
+            "Առարկա": "hanr (hakobyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Երկուշաբթի",
+            "Ժամ": 2,
+            "Առարկա": "hanr (hakobyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Երեքշաբթի",
+            "Ժամ": 2,
+            "Առարկա": "hanr (hakobyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Ուրբաթ",
+            "Ժամ": 2,
+            "Առարկա": "python (zohrabyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Երեքշաբթի",
+            "Ժամ": 3,
+            "Առարկա": "hanr (hakobyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Չորեքշաբթի",
+            "Ժամ": 3,
+            "Առարկա": "hanr (hakobyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Ուրբաթ",
+            "Ժամ": 3,
+            "Առարկա": "erkr (axajanyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Հինգշաբթի",
+            "Ժամ": 3,
+            "Առարկա": "hasarak (grigoryan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Երկուշաբթի",
+            "Ժամ": 3,
+            "Առարկա": "erkr (axajanyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Չորեքշաբթի",
+            "Ժամ": 4,
+            "Առարկա": "python (zohrabyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Հինգշաբթի",
+            "Ժամ": 4,
+            "Առարկա": "erkr (axajanyan)"
+        },
+        {
+            "Դասարան": "Ab3",
+            "Օր": "Ուրբաթ",
+            "Ժամ": 4,
+            "Առարկա": "hasarak (grigoryan)"
+        }
+    ],
+    "subj_pool": [
+        "hanr",
+        "erkr",
+        "fizika",
+        "hasarak",
+        "python"
+    ],
+    "teacher_pool": [
+        "axajanyan",
+        "martirosyan",
+        "saxatelyan",
+        "hakobyan",
+        "grigoryan",
+        "zohrabyan"
+    ]
+}
