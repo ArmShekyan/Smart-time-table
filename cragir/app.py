@@ -40,6 +40,7 @@ DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի",
 
 DEFAULT_OWNER = {"username": "armshekyan", "password": "123", "role": "owner"}
 DEFAULT_ADMIN = {"username": "arsoo", "password": "123", "role": "admin"}
+DEFAULT_USER = {"username": "user", "password": "123", "role": "user"}
 
 
 # --- 🔑 ՏՎՅԱԼՆԵՐԻ ԲԱԶԱՅԻ ԵՎ ԼՈԳԻՆԻ ՖՈՒՆԿՑԻԱՆԵՐ ---
@@ -126,7 +127,7 @@ def load_from_disk():
         except Exception:
             pass
     
-    st.session_state.users_list = [DEFAULT_OWNER, DEFAULT_ADMIN]
+    st.session_state.users_list = [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_USER]
 
 
 def parse_data(data):
@@ -137,7 +138,7 @@ def parse_data(data):
     st.session_state.schedule = data.get("schedule", None)
     st.session_state.subj_pool = data.get("subj_pool", [])
     st.session_state.teacher_pool = data.get("teacher_pool", [])
-    st.session_state.users_list = data.get("users_list", [DEFAULT_OWNER, DEFAULT_ADMIN])
+    st.session_state.users_list = data.get("users_list", [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_USER])
 
 
 # --- INITIALIZATION ---
