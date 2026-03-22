@@ -105,6 +105,20 @@ def save_to_disk():
     st.sidebar.warning("⚠️ Պահպանվեց տեղական JSON ֆայլում:")
 
 
+def manual_refresh():
+    # 1. Բեռնում ենք թարմ տվյալները SQL-ից (կամ տեղական ֆայլից, եթե ինտերնետ չկա)
+    if os.path.exists(DB_FILE):
+        try:
+            with open(DB_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                parse_data(data)
+        except Exception:
+            pass
+            
+    # 🔥 2. Հրահանգում ենք Streamlit-ին վերագործարկել էջը (Refresh)
+    st.rerun()
+
+
 def load_from_disk():
     headers = get_supabase_headers()
     if headers:
@@ -205,6 +219,9 @@ st.sidebar.caption(f"Պաշտոն՝ **{st.session_state.user_role}**")
 if st.sidebar.button("🚪 Ելք համակարգից", width='stretch'):
     st.session_state.logged_in = False
     st.rerun()
+
+if st.sidebar.button("🔄 Թարմացնել Տվյալները", use_container_width=True):
+    manual_refresh()
 
 st.sidebar.divider()
 
