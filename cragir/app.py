@@ -250,6 +250,13 @@ st.markdown("""
         box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3) !important;
     }
 
+    /* 🗑️ Ջնջում ենք Streamlit Form-ի ստանդարտ սև սահմանագծերը և ֆոնը լոգինի վահանակում */
+    [data-testid="stForm"] {
+        border: none !important;
+        padding: 0 !important;
+        background-color: transparent !important;
+    }
+
     /* 1. Sidebar-ի սիրունացում */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
@@ -328,29 +335,33 @@ if "subjects" not in st.session_state:
     load_from_disk()
 
 
-# --- 🚪 ԼՈԳԻՆԻ ԷՋ (Վերջնական Ճշգրտված Տարբերակ) ---
+# --- 🚪 ԼՈԳԻՆԻ ԷՋ (Enter-ի աջակցությամբ և Սիրուն Դիզայնով) ---
 if not st.session_state.logged_in:
     left_col, center_col, right_col = st.columns([1, 1.5, 1])
 
     with center_col:
-        # Սիրունացնում ենք միայն վերնագրերը (Card-ը կձևավորվի CSS-ով)
+        st.markdown('<div class="login-card">', unsafe_allow_html=True)
+        
         st.markdown(
             "<h1 style='text-align: center; color: #0d6efd; font-size: 28px; font-weight: 800; margin-bottom: 5px;'>Smart Time Table</h1>"
             "<p style='text-align: center; color: #6c757d; font-size: 14px; margin-bottom: 25px;'>Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար</p>", 
             unsafe_allow_html=True
         )
         
-        # 📝 Դաշտերը (Form-ից դուրս)
-        username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
-        password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="••••••••")
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # 🔥 Գրադիենտով Կոճակը
-        st.markdown('<div class="login-btn">', unsafe_allow_html=True)
-        submit_login = st.button("Մուտք գործել", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        # 🎯 Օգտագործում ենք st.form, որպեսզի Enter-ը աշխատի
+        with st.form("login_panel", clear_on_submit=False):
+            username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
+            password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="••••••••")
             
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # 🔥 Գրադիենտով Form Submit կոճակ
+            st.markdown('<div class="login-btn">', unsafe_allow_html=True)
+            submit_login = st.form_submit_button("Մուտք գործել", use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('</div>', unsafe_allow_html=True) # Փակում ենք login-card-ը
+
         if submit_login:
             if not username_input or not password_input:
                 st.error("⚠️ Խնդրում ենք լրացնել բոլոր դաշտերը:")
