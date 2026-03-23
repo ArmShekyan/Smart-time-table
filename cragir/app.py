@@ -509,12 +509,23 @@ elif st.session_state.active_page == "normal":
                     hrs = st.number_input("Շաբաթական ժամեր", 1, 10, 2)
                     if st.form_submit_button("Կապել", width='stretch'):
                         current_hrs = sum(a.lessons_per_week for a in st.session_state.assignments if a.class_id == sel_c.id)
+                        
+                        # 🔍 1. Ստուգում ենք, թե արդյոք այս առարկան ԱՐԴԵՆ ունի որևէ ուսուցիչ այս դասարանում
+                        subject_already_taken = any(
+                            a.class_id == sel_c.id and a.subject_id == sel_s.id 
+                            for a in st.session_state.assignments
+                        )
+
                         if current_hrs + hrs > 35:
                             st.error("❌ Դասարանը չի կարող 35 ժամից ավել ունենալ։")
-                        elif any(a.class_id == sel_c.id and a.subject_id == sel_s.id for a in st.session_state.assignments):
-                            st.error("⚠️ Այս առարկան արդեն ունի ուսուցիչ այս դասարանում։")
+                        
+                        # 🛑 Եթե առարկան արդեն զբաղված է ուրիշի կողմից
+                        elif subject_already_taken:
+                            st.error(f"⚠️ «{sel_s.name}» առարկան այս դասարանում արդեն ունի դասավանդող ուսուցիչ։")
+                        
                         else:
-                            st.session_state.assignments.append(Assignment(str(uuid.uuid4()), sel_t.id, sel_s.id, sel_c.id, hrs)); st.rerun()
+                            st.session_state.assignments.append(Assignment(str(uuid.uuid4()), sel_t.id, sel_s.id, sel_c.id, hrs))
+                            st.rerun()
 
         st.divider()
         st.subheader("✅ Շաբաթական Ժամերի Բաշխում")
