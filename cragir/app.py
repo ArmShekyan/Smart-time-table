@@ -5,6 +5,7 @@ import pandas as pd
 import json
 import os
 import requests
+import time # ⏳ Ավելացրինք անիմացիաների համար
 from dataclasses import dataclass, asdict
 from typing import List
 # --- 📄 PDF-Ի import ---
@@ -82,79 +83,106 @@ def check_user(username, password):
 
 
 def save_to_disk():
-    data = {
-        "subjects": [asdict(s) for s in st.session_state.subjects],
-        "teachers": [asdict(t) for t in st.session_state.teachers],
-        "classes": [asdict(c) for c in st.session_state.classes],
-        "assignments": [asdict(a) for a in st.session_state.assignments],
-        "schedule": st.session_state.schedule,
-        "subj_pool": st.session_state.subj_pool,
-        "teacher_pool": st.session_state.teacher_pool,
-        "users_list": st.session_state.users_list 
-    }
+    # 🔥 ԱՆԻՄԱՑԻԱ ՊԱՀՊԱՆԵԼԻՍ
+    with st.spinner("⏳ Պահպանվում է..."):
+        time.sleep(1) # Փոքրիկ դադար անիմացիան ցույց տալու համար
+        data = {
+            "subjects": [asdict(s) for s in st.session_state.subjects],
+            "teachers": [asdict(t) for t in st.session_state.teachers],
+            "classes": [asdict(c) for c in st.session_state.classes],
+            "assignments": [asdict(a) for a in st.session_state.assignments],
+            "schedule": st.session_state.schedule,
+            "subj_pool": st.session_state.subj_pool,
+            "teacher_pool": st.session_state.teacher_pool,
+            "users_list": st.session_state.users_list 
+        }
 
-    headers = get_supabase_headers()
-    if headers:
-        try:
-            url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
-            payload = {"id": 1, "data": data}
-            headers["Prefer"] = "resolution=merge-duplicates"
-            requests.post(url, headers=headers, data=json.dumps(payload))
-            st.sidebar.success("✅ Տվյալները պահպանվեցին Cloud SQL-ում!")
-            return
-        except Exception:
-            pass
+        headers = get_supabase_headers()
+        if headers:
+            try:
+                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
+                payload = {"id": 1, "data": data}
+                headers["Prefer"] = "resolution=merge-duplicates"
+                requests.post(url, headers=headers, data=json.dumps(payload))
+                st.toast("✅ Տվյալները պահպանվեցին Cloud-ում!", icon="🌐")
+                return
+            except Exception:
+                pass
 
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    st.sidebar.warning("⚠️ Պահպանվեց տեղական JSON ֆայլում:")
+        with open(DB_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+        st.toast("⚠️ Պահպանվեց տեղական ֆայլում:", icon="💾")
 
 
 def reset_all_data():
-    st.session_state.subjects = []
-    st.session_state.teachers = []
-    st.session_state.classes = []
-    st.session_state.assignments = []
-    st.session_state.schedule = None
-    st.session_state.subj_pool = []
-    st.session_state.teacher_pool = []
-    
-    data = {
-        "subjects": [],
-        "teachers": [],
-        "classes": [],
-        "assignments": [],
-        "schedule": None,
-        "subj_pool": [],
-        "teacher_pool": [],
-        "users_list": st.session_state.users_list 
-    }
+    # 🔥 ԱՆԻՄԱՑԻԱ ԶՐՈՅԱՑՆԵԼԻՍ
+    with st.spinner("🚨 Ամբողջական ջնջում..."):
+        time.sleep(2)
+        st.session_state.subjects = []
+        st.session_state.teachers = []
+        st.session_state.classes = []
+        st.session_state.assignments = []
+        st.session_state.schedule = None
+        st.session_state.subj_pool = []
+        st.session_state.teacher_pool = []
+        
+        data = {
+            "subjects": [],
+            "teachers": [],
+            "classes": [],
+            "assignments": [],
+            "schedule": None,
+            "subj_pool": [],
+            "teacher_pool": [],
+            "users_list": st.session_state.users_list 
+        }
 
-    headers = get_supabase_headers()
-    if headers:
-        try:
-            url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
-            payload = {"id": 1, "data": data}
-            headers["Prefer"] = "resolution=merge-duplicates"
-            requests.post(url, headers=headers, data=json.dumps(payload))
-            st.sidebar.success("✅ Բազան հաջողությամբ զրոյացվեց Cloud-ում:")
-            return
-        except Exception:
-            pass
+        headers = get_supabase_headers()
+        if headers:
+            try:
+                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
+                payload = {"id": 1, "data": data}
+                headers["Prefer"] = "resolution=merge-duplicates"
+                requests.post(url, headers=headers, data=json.dumps(payload))
+                st.toast("💥 Բազան զրոյացվեց Cloud-ում:", icon="💣")
+                st.balloons() # 🥳 Գեղեցիկ փուչիկներ
+                return
+            except Exception:
+                pass
 
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-    st.sidebar.warning("⚠️ Բազան զրոյացվեց տեղական ֆայլում:")
+        with open(DB_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+        st.toast("💥 Բազան զրոյացվեց տեղական ֆայլում:", icon="💣")
+        st.balloons()
 
 
 def manual_refresh():
-    if os.path.exists(DB_FILE):
-        try:
-            with open(DB_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                parse_data(data)
-        except Exception:
-            pass
+    # 🔥 ԱՆԻՄԱՑԻԱ ԹԱՐՄԱՑՆԵԼԻՍ
+    with st.spinner("🔄 Տվյալները թարմացվում են Cloud-ից..."):
+        time.sleep(1.5)
+        # Կրկնում ենք load_from_disk-ի տրամաբանությունը
+        headers = get_supabase_headers()
+        if headers:
+            try:
+                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
+                response = requests.get(url, headers=headers)
+                if response.status_code == 200 and response.json():
+                    data = response.json()[0]["data"]
+                    parse_data(data)
+                    st.toast("✅ Տվյալները թարմ են:", icon="🔄")
+                    st.rerun()
+                    return
+            except Exception:
+                pass
+
+        if os.path.exists(DB_FILE):
+            try:
+                with open(DB_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    parse_data(data)
+                    st.toast("✅ Տեղական տվյալները թարմ են:", icon="🔄")
+            except Exception:
+                pass
     st.rerun()
 
 
@@ -195,7 +223,69 @@ def parse_data(data):
 
 
 # --- INITIALIZATION ---
-st.set_page_config(page_title="Smart Time Table", layout="wide")
+st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅")
+
+# 🔥🎨 ԱՎԵԼԱՑՐԻՆՔ ԱՆՀԱՏԱԿԱՆ CSS ՈՃԵՐ ԵՎ ԱՆԻՄԱՑԻԱՆԵՐ
+st.markdown("""
+<style>
+    /* 1. Sidebar-ի սիրունացում */
+    [data-testid="stSidebar"] {
+        background-color: #1a1c24;
+        border-right: 1px solid #343a40;
+    }
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {
+        color: #f8f9fa;
+    }
+    [data-testid="stSidebar"] .stButton>button {
+        border-radius: 20px;
+        transition: all 0.3s ease-in-out;
+    }
+    [data-testid="stSidebar"] .stButton>button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+    }
+
+    /* 2. Հիմնական Աղյուսակների (Dataframe) սիրունացում */
+    [data-testid="stDataFrameDataframe"] div table {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    [data-testid="stDataFrameDataframe"] div table thead tr th {
+        background-color: #343a40 !important;
+        color: white !important;
+    }
+    [data-testid="stDataFrameDataframe"] div table tbody tr:hover {
+        background-color: #f1f3f5 !important;
+    }
+
+    /* 3. Metrics (Վիճակագրություն) սիրունացում */
+    [data-testid="stMetricValue"] {
+        color: #0d6efd;
+        font-weight: bold;
+    }
+    [data-testid="stMetricLabel"] {
+        color: #6c757d;
+    }
+
+    /* 4. Expander-ի (Դասարանների) սիրունացում */
+    .streamlit-expanderHeader {
+        background-color: #e9ecef;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+
+    /* 5. Fade-in Անիմացիա էջը բացելիս */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .stApp {
+        animation: fadeIn 0.8s ease-in-out;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 
 if "subjects" not in st.session_state:
     st.session_state.update({
@@ -221,7 +311,7 @@ if not st.session_state.logged_in:
     left_col, center_col, right_col = st.columns([1, 2, 1])
 
     with center_col:
-        st.markdown("<h1 style='text-align: center;'>🔐 Մուտք Smart Time Table</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; color: #0d6efd;'>🔐 Մուտք Smart Time Table</h1>", unsafe_allow_html=True)
         
         with st.form("login_form", clear_on_submit=False):
             username_input = st.text_input("Օգտատիրոջ անուն (Username)")
@@ -242,6 +332,8 @@ if not st.session_state.logged_in:
                     st.session_state.active_tab = "📂 Վերջին պահպանվածը"
 
                 st.success(f"✅ Բարի գալուստ, {username_input}!")
+                st.snow() # ❄️ Գեղեցիկ անիմացիա լոգինից հետո
+                time.sleep(1)
                 st.rerun()
             else:
                 st.error("❌ Սխալ օգտանուն կամ գաղտնաբառ")
@@ -316,7 +408,8 @@ if st.sidebar.button("🚪 Ելք համակարգից", width='stretch'):
     st.session_state.logged_in = False
     st.rerun()
 
-if st.sidebar.button("🔄 Թարմացնել Տվյալները", use_container_width=True):
+# 🔥 ԱՆԻՄԱՑԻՈՆ ԿՈՃԱԿ
+if st.sidebar.button("🔄 Թարմացնել Cloud-ից", use_container_width=True):
     manual_refresh()
 
 st.sidebar.divider()
@@ -346,14 +439,16 @@ page = st.sidebar.radio("Նավիգացիա", available_pages, index=default_ind
 
 st.sidebar.divider()
 
+# 🔥 ԱՆԻՄԱՑԻՈՆ ԿՈՃԱԿ
 if st.sidebar.button("💾 Պահպանել Բոլորը", width='stretch', type="primary"):
     save_to_disk()
 
 
 if st.session_state.user_role == 'owner':
     st.sidebar.divider()
-    st.sidebar.markdown("### ⚠️ Վտանգավոր Գոտի")
+    st.sidebar.markdown("<h3 style='color: #dc3545;'>⚠️ Վտանգավոր Գոտի</h3>", unsafe_allow_html=True)
     confirm_reset = st.sidebar.checkbox("Հաստատում եմ ամբողջական ջնջումը")
+    # 🔥 ԱՆԻՄԱՑԻՈՆ ԿԱՐՄԻՐ ԿՈՃԱԿ
     if st.sidebar.button("🚨 Զրոյացնել Ամբողջ Բազան", type="primary", use_container_width=True, disabled=not confirm_reset):
         reset_all_data()
         st.rerun()
@@ -393,6 +488,7 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
                             try:
                                 url = f"{st.secrets['supabase_url']}/rest/v1/users"
                                 response = requests.post(url, headers=headers, data=json.dumps(new_user_data))
+                                st.toast(f"✅ Օգտատեր {new_u}-ն ավելացվեց Cloud-ում:", icon="👤")
                             except Exception:
                                 pass
                         st.rerun()
@@ -401,26 +497,30 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
     st.subheader("📋 Գրանցված Օգտատերեր")
     
     for i, u in enumerate(st.session_state.users_list):
-        c1, c2, c3 = st.columns([3, 3, 1])
-        c1.write(f"👤 **{u['username']}**")
-        c2.write(f"🎭 Դերը՝ `{u['role']}`")
-        
-        can_delete = True
-        if u['username'] == st.session_state.username or u['role'] == 'owner':
-            can_delete = False 
-        elif u['role'] == 'admin' and st.session_state.user_role != 'owner':
-            can_delete = False
-                
-        if can_delete:
-            if c3.button("🗑️", key=f"del_user_{i}"):
-                st.session_state.users_list.pop(i)
-                st.rerun()
+        # Օգտագործում ենք st.container() գեղեցիկ շրջանակի համար
+        with st.container(border=True):
+            c1, c2, c3 = st.columns([3, 3, 1])
+            c1.markdown(f"👤 **{u['username']}**")
+            c2.markdown(f"🎭 Դերը՝ `<span style='color: #0d6efd;'>{u['role']}</span>`", unsafe_allow_html=True)
+            
+            can_delete = True
+            if u['username'] == st.session_state.username or u['role'] == 'owner':
+                can_delete = False 
+            elif u['role'] == 'admin' and st.session_state.user_role != 'owner':
+                can_delete = False
+                    
+            if can_delete:
+                if c3.button("🗑️", key=f"del_user_{i}"):
+                    st.session_state.users_list.pop(i)
+                    st.toast(f"🗑️ Օգտատերը ջնջվեց:", icon="👨‍⚖️")
+                    st.rerun()
 
 elif st.session_state.active_page == "normal":
 
     if st.session_state.active_tab == "📊 Վահանակ":
         st.title("📊 Ընդհանուր Վիճակագրություն")
         
+        # Օգտագործում ենք Columns + Metrics CSS ոճերով
         m1, m2, m3, m4 = st.columns(4)
         m1.metric(label="📚 Առարկաներ", value=len(st.session_state.subjects))
         m2.metric(label="👩‍🏫 Ուսուցիչներ", value=len(st.session_state.teachers))
@@ -454,7 +554,9 @@ elif st.session_state.active_page == "normal":
                 new_name = st.text_input("Առարկայի անուն")
                 if st.form_submit_button("Ավելացնել ցանկում", width='stretch'):
                     if new_name and new_name not in st.session_state.subj_pool:
-                        st.session_state.subj_pool.append(new_name); st.rerun()
+                        st.session_state.subj_pool.append(new_name)
+                        st.toast(f"📚 {new_name}-ն ավելացվեց ցանկում:", icon="📝")
+                        st.rerun()
 
         with col_r:
             if st.session_state.subj_pool:
@@ -464,16 +566,21 @@ elif st.session_state.active_page == "normal":
                     comp = st.select_slider("Բարդություն (1-5)", options=[1,2,3,4,5], value=3)
                     if st.form_submit_button("Գրանցել", width='stretch'):
                         if not any(s.name == selected for s in st.session_state.subjects):
-                            st.session_state.subjects.append(Subject(str(uuid.uuid4()), selected, comp)); st.rerun()
+                            st.session_state.subjects.append(Subject(str(uuid.uuid4()), selected, comp))
+                            st.toast(f"✅ Առարկան գրանցվեց:", icon="📚")
+                            st.rerun()
 
         st.divider()
         st.subheader("✅ Գրանցված Առարկաներ")
         for i, s in enumerate(st.session_state.subjects):
-            c1, c2 = st.columns([5,1])
-            c1.write(f"📖 **{s.name}** (Բարդություն՝ {s.complexity})")
-            if c2.button("🗑️", key=f"s_{s.id}"):
-                st.session_state.assignments = [a for a in st.session_state.assignments if a.subject_id != s.id]
-                st.session_state.subjects.pop(i); st.rerun()
+            with st.container(border=True):
+                c1, c2 = st.columns([5,1])
+                c1.markdown(f"📖 **{s.name}** | Բարդություն՝ <span style='color: #0d6efd; font-weight: bold;'>{s.complexity}</span>", unsafe_allow_html=True)
+                if c2.button("🗑️", key=f"s_{s.id}"):
+                    st.session_state.assignments = [a for a in st.session_state.assignments if a.subject_id != s.id]
+                    st.session_state.subjects.pop(i)
+                    st.toast(f"🗑️ Առարկան ջնջվեց:", icon="📚")
+                    st.rerun()
 
     elif st.session_state.active_tab == "👩‍🏫 Ուսուցիչներ":
         st.title("👩‍🏫 Ուսուցիչների Շտեմարան")
@@ -485,7 +592,9 @@ elif st.session_state.active_page == "normal":
                 t_name = st.text_input("Ուսուցչի անուն")
                 if st.form_submit_button("Ավելացնել ցանկում", width='stretch'):
                     if t_name and t_name not in st.session_state.teacher_pool:
-                        st.session_state.teacher_pool.append(t_name); st.rerun()
+                        st.session_state.teacher_pool.append(t_name)
+                        st.toast(f"👤 {t_name}-ն ավելացվեց ցանկում:", icon="📝")
+                        st.rerun()
 
         with col_r:
             if st.session_state.teacher_pool and st.session_state.subjects:
@@ -495,16 +604,21 @@ elif st.session_state.active_page == "normal":
                     sel_subjs = st.multiselect("Ընտրեք առարկաները", st.session_state.subjects, format_func=lambda x: x.name)
                     if st.form_submit_button("Գրանցել", width='stretch'):
                         if not any(t.name == sel_t for t in st.session_state.teachers):
-                            st.session_state.teachers.append(Teacher(str(uuid.uuid4()), sel_t, [s.id for s in sel_subjs])); st.rerun()
+                            st.session_state.teachers.append(Teacher(str(uuid.uuid4()), sel_t, [s.id for s in sel_subjs]))
+                            st.toast(f"✅ Ուսուցիչը գրանցվեց:", icon="👩‍🏫")
+                            st.rerun()
 
         st.divider()
         st.subheader("✅ Գրանցված Ուսուցիչներ")
         for i, t in enumerate(st.session_state.teachers):
-            c1, c2 = st.columns([5,1])
-            c1.write(f"👤 **{t.name}** — {', '.join([get_subj_name(sid) for sid in t.subject_ids])}")
-            if c2.button("🗑️", key=f"t_{t.id}"):
-                st.session_state.assignments = [a for a in st.session_state.assignments if a.teacher_id != t.id]
-                st.session_state.teachers.pop(i); st.rerun()
+            with st.container(border=True):
+                c1, c2 = st.columns([5,1])
+                c1.markdown(f"👤 **{t.name}** — <span style='color: #6c757d;'>{', '.join([get_subj_name(sid) for sid in t.subject_ids])}</span>", unsafe_allow_html=True)
+                if c2.button("🗑️", key=f"t_{t.id}"):
+                    st.session_state.assignments = [a for a in st.session_state.assignments if a.teacher_id != t.id]
+                    st.session_state.teachers.pop(i)
+                    st.toast(f"🗑️ Ուսուցիչը ջնջվեց:", icon="👩‍🏫")
+                    st.rerun()
 
     elif st.session_state.active_tab == "🏫 Դասարաններ":
         st.title("🏫 Դասարաններ և Ժամեր")
@@ -516,14 +630,17 @@ elif st.session_state.active_page == "normal":
                 g = st.text_input("Հոսք (օր. ԱԲ)")
                 s = st.text_input("Թիվ/Տառ (օր. 1 կամ Ա)")
                 if st.form_submit_button("Ավելացնել", width='stretch'):
-                    if g and s: st.session_state.classes.append(ClassGroup(str(uuid.uuid4()), g, s)); st.rerun()
+                    if g and s:
+                        st.session_state.classes.append(ClassGroup(str(uuid.uuid4()), g, s))
+                        st.toast(f"✅ Դասարանը ավելացվեց:", icon="🏫")
+                        st.rerun()
 
         with col2:
             if st.session_state.teachers and st.session_state.classes:
                 
-                # 🎯 ՈՒՍՈՒՑՉԻ ԸՆՏՐՈՒԹՅՈՒՆԸ ՀԱՆԵՑԻՆՔ FORM-ԻՑ ԴՈՒՐՍ
+                # --- Ուսուցչի ընտրությունը FORM-ից դուրս (Անխաթար տրամաբանություն) ---
                 def on_teacher_change():
-                    pass # Ստիպում է Streamlit-ին Rerun լինել Ուսուցչին փոխելիս
+                    pass # Ստիպում է Rerun լինել Ուսուցչին փոխելիս
 
                 sel_t = st.selectbox(
                     "👩‍🏫 Ընտրեք Ուսուցչին", 
@@ -533,10 +650,10 @@ elif st.session_state.active_page == "normal":
                     on_change=on_teacher_change
                 )
 
-                # 🎯 ՖԻԼՏՐՈՒՄ ԵՆՔ ԱՌԱՐԿԱՆԵՐԸ
+                # Ֆիլտրում ենք առարկաները
                 t_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
 
-                # 🆕 ՍԿՍՎՈՒՄ Է ՄՆԱՑԱԾ ՏՎՅԱԼՆԵՐԻ ՁԵՎԱԹՈՒՂԹԸ
+                # --- Մնացած ձևաթուղթը ---
                 with st.form("as_form_fixed", clear_on_submit=True):
                     st.markdown("### 🔗 Կապել Դասարանին")
                     
@@ -566,8 +683,8 @@ elif st.session_state.active_page == "normal":
                             elif subject_already_assigned:
                                 st.error(f"⚠️ «{sel_s.name}» առարկան այս դասարանում արդեն ունի դասավանդող ուսուցիչ։")
                             else:
-                                # 💡 Քանի որ sel_t-ն դրսից է, Python-ը դեռ հիշում է այն
                                 st.session_state.assignments.append(Assignment(str(uuid.uuid4()), sel_t.id, sel_s.id, sel_c.id, hrs))
+                                st.toast("✅ Կապը ստեղծվեց:", icon="🔗")
                                 st.rerun()
 
         st.divider()
@@ -576,84 +693,100 @@ elif st.session_state.active_page == "normal":
             cls_obj = next((c for c in st.session_state.classes if c.id == a.class_id), None)
             t_obj = next((t for t in st.session_state.teachers if t.id == a.teacher_id), None)
             if cls_obj and t_obj:
-                c1, c2 = st.columns([5,1])
-                c1.write(f"📍 **{cls_obj.grade}{cls_obj.section}** | {get_subj_name(a.subject_id)} | {t_obj.name} | {a.lessons_per_week} ժամ")
-                if c2.button("🗑️", key=f"as_{i}"):
-                    st.session_state.assignments.pop(i); st.rerun()
+                with st.container(border=True):
+                    c1, c2 = st.columns([5,1])
+                    c1.markdown(f"📍 **{cls_obj.grade}{cls_obj.section}** | {get_subj_name(a.subject_id)} | {t_obj.name} | <span style='color: #0d6efd;'>{a.lessons_per_week} ժամ</span>", unsafe_allow_html=True)
+                    if c2.button("🗑️", key=f"as_{i}"):
+                        st.session_state.assignments.pop(i)
+                        st.toast("🗑️ Կապը ջնջվեց:", icon="🔗")
+                        st.rerun()
 
     elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
         
+        # 🔥 ԱՆԻՄԱՑԻՈՆ ԳԵՆԵՐԱՑՄԱՆ ԿՈՃԱԿ
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", width='stretch', type="primary"):
-            final_schedule = []
-            teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
-            class_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
-
-            shuffled_classes = list(st.session_state.classes)
-            random.shuffle(shuffled_classes)
-
-            for cls in shuffled_classes:
-                class_fund = []
-                assignments_for_cls = [a for a in st.session_state.assignments if a.class_id == cls.id]
-                for ass in assignments_for_cls:
-                    class_fund.extend([ass] * ass.lessons_per_week)
+            with st.spinner("🧠 Ալգորիթմը մտածում է... Խնդրում ենք սպասել..."):
+                time.sleep(2.5) # Ավելի երկար դադար AI-ի տպավորություն թողնելու համար
                 
-                class_fund.sort(key=lambda x: get_subj_complexity(x.subject_id), reverse=True)
-                class_day_counts = {d: 0 for d in DAYS_AM}
-                
-                timeout = 0
-                while class_fund and timeout < 3000:
-                    timeout += 1
-                    min_count = min(class_day_counts.values())
-                    lightest_days = [d for d in DAYS_AM if class_day_counts[d] == min_count]
-                    best_day = random.choice(lightest_days)
-                    
-                    if class_day_counts[best_day] >= 7:
-                        continue 
-                    
-                    next_hour = class_day_counts[best_day] + 1
-                    chosen_candidate_idx = -1
-                    
-                    for idx, candidate in enumerate(class_fund):
-                        if (candidate.teacher_id not in teacher_occupancy[best_day][next_hour] and 
-                            f"{cls.grade}{cls.section}" not in class_occupancy[best_day][next_hour]):
-                            chosen_candidate_idx = idx
-                            break 
+                final_schedule = []
+                teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
+                class_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
 
-                    if chosen_candidate_idx == -1:
-                        continue
+                shuffled_classes = list(st.session_state.classes)
+                random.shuffle(shuffled_classes)
 
-                    target = class_fund.pop(chosen_candidate_idx)
-                    t_name = next((t.name for t in st.session_state.teachers if t.id == target.teacher_id), "Անհայտ")
-                    subj_name = get_subj_name(target.subject_id)
+                for cls in shuffled_classes:
+                    class_fund = []
+                    assignments_for_cls = [a for a in st.session_state.assignments if a.class_id == cls.id]
+                    for ass in assignments_for_cls:
+                        class_fund.extend([ass] * ass.lessons_per_week)
                     
-                    final_schedule.append({
-                        "Դասարան": f"{cls.grade}{cls.section}",
-                        "Օր": best_day, 
-                        "Ժամ": next_hour, 
-                        "Առարկա": f"{subj_name} ({t_name})" 
-                    })
+                    class_fund.sort(key=lambda x: get_subj_complexity(x.subject_id), reverse=True)
+                    class_day_counts = {d: 0 for d in DAYS_AM}
                     
-                    teacher_occupancy[best_day][next_hour].add(target.teacher_id)
-                    class_occupancy[best_day][next_hour].add(f"{cls.grade}{cls.section}")
-                    class_day_counts[best_day] += 1
+                    timeout = 0
+                    while class_fund and timeout < 3000:
+                        timeout += 1
+                        min_count = min(class_day_counts.values())
+                        lightest_days = [d for d in DAYS_AM if class_day_counts[d] == min_count]
+                        best_day = random.choice(lightest_days)
+                        
+                        if class_day_counts[best_day] >= 7:
+                            continue 
+                        
+                        next_hour = class_day_counts[best_day] + 1
+                        chosen_candidate_idx = -1
+                        
+                        for idx, candidate in enumerate(class_fund):
+                            if (candidate.teacher_id not in teacher_occupancy[best_day][next_hour] and 
+                                f"{cls.grade}{cls.section}" not in class_occupancy[best_day][next_hour]):
+                                chosen_candidate_idx = idx
+                                break 
 
-            st.session_state.schedule = final_schedule
-            st.success("✅ Դասացուցակը հաջողությամբ գեներացվեց առանց կոնֆլիկտների:")
+                        if chosen_candidate_idx == -1:
+                            continue
+
+                        target = class_fund.pop(chosen_candidate_idx)
+                        t_name = next((t.name for t in st.session_state.teachers if t.id == target.teacher_id), "Անհայտ")
+                        subj_name = get_subj_name(target.subject_id)
+                        
+                        final_schedule.append({
+                            "Դասարան": f"{cls.grade}{cls.section}",
+                            "Օր": best_day, 
+                            "Ժամ": next_hour, 
+                            "Առարկա": f"{subj_name} ({t_name})" 
+                        })
+                        
+                        teacher_occupancy[best_day][next_hour].add(target.teacher_id)
+                        class_occupancy[best_day][next_hour].add(f"{cls.grade}{cls.section}")
+                        class_day_counts[best_day] += 1
+
+                st.session_state.schedule = final_schedule
+                st.toast("✅ Դասացուցակը պատրաստ է:", icon="🚀")
+                st.balloons() # 🥳🥳🥳
 
         if st.session_state.schedule:
             df = pd.DataFrame(st.session_state.schedule)
             st.subheader("📋 Արդյունքներն ըստ Դասարանների")
+            # Օգտագործում ենք st.expander()՝ CSS ոճերով
             for c in df['Դասարան'].unique():
                 with st.expander(f"🏫 Դասարան՝ {c}", expanded=True):
                     cls_df = df[df['Դասարան'] == c].copy()
                     cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: x.split(" (")[0])
                     pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
+                    
+                    # Ուղղում ենք օրերի հերթականությունը (Pandas-ի թերությունը)
+                    existing_days = [day for day in DAYS_AM if day in pivot.columns]
+                    if existing_days:
+                        pivot = pivot[existing_days]
+
                     st.dataframe(pivot, width='stretch')
 
+            st.divider()
             pdf_bytes = generate_pdf(st.session_state.schedule)
             st.download_button(
-                label="📥 Ներբեռնել Դասացուցակը (PDF - English Only)",
+                label="📥 Ներբեռնել PDF (English Only)",
                 data=bytes(pdf_bytes),
                 file_name="School_Timetable.pdf",
                 mime="application/pdf",
@@ -671,11 +804,16 @@ elif st.session_state.active_page == "normal":
                 for cls in [f"{c.grade}{c.section}" for c in st.session_state.classes if c.grade == sel_grade]:
                     cls_data = df[df['Դասարան'] == cls]
                     if not cls_data.empty:
-                        st.subheader(f"🏫 Դասարան՝ {cls}")
-                        cls_df_clean = cls_data.copy()
-                        cls_df_clean['Առարկա'] = cls_df_clean['Առարկա'].apply(lambda x: x.split(" (")[0])
-                        pivot = cls_df_clean.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
-                        st.dataframe(pivot, width='stretch')
+                        with st.expander(f"🏫 Դասարան՝ {cls}", expanded=True):
+                            cls_df_clean = cls_data.copy()
+                            cls_df_clean['Առարկա'] = cls_df_clean['Առարկա'].apply(lambda x: x.split(" (")[0])
+                            pivot = cls_df_clean.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
+                            
+                            existing_days = [day for day in DAYS_AM if day in pivot.columns]
+                            if existing_days:
+                                pivot = pivot[existing_days]
+
+                            st.dataframe(pivot, width='stretch')
             else: st.info("Դեռ դասարաններ չկան")
         else: st.info("Պահպանված տվյալներ չկան")
 
@@ -685,22 +823,18 @@ elif st.session_state.active_page == "normal":
             df = pd.DataFrame(st.session_state.schedule)
             sel_t = st.selectbox("Ընտրեք ուսուցչին", st.session_state.teachers, format_func=lambda x: x.name)
             t_data = df[df['Առարկա'].str.contains(sel_t.name)]
-            
             if not t_data.empty:
                 t_data_clean = t_data.copy()
                 t_data_clean['Ցուցադրում'] = t_data_clean['Դասարան'] + " - " + t_data_clean['Առարկա'].apply(lambda x: x.split(" (")[0])
                 
-                # 1. Սովորական Pivot ենք անում
+                # Pivot
                 pivot = t_data_clean.pivot(index='Ժամ', columns='Օր', values='Ցուցադրում').fillna("-")
                 
-                # 🎯 2. ԱՀԱ ԼՈՒԾՈՒՄԸ: Վերցնում ենք միայն այն օրերը, որոնք ԻՐԱԿԱՆՈՒՄ կան այս ուսուցչի մոտ, բայց DAYS_AM-ի հերթականությամբ
+                # Օրերի ճիշտ հերթականություն
                 existing_days = [day for day in DAYS_AM if day in pivot.columns]
-                
                 if existing_days:
-                    pivot = pivot[existing_days] # Սա կդասավորի սյունակները ճիշտ հերթականությամբ
-                
+                    pivot = pivot[existing_days]
+
                 st.dataframe(pivot, width='stretch')
-            else:
-                st.warning("Այս ուսուցչի համար դեռևս դասեր չկան բաշխված։")
-        else:
-            st.info("Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
+            else: st.warning("Այս ուսուցչի համար դեռևս դասեր չկան բաշխված։")
+        else: st.info("Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
