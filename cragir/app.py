@@ -109,6 +109,45 @@ def save_to_disk():
         json.dump(data, f, ensure_ascii=False, indent=4)
     st.sidebar.warning("⚠️ Պահպանվեց տեղական JSON ֆայլում:")
 
+def reset_all_data():
+    # 1. Մաքրում ենք Python-ի հիշողությունը (բացի օգտատերերից)
+    st.session_state.subjects = []
+    st.session_state.teachers = []
+    st.session_state.classes = []
+    st.session_state.assignments = []
+    st.session_state.schedule = None
+    st.session_state.subj_pool = []
+    st.session_state.teacher_pool = []
+    
+    # 2. Ուղարկում ենք դատարկ տվյալներ Supabase
+    data = {
+        "subjects": [],
+        "teachers": [],
+        "classes": [],
+        "assignments": [],
+        "schedule": None,
+        "subj_pool": [],
+        "teacher_pool": [],
+        "users_list": st.session_state.users_list # 🔐 Օգտատերերը ՊԱՀՊԱՆՎՈՒՄ ԵՆ
+    }
+
+    headers = get_supabase_headers()
+    if headers:
+        try:
+            url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
+            payload = {"id": 1, "data": data}
+            headers["Prefer"] = "resolution=merge-duplicates"
+            requests.post(url, headers=headers, data=json.dumps(payload))
+            st.sidebar.success("✅ Բազան հաջողությամբ զրոյացվեց Cloud-ում:")
+            return
+        except Exception:
+            pass
+
+    # 3. Մաքրում ենք նաև տեղական JSON-ը
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+    st.sidebar.warning("⚠️ Բազան զրոյացվեց տեղական ֆայլում:")
+
 
 def manual_refresh():
     if os.path.exists(DB_FILE):
@@ -323,6 +362,18 @@ st.sidebar.divider()
 
 if st.sidebar.button("💾 Պահպանել Բոլորը", width='stretch', type="primary"):
     save_to_disk()
+
+# 🔥 Միայն Owner-ի համար տեսանելի Կարմիր Կոճակ
+if st.session_state.user_role == 'owner':
+    st.sidebar.divider()
+    st.sidebar.markdown("### ⚠️ Վտանգավոր Գոտի")
+    
+    # Որպեսզի պատահական չսեղմես, դնում ենք Checkbox-ով հաստատում
+    confirm_reset = st.sidebar.checkbox("Հաստատում եմ ամբողջական ջնջումը")
+    
+    if st.sidebar.button("🚨 Զրոյացնել Ամբողջ Բազան", type="primary", use_container_width=True, disabled=not confirm_reset):
+        reset_all_data()
+        st.rerun()
 
 st.sidebar.divider()
 
