@@ -554,29 +554,40 @@ elif st.session_state.active_page == "normal":
                 with st.form("as_form", clear_on_submit=True):
                     st.markdown("### 🔗 Կապել Դասարանին")
                     sel_c = st.selectbox("Դասարան", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
+                    
+                    # 1. Ընտրում ենք ուսուցչին
                     sel_t = st.selectbox("Ուսուցիչ", st.session_state.teachers, format_func=lambda x: x.name)
+                    
+                    # 🎯 2. ԱՀԱ ՖԻԼՏՐԸ: Թողնում ենք միայն այն առարկաները, որոնք դասավանդում է ԸՆՏՐՎԱԾ ուսուցիչը
                     t_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
-                    sel_s = st.selectbox("Առարկա", t_subjs, format_func=lambda x: x.name if x else "")
-                    hrs = st.number_input("Շաբաթական ժամեր", 1, 10, 2)
-                    if st.form_submit_button("Կապել", width='stretch'):
-                        current_hrs = sum(a.lessons_per_week for a in st.session_state.assignments if a.class_id == sel_c.id)
-                        
-                        # 🔍 1. Ստուգում ենք, թե արդյոք այս առարկան ԱՐԴԵՆ ունի որևէ ուսուցիչ այս դասարանում
-                        subject_already_taken = any(
-                            a.class_id == sel_c.id and a.subject_id == sel_s.id 
-                            for a in st.session_state.assignments
-                        )
+                    
+                    # 3. Ցույց ենք տալիս միայն ֆիլտրված առարկաները
+                    if t_subjs:
+                        sel_s = st.selectbox("Առարկա", t_subjs, format_func=lambda x: x.name)
+                    else:
+                        st.warning("⚠️ Այս ուսուցիչը դեռ ոչ մի առարկայի հետ կապված չէ։")
+                        sel_s = None
 
-                        if current_hrs + hrs > 35:
-                            st.error("❌ Դասարանը չի կարող 35 ժամից ավել ունենալ։")
-                        
-                        # 🛑 Եթե առարկան արդեն զբաղված է ուրիշի կողմից
-                        elif subject_already_taken:
-                            st.error(f"⚠️ «{sel_s.name}» առարկան այս դասարանում արդեն ունի դասավանդող ուսուցիչ։")
-                        
+                    hrs = st.number_input("Շաբաթական ժամեր", 1, 10, 2)
+                    
+                    if st.form_submit_button("Կապել", width='stretch'):
+                        if not sel_s:
+                            st.error("❌ Չհաջողվեց կապել, քանի որ առարկա ընտրված չէ։")
                         else:
-                            st.session_state.assignments.append(Assignment(str(uuid.uuid4()), sel_t.id, sel_s.id, sel_c.id, hrs))
-                            st.rerun()
+                            current_hrs = sum(a.lessons_per_week for a in st.session_state.assignments if a.class_id == sel_c.id)
+                            
+                            subject_already_assigned = any(
+                                a.class_id == sel_c.id and a.subject_id == sel_s.id 
+                                for a in st.session_state.assignments
+                            )
+
+                            if current_hrs + hrs > 35:
+                                st.error("❌ Դասարանը չի կարող 35 ժամից ավել ունենալ։")
+                            elif subject_already_assigned:
+                                st.error(f"⚠️ «{sel_s.name}» առարկան այս դասարանում արդեն ունի դասավանդող ուսուցիչ։")
+                            else:
+                                st.session_state.assignments.append(Assignment(str(uuid.uuid4()), sel_t.id, sel_s.id, sel_c.id, hrs))
+                                st.rerun()
 
         st.divider()
         st.subheader("✅ Շաբաթական Ժամերի Բաշխում")
