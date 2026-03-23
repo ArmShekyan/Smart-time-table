@@ -173,7 +173,8 @@ if "subjects" not in st.session_state:
         "logged_in": False,       
         "username": "",           
         "user_role": "",         
-        "active_page": "normal"  
+        "active_page": "normal",
+        "active_tab": "📊 Վահանակ"  # ✅ Նոր փոփոխական, որ Sidebar-ն ու էջը միշտ Վահանակով բացվեն
     })
     load_from_disk()
 
@@ -197,6 +198,13 @@ if not st.session_state.logged_in:
                 st.session_state.logged_in = True
                 st.session_state.username = user['username']
                 st.session_state.user_role = user['role']
+                
+                # ✅ Լոգինից հետո ստիպում ենք, որ բացվի Վահանակը
+                if user['role'] in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
+                    st.session_state.active_tab = "📊 Վահանակ"
+                else:
+                    st.session_state.active_tab = "📂 Վերջին պահպանվածը"
+                    
                 st.success(f"✅ Բարի գալուստ, {username_input}!")
                 st.rerun()
             else:
@@ -287,30 +295,28 @@ st.sidebar.divider()
 
 # --- ԷՋԵՐԻ ՍԱՀՄԱՆԱՓԱԿՈՒՄ ԸՍՏ ԴԵՐԵՐԻ ---
 
-# Ստեղծում ենք ֆունկցիան, որ Python-ը NameError չտա
 def on_page_change():
     st.session_state.active_page = "normal"
+    # ✅ Պահում ենք սեղմված Sidebar-ի կետը
+    st.session_state.active_tab = st.session_state.nav_radio
 
 available_pages = []
 
-# Եթե Admin կամ Owner է, տեսնում է ամեն ինչ
 if st.session_state.user_role in ['owner', 'admin']:
     available_pages = ["📊 Վահանակ", "📚 Առարկաներ", "👩‍🏫 Ուսուցիչներ", "🏫 Դասարաններ", "🚀 Գեներացում", "📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական"]
-
-# Եթե միայն Առարկա խմբագրող է
 elif st.session_state.user_role == 'subject_editor':
     available_pages = ["📊 Վահանակ", "📚 Առարկաներ", "📂 Վերջին պահպանվածը"]
-
-# Եթե միայն Ուսուցիչ խմբագրող է
 elif st.session_state.user_role == 'teacher_editor':
     available_pages = ["📊 Վահանակ", "👩‍🏫 Ուսուցիչներ", "📂 Վերջին պահպանվածը"]
-
-# 🎯 Սա հենց ուսուցիչների համար է (user դերը)
 else:
     available_pages = ["📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական"]
 
-# Ստեղծում ենք Sidebar-ի ռադիո կոճակը
-page = st.sidebar.radio("Նավիգացիա", available_pages, key="nav_radio", on_change=on_page_change)
+# ✅ Հաշվում ենք, թե որ index-ում է պահպանված էջը (սա կլուծի դաս համընկնելու խնդիրը)
+default_index = 0
+if st.session_state.active_tab in available_pages:
+    default_index = available_pages.index(st.session_state.active_tab)
+
+page = st.sidebar.radio("Նավիգացիա", available_pages, index=default_index, key="nav_radio", on_change=on_page_change)
 
 
 st.sidebar.divider()
@@ -391,7 +397,8 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
 
 elif st.session_state.active_page == "normal":
 
-    if page == "📊 Վահանակ":
+    # ✅ Հիմա պայմանները ստուգում են ոչ թե page փոփոխականը, այլ active_tab-ը
+    if st.session_state.active_tab == "📊 Վահանակ":
         st.title("📊 Ընդհանուր Վիճակագրություն")
         
         m1, m2, m3, m4 = st.columns(4)
@@ -417,7 +424,7 @@ elif st.session_state.active_page == "normal":
                 st.dataframe(df_t, width='stretch', hide_index=True)
             else: st.caption("Ուսուցիչներ գրանցված չեն:")
 
-    elif page == "📚 Առարկաներ":
+    elif st.session_state.active_tab == "📚 Առարկաներ":
         st.title("📚 Առարկաների Շտեմարան")
         
         col_l, col_r = st.columns([1, 1])
@@ -448,7 +455,7 @@ elif st.session_state.active_page == "normal":
                 st.session_state.assignments = [a for a in st.session_state.assignments if a.subject_id != s.id]
                 st.session_state.subjects.pop(i); st.rerun()
 
-    elif page == "👩‍🏫 Ուսուցիչներ":
+    elif st.session_state.active_tab == "👩‍🏫 Ուսուցիչներ":
         st.title("👩‍🏫 Ուսուցիչների Շտեմարան")
         
         col_l, col_r = st.columns([1, 1])
@@ -479,7 +486,7 @@ elif st.session_state.active_page == "normal":
                 st.session_state.assignments = [a for a in st.session_state.assignments if a.teacher_id != t.id]
                 st.session_state.teachers.pop(i); st.rerun()
 
-    elif page == "🏫 Դասարաններ":
+    elif st.session_state.active_tab == "🏫 Դասարաններ":
         st.title("🏫 Դասարաններ և Ժամեր")
         
         col1, col2 = st.columns(2)
@@ -520,7 +527,7 @@ elif st.session_state.active_page == "normal":
                 if c2.button("🗑️", key=f"as_{i}"):
                     st.session_state.assignments.pop(i); st.rerun()
 
-    elif page == "🚀 Գեներացում":
+    elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
         
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", width='stretch', type="primary"):
@@ -600,8 +607,7 @@ elif st.session_state.active_page == "normal":
                     pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
                     st.dataframe(pivot, width='stretch')
 
-            # --- 📄 ԱՅՍՏԵՂ ԱՎԵԼԱՑՐԻՆՔ PDF-Ի ԿՈՃԱԿԸ ---
-            # Ստեղծում ենք PDF-ի bytes
+            # --- 📄 PDF-Ի ԿՈՃԱԿԸ ---
             pdf_bytes = generate_pdf(st.session_state.schedule)
             
             st.download_button(
@@ -613,7 +619,7 @@ elif st.session_state.active_page == "normal":
                 type="primary"
             )
 
-    elif page == "📂 Վերջին պահպանվածը":
+    elif st.session_state.active_tab == "📂 Վերջին պահպանվածը":
         st.title("📂 Պահպանված Դասացուցակ")
         if st.session_state.schedule:
             df = pd.DataFrame(st.session_state.schedule)
@@ -631,7 +637,7 @@ elif st.session_state.active_page == "normal":
             else: st.info("Դեռ դասարաններ չկան")
         else: st.info("Պահպանված տվյալներ չկան")
 
-    elif page == "👤 Ուսուցչի Անձնական":
+    elif st.session_state.active_tab == "👤 Ուսուցչի Անձնական":
         st.title("👤 Ուսուցչի Շաբաթվա Գրաֆիկ")
         if st.session_state.schedule and st.session_state.teachers:
             df = pd.DataFrame(st.session_state.schedule)
