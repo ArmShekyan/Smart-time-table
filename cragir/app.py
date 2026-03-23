@@ -7,7 +7,7 @@ import os
 import requests
 from dataclasses import dataclass, asdict
 from typing import List
-# --- 📄 ԱՎԵԼԱՑՐԻՆՔ PDF-Ի import ---
+# --- 📄 PDF-Ի import ---
 from fpdf import FPDF
 import io
 
@@ -110,7 +110,6 @@ def save_to_disk():
     st.sidebar.warning("⚠️ Պահպանվեց տեղական JSON ֆայլում:")
 
 
-# 🔥 ԱՎԵԼԱՑՐԻՆՔ ԶՐՈՅԱՑՄԱՆ ՖՈՒՆԿՑԻԱՆ
 def reset_all_data():
     st.session_state.subjects = []
     st.session_state.teachers = []
@@ -128,7 +127,7 @@ def reset_all_data():
         "schedule": None,
         "subj_pool": [],
         "teacher_pool": [],
-        "users_list": st.session_state.users_list # 🔐 Օգտատերերը ՉԵՆ ՋՆՋՎՈՒՄ
+        "users_list": st.session_state.users_list 
     }
 
     headers = get_supabase_headers()
@@ -212,7 +211,7 @@ if "subjects" not in st.session_state:
         "username": "",           
         "user_role": "",         
         "active_page": "normal",
-        "active_tab": "📊 Վահանակ" # ✅ Նավիգացիան ճիշտ պահելու համար
+        "active_tab": "📊 Վահանակ" 
     })
     load_from_disk()
 
@@ -258,7 +257,7 @@ def get_subj_name(sid):
 def get_subj_complexity(sid):
     return next((s.complexity for s in st.session_state.subjects if s.id == sid), 3)
 
-#pdf
+
 def generate_pdf(schedule_data):
     pdf = FPDF()
     pdf.add_page()
@@ -322,7 +321,6 @@ if st.sidebar.button("🔄 Թարմացնել Տվյալները", use_container
 
 st.sidebar.divider()
 
-# --- ԷՋԵՐԻ ՍԱՀՄԱՆԱՓԱԿՈՒՄ ԸՍՏ ԴԵՐԵՐԻ ---
 
 def on_page_change():
     st.session_state.active_page = "normal"
@@ -351,7 +349,7 @@ st.sidebar.divider()
 if st.sidebar.button("💾 Պահպանել Բոլորը", width='stretch', type="primary"):
     save_to_disk()
 
-# 🔥 ԱՎԵԼԱՑՐԻՆՔ FACTORY RESET-Ը ՄԻԱՅՆ OWNER-Ի ՀԱՄԱՐ
+
 if st.session_state.user_role == 'owner':
     st.sidebar.divider()
     st.sidebar.markdown("### ⚠️ Վտանգավոր Գոտի")
@@ -522,24 +520,27 @@ elif st.session_state.active_page == "normal":
 
         with col2:
             if st.session_state.teachers and st.session_state.classes:
-                with st.form("as_form", clear_on_submit=True):
-                    st.markdown("### 🔗 Կապել Դասարանին")
-                    sel_c = st.selectbox("Դասարան", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
-                    
-                    # 🔥 ՈՒՂՂՎԱԾ ՈՒՍՈՒՑՉԻ ՖԻԼՏՐԸ՝ ԱՆՄԻՋԱՊԵՍ RERUN ԼԻՆԵԼՈՒ ՀԱՄԱՐ
-                    def on_teacher_change():
-                        pass 
+                
+                # 🎯 ՈՒՍՈՒՑՉԻ ԸՆՏՐՈՒԹՅՈՒՆԸ ՀԱՆԵՑԻՆՔ FORM-ԻՑ ԴՈՒՐՍ
+                def on_teacher_change():
+                    pass # Ստիպում է Streamlit-ին Rerun լինել Ուսուցչին փոխելիս
 
-                    sel_t = st.selectbox(
-                        "Ուսուցիչ", 
-                        st.session_state.teachers, 
-                        format_func=lambda x: x.name,
-                        key="selected_teacher_box",
-                        on_change=on_teacher_change
-                    )
+                sel_t = st.selectbox(
+                    "👩‍🏫 Ընտրեք Ուսուցչին", 
+                    st.session_state.teachers, 
+                    format_func=lambda x: x.name,
+                    key="selected_teacher_box_outside",
+                    on_change=on_teacher_change
+                )
+
+                # 🎯 ՖԻԼՏՐՈՒՄ ԵՆՔ ԱՌԱՐԿԱՆԵՐԸ
+                t_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
+
+                # 🆕 ՍԿՍՎՈՒՄ Է ՄՆԱՑԱԾ ՏՎՅԱԼՆԵՐԻ ՁԵՎԱԹՈՒՂԹԸ
+                with st.form("as_form_fixed", clear_on_submit=True):
+                    st.markdown("### 🔗 Կապել Դասարանին")
                     
-                    # 🎯 Միայն ընտրված ուսուցչի առարկաները
-                    t_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
+                    sel_c = st.selectbox("Դասարան", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
                     
                     if t_subjs:
                         sel_s = st.selectbox("Առարկա", t_subjs, format_func=lambda x: x.name)
@@ -555,7 +556,6 @@ elif st.session_state.active_page == "normal":
                         else:
                             current_hrs = sum(a.lessons_per_week for a in st.session_state.assignments if a.class_id == sel_c.id)
                             
-                            # 🔥 ԲԱՑԱՌԻԿՈՒԹՅԱՆ ՍՏՈՒԳՈՒՄ
                             subject_already_assigned = any(
                                 a.class_id == sel_c.id and a.subject_id == sel_s.id 
                                 for a in st.session_state.assignments
@@ -566,6 +566,7 @@ elif st.session_state.active_page == "normal":
                             elif subject_already_assigned:
                                 st.error(f"⚠️ «{sel_s.name}» առարկան այս դասարանում արդեն ունի դասավանդող ուսուցիչ։")
                             else:
+                                # 💡 Քանի որ sel_t-ն դրսից է, Python-ը դեռ հիշում է այն
                                 st.session_state.assignments.append(Assignment(str(uuid.uuid4()), sel_t.id, sel_s.id, sel_c.id, hrs))
                                 st.rerun()
 
