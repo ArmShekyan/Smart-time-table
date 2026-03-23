@@ -220,7 +220,7 @@ def generate_pdf(schedule_data):
     
     # --- 1. Ավելացնում ենք քո գտած ֆայլը որպես հայերեն տառատեսակ ---
     # (Եթե ֆայլի անունը ուրիշ է, փոխիր 'Sylfaen.ttf'-ի տեղը)
-    pdf.add_font('ArmenianFont', '', 'Sylfaen.ttf') 
+    pdf.add_font('ArmenianFont', '', 'sylfaen.ttf') 
     pdf.set_font('ArmenianFont', size=11)
     
     pdf.cell(200, 10, txt="Smart Time Table - Դպրոցական Դասացուցակ", ln=True, align='C')
