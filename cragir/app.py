@@ -297,7 +297,7 @@ if "subjects" not in st.session_state:
         "user_role": "",         
         "active_page": "normal",
         "active_tab": "📊 Վահանակ",
-        "chat_history": []  # ✨ Պահում ենք AI-ի չաթի պատմությունը
+        "chat_histories": {} # Պահում ենք չաթի պատմությունները բոլոր օգտատերերի համար առանձին
     })
     load_from_disk()
 
@@ -837,19 +837,27 @@ elif st.session_state.active_page == "normal":
             else: st.warning("Այս ուսուցչի համար դեռևս դասեր չկան բաշխված։")
         else: st.info("Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
 
+
+
     elif st.session_state.active_tab == "🤖 AI Օգնական":
         st.title("🤖 AI Օգնական (Gemini)")
-        st.caption("Հարցրեք AI-ին դասացուցակի, կոդի կամ դպրոցական պլանների մասին։")
+        st.caption(f"Բարև, **{st.session_state.username}**! Ես քո անձնական AI օգնականն եմ։")
 
-        # 1. Արտածում ենք նախորդ չաթի հաղորդագրությունները
-        for message in st.session_state.chat_history:
+        # 🎯 Յուրաքանչյուր օգտատիրոջ համար ստեղծում ենք իր սեփական պատմությունը
+        current_user = st.session_state.username
+        if current_user not in st.session_state.chat_histories:
+            st.session_state.chat_histories[current_user] = []
+
+        # 1. Արտածում ենք ՄԻԱՅՆ այս օգտատիրոջ նախորդ հաղորդագրությունները
+        for message in st.session_state.chat_histories[current_user]:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
         # 2. Չաթի մուտքագրման դաշտը
         if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
             
-            st.session_state.chat_history.append({"role": "user", "content": prompt})
+            # Ավելացնում ենք հենց այս օգտատիրոջ պատմության մեջ
+            st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
 
@@ -859,8 +867,9 @@ elif st.session_state.active_page == "normal":
                         if "GEMINI_API_KEY" not in st.secrets:
                             response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
                         else:
-                            # Context-ի ստեղծում (AI-ը կիմանա քո դասացուցակը)
-                            context = "Դու 'Smart Time Table' պրոյեկտի AI օգնականն ես։ Պատասխանիր հստակ, հայերենով և սեղմ։\n"
+                            # Context-ի ստեղծում
+                            context = f"Դու 'Smart Time Table' պրոյեկտի AI օգնականն ես։ Պատասխանիր հստակ, հայերենով և սեղմ։\n"
+                            context += f"Դու խոսում ես {current_user}-ի հետ։\n"
                             if st.session_state.schedule:
                                 context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
                             else:
@@ -879,4 +888,4 @@ elif st.session_state.active_page == "normal":
                         response_text = f"❌ Սխալ տեղի ունեցավ API կանչի ժամանակ: {str(e)}"
 
                     st.markdown(response_text)
-                    st.session_state.chat_history.append({"role": "assistant", "content": response_text})
+                    st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
