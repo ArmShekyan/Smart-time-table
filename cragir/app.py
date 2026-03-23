@@ -41,7 +41,7 @@ class Assignment:
 DB_FILE = "smart_timetable_final.json"
 DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
-DEFAULT_OWNER = {"username": "armshekyan", "password": "123", "role": "owner"}
+DEFAULT_OWNER = {"username": "armshekyan", "password": "arms567", "role": "owner"}
 DEFAULT_ADMIN = {"username": "arsoo", "password": "123", "role": "admin"}
 DEFAULT_SUB_EDIT = {"username": "sub", "password": "123", "role": "subject_editor"}
 DEFAULT_TEACH_EDIT = {"username": "teach", "password": "123", "role": "teacher_editor"}
