@@ -7,6 +7,9 @@ import os
 import requests
 from dataclasses import dataclass, asdict
 from typing import List
+# --- 📄 ԱՎԵԼԱՑՐԻՆՔ PDF-Ի import ---
+from fpdf import FPDF
+import io
 
 # --- ՄՈԴԵԼՆԵՐ ---
 @dataclass
@@ -94,12 +97,10 @@ def save_to_disk():
     if headers:
         try:
             url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
-            # Օգտագործում ենք upsert, որ եթե ID=1 կա, վրան գրի
             payload = {"id": 1, "data": data}
             headers["Prefer"] = "resolution=merge-duplicates"
-            
             requests.post(url, headers=headers, data=json.dumps(payload))
-            st.sidebar.success("✅ Բոլոր տվյալները պահպանվեցին Cloud SQL-ում!")
+            st.sidebar.success("✅ Տվյալները պահպանվեցին Cloud SQL-ում!")
             return
         except Exception:
             pass
@@ -212,6 +213,47 @@ def get_subj_name(sid):
 def get_subj_complexity(sid):
     return next((s.complexity for s in st.session_state.subjects if s.id == sid), 3)
 
+# --- 📄 ԱՎԵԼԱՑՐԻՆՔ PDF-Ի ՍՏԵՂԾՄԱՆ ՖՈՒՆԿՑԻԱՆ ---
+def generate_pdf(schedule_data):
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Նախնական Font (Առայժմ Helvetica, որ Error չտա)
+    pdf.set_font("Helvetica", size=12)
+    
+    pdf.cell(200, 10, txt="Smart Time Table - School Schedule", ln=True, align='C')
+    pdf.ln(10)
+
+    df = pd.DataFrame(schedule_data)
+    
+    for cls in df['Դասարան'].unique():
+        pdf.set_font("Helvetica", style='B', size=11)
+        pdf.cell(0, 10, txt=f"Class: {cls}", ln=True)
+        pdf.set_font("Helvetica", size=10)
+        
+        cls_df = df[df['Դասարան'] == cls]
+        cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: x.split(" (")[0])
+        pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
+        
+        # Վերնագրեր
+        pdf.cell(15, 8, "Hour", border=1)
+        for day in DAYS_AM:
+            pdf.cell(35, 8, day[:3], border=1) # Օրվա առաջին 3 տառը
+        pdf.ln()
+
+        # Տողեր
+        for hour in pivot.index:
+            pdf.cell(15, 8, str(hour), border=1)
+            for day in DAYS_AM:
+                val = pivot.loc[hour, day] if day in pivot.columns else "-"
+                # Կարճացնում ենք տեքստը, որ աղյուսակից դուրս չգա
+                cell_text = str(val)[:15] 
+                pdf.cell(35, 8, cell_text, border=1)
+            pdf.ln()
+        pdf.ln(10)
+
+    return pdf.output()
+
 
 st.sidebar.title(f"👤 {st.session_state.username}")
 st.sidebar.caption(f"Պաշտոն՝ **{st.session_state.user_role}**")
@@ -286,6 +328,7 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
                         if headers:
                             try:
                                 url = f"{st.secrets['supabase_url']}/rest/v1/users"
+                                
                                 response = requests.post(url, headers=headers, data=json.dumps(new_user_data))
                                 
                                 if response.status_code in [200, 201]:
@@ -457,25 +500,28 @@ elif st.session_state.active_page == "normal":
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", width='stretch', type="primary"):
             final_schedule = []
             
-            # Կոնֆլիկտները ստուգելու համար (Ուսուցչի և Դասարանի զբաղվածություն)
+            # Զբաղվածության մատրիցա (Կոնֆլիկտները բացառելու համար)
             teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
             class_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
-            
+
+            # Խառնում ենք դասարանները, որ ամեն անգամ տարբեր լինի
             shuffled_classes = list(st.session_state.classes)
             random.shuffle(shuffled_classes)
-            
+
             for cls in shuffled_classes:
                 class_fund = []
                 assignments_for_cls = [a for a in st.session_state.assignments if a.class_id == cls.id]
+                
                 for ass in assignments_for_cls:
                     class_fund.extend([ass] * ass.lessons_per_week)
                 
-                # Սորտավորում ըստ բարդության
+                # Սորտավորում ենք ըստ բարդության
                 class_fund.sort(key=lambda x: get_subj_complexity(x.subject_id), reverse=True)
+                
                 class_day_counts = {d: 0 for d in DAYS_AM}
                 
                 timeout = 0
-                while class_fund and timeout < 5000:
+                while class_fund and timeout < 3000:
                     timeout += 1
                     min_count = min(class_day_counts.values())
                     lightest_days = [d for d in DAYS_AM if class_day_counts[d] == min_count]
@@ -490,9 +536,10 @@ elif st.session_state.active_page == "normal":
                     for idx, candidate in enumerate(class_fund):
                         subj_name = get_subj_name(candidate.subject_id)
                         
-                        # Պրոֆեսիոնալ ստուգում. ոչ ուսուցիչը, ոչ դասարանը չպիտի զբաղված լինեն
+                        # Պրոֆեսիոնալ ստուգում
                         if (candidate.teacher_id not in teacher_occupancy[best_day][next_hour] and 
                             f"{cls.grade}{cls.section}" not in class_occupancy[best_day][next_hour]):
+                            
                             chosen_candidate_idx = idx
                             break 
 
@@ -526,6 +573,19 @@ elif st.session_state.active_page == "normal":
                     cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: x.split(" (")[0])
                     pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
                     st.dataframe(pivot, width='stretch')
+
+            # --- 📄 ԱՅՍՏԵՂ ԱՎԵԼԱՑՐԻՆՔ PDF-Ի ԿՈՃԱԿԸ ---
+            # Ստեղծում ենք PDF-ի bytes
+            pdf_bytes = generate_pdf(st.session_state.schedule)
+            
+            st.download_button(
+                label="📥 Ներբեռնել Դասացուցակը (PDF - English Only)",
+                data=bytes(pdf_bytes),
+                file_name="School_Timetable.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                type="primary"
+            )
 
     elif page == "📂 Վերջին պահպանվածը":
         st.title("📂 Պահպանված Դասացուցակ")
