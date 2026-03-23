@@ -685,10 +685,19 @@ elif st.session_state.active_page == "normal":
             df = pd.DataFrame(st.session_state.schedule)
             sel_t = st.selectbox("Ընտրեք ուսուցչին", st.session_state.teachers, format_func=lambda x: x.name)
             t_data = df[df['Առարկա'].str.contains(sel_t.name)]
+            
             if not t_data.empty:
                 t_data_clean = t_data.copy()
                 t_data_clean['Ցուցադրում'] = t_data_clean['Դասարան'] + " - " + t_data_clean['Առարկա'].apply(lambda x: x.split(" (")[0])
+                
+                # 🎯 ԱՀԱ ԼՈՒԾՈՒՄԸ: Ստիպում ենք Pandas-ին հասկանալ հայերեն օրերի ճիշտ հերթականությունը
+                t_data_clean['Օր'] = pd.Categorical(t_data_clean['Օր'], categories=DAYS_AM, ordered=True)
+                
+                # Սարքում ենք աղյուսակը (Pivot)
                 pivot = t_data_clean.pivot(index='Ժամ', columns='Օր', values='Ցուցադրում').fillna("-")
+                
                 st.dataframe(pivot, width='stretch')
-            else: st.warning("Այս ուսուցչի համար դեռևս դասեր չկան բաշխված։")
-        else: st.info("Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
+            else:
+                st.warning("Այս ուսուցչի համար դեռևս դասեր չկան բաշխված։")
+        else:
+            st.info("Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
