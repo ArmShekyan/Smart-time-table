@@ -220,43 +220,9 @@ def parse_data(data):
 # --- INITIALIZATION ---
 st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅")
 
-# 🔥🎨 ԱՆՀԱՏԱԿԱՆ CSS ՈՃԵՐ ԵՎ ԼՈԳԻՆԻ ԷԼԵԳԱՆՏ ԴԻԶԱՅՆ
+# 🔥🎨 ԱՆՀԱՏԱԿԱՆ CSS ՈՃԵՐ ԵՎ ԿԱՅՈՒՆ ԴԻԶԱՅՆ
 st.markdown("""
 <style>
-    /* 🔐 Լոգինի Քարտի Սիրունացում */
-    .login-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        padding: 40px;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        border: 1px solid #e0e6ed;
-        margin-top: 50px;
-    }
-    
-    /* 🔘 Լոգինի Կոճակի Էֆեկտները */
-    .login-btn button {
-        background: linear-gradient(90deg, #0d6efd 0%, #00b4d8 100%) !important;
-        border: none !important;
-        color: white !important;
-        font-weight: bold !important;
-        font-size: 16px !important;
-        height: 45px !important;
-        border-radius: 12px !important;
-        transition: transform 0.3s ease, box-shadow 0.3s ease !important;
-    }
-    
-    .login-btn button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3) !important;
-    }
-
-    /* 🗑️ Ջնջում ենք Streamlit Form-ի ստանդարտ սև սահմանագծերը և ֆոնը լոգինի վահանակում */
-    [data-testid="stForm"] {
-        border: none !important;
-        padding: 0 !important;
-        background-color: transparent !important;
-    }
-
     /* 1. Sidebar-ի սիրունացում */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
@@ -335,54 +301,49 @@ if "subjects" not in st.session_state:
     load_from_disk()
 
 
-# --- 🚪 ԼՈԳԻՆԻ ԷՋ (Enter-ի աջակցությամբ և Սիրուն Դիզայնով) ---
+# --- 🚪 ԼՈԳԻՆԻ ԷՋ (Կայուն, մաքուր Streamlit տարբերակ) ---
 if not st.session_state.logged_in:
     left_col, center_col, right_col = st.columns([1, 1.5, 1])
 
     with center_col:
-        st.markdown('<div class="login-card">', unsafe_allow_html=True)
+        st.markdown("<br><br>", unsafe_allow_html=True)
         
-        st.markdown(
-            "<h1 style='text-align: center; color: #0d6efd; font-size: 28px; font-weight: 800; margin-bottom: 5px;'>Smart Time Table</h1>"
-            "<p style='text-align: center; color: #6c757d; font-size: 14px; margin-bottom: 25px;'>Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար</p>", 
-            unsafe_allow_html=True
-        )
-        
-        # 🎯 Օգտագործում ենք st.form, որպեսզի Enter-ը աշխատի
-        with st.form("login_panel", clear_on_submit=False):
-            username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
-            password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="••••••••")
+        with st.container(border=True):
+            st.markdown(
+                "<h2 style='text-align: center; color: #0d6efd; font-weight: 800; margin-bottom: 5px;'>Smart Time Table</h2>"
+                "<p style='text-align: center; color: #6c757d; font-size: 14px;'>Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար</p>", 
+                unsafe_allow_html=True
+            )
             
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            # 🔥 Գրադիենտով Form Submit կոճակ
-            st.markdown('<div class="login-btn">', unsafe_allow_html=True)
-            submit_login = st.form_submit_button("Մուտք գործել", use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+            with st.form("login_panel", clear_on_submit=False):
+                username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
+                password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="••••••••")
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                submit_login = st.form_submit_button("Մուտք գործել", use_container_width=True, type="primary")
 
-        st.markdown('</div>', unsafe_allow_html=True) # Փակում ենք login-card-ը
-
-        if submit_login:
-            if not username_input or not password_input:
-                st.error("⚠️ Խնդրում ենք լրացնել բոլոր դաշտերը:")
-            else:
-                user = check_user(username_input, password_input)
-                if user:
-                    st.session_state.logged_in = True
-                    st.session_state.username = user['username']
-                    st.session_state.user_role = user['role']
-                    
-                    if user['role'] in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
-                        st.session_state.active_tab = "📊 Վահանակ"
-                    else:
-                        st.session_state.active_tab = "📂 Վերջին պահպանվածը"
-
-                    st.toast(f"🎉 Բարի վերադարձ, {username_input}!", icon="🚀")
-                    st.snow() 
-                    time.sleep(1)
-                    st.rerun()
+            if submit_login:
+                if not username_input or not password_input:
+                    st.error("⚠️ Խնդրում ենք լրացնել բոլոր դաշտերը:")
                 else:
-                    st.error("❌ Սխալ օգտանուն կամ գաղտնաբառ:")
+                    user = check_user(username_input, password_input)
+                    if user:
+                        st.session_state.logged_in = True
+                        st.session_state.username = user['username']
+                        st.session_state.user_role = user['role']
+                        
+                        if user['role'] in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
+                            st.session_state.active_tab = "📊 Վահանակ"
+                        else:
+                            st.session_state.active_tab = "📂 Վերջին պահպանվածը"
+
+                        st.toast(f"🎉 Բարի վերադարձ, {username_input}!", icon="🚀")
+                        st.snow() 
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error("❌ Սխալ օգտանուն կամ գաղտնաբառ:")
                 
     st.stop()
 
