@@ -5,10 +5,9 @@ import pandas as pd
 import json
 import os
 import requests
-import time # ⏳ Ավելացրինք անիմացիաների համար
+import time
 from dataclasses import dataclass, asdict
 from typing import List
-# --- 📄 PDF-Ի import ---
 from fpdf import FPDF
 import io
 
@@ -83,9 +82,8 @@ def check_user(username, password):
 
 
 def save_to_disk():
-    # 🔥 ԱՆԻՄԱՑԻԱ ՊԱՀՊԱՆԵԼԻՍ
     with st.spinner("⏳ Պահպանվում է..."):
-        time.sleep(1) # Փոքրիկ դադար անիմացիան ցույց տալու համար
+        time.sleep(1)
         data = {
             "subjects": [asdict(s) for s in st.session_state.subjects],
             "teachers": [asdict(t) for t in st.session_state.teachers],
@@ -115,7 +113,6 @@ def save_to_disk():
 
 
 def reset_all_data():
-    # 🔥 ԱՆԻՄԱՑԻԱ ԶՐՈՅԱՑՆԵԼԻՍ
     with st.spinner("🚨 Ամբողջական ջնջում..."):
         time.sleep(2)
         st.session_state.subjects = []
@@ -145,7 +142,7 @@ def reset_all_data():
                 headers["Prefer"] = "resolution=merge-duplicates"
                 requests.post(url, headers=headers, data=json.dumps(payload))
                 st.toast("💥 Բազան զրոյացվեց Cloud-ում:", icon="💣")
-                st.balloons() # 🥳 Գեղեցիկ փուչիկներ
+                st.balloons()
                 return
             except Exception:
                 pass
@@ -157,10 +154,8 @@ def reset_all_data():
 
 
 def manual_refresh():
-    # 🔥 ԱՆԻՄԱՑԻԱ ԹԱՐՄԱՑՆԵԼԻՍ
     with st.spinner("🔄 Տվյալները թարմացվում են Cloud-ից..."):
         time.sleep(1.5)
-        # Կրկնում ենք load_from_disk-ի տրամաբանությունը
         headers = get_supabase_headers()
         if headers:
             try:
@@ -225,9 +220,36 @@ def parse_data(data):
 # --- INITIALIZATION ---
 st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅")
 
-# 🔥🎨 ԱՎԵԼԱՑՐԻՆՔ ԱՆՀԱՏԱԿԱՆ CSS ՈՃԵՐ ԵՎ ԱՆԻՄԱՑԻԱՆԵՐ
+# 🔥🎨 ԱՆՀԱՏԱԿԱՆ CSS ՈՃԵՐ ԵՎ ԼՈԳԻՆԻ ԷԼԵԳԱՆՏ ԴԻԶԱՅՆ
 st.markdown("""
 <style>
+    /* 🔐 Լոգինի Քարտի Սիրունացում */
+    .login-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: 1px solid #e0e6ed;
+        margin-top: 50px;
+    }
+    
+    /* 🔘 Լոգինի Կոճակի Էֆեկտները */
+    .login-btn button {
+        background: linear-gradient(90deg, #0d6efd 0%, #00b4d8 100%) !important;
+        border: none !important;
+        color: white !important;
+        font-weight: bold !important;
+        font-size: 16px !important;
+        height: 45px !important;
+        border-radius: 12px !important;
+        transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+    }
+    
+    .login-btn button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3) !important;
+    }
+
     /* 1. Sidebar-ի սիրունացում */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
@@ -306,37 +328,51 @@ if "subjects" not in st.session_state:
     load_from_disk()
 
 
-# --- 🚪 ԼՈԳԻՆԻ ԷՋ ---
+# --- 🚪 ԼՈԳԻՆԻ ԷՋ (Էլեգանտ և Գեղեցիկ) ---
 if not st.session_state.logged_in:
-    left_col, center_col, right_col = st.columns([1, 2, 1])
+    left_col, center_col, right_col = st.columns([1, 1.5, 1])
 
     with center_col:
-        st.markdown("<h1 style='text-align: center; color: #0d6efd;'>🔐 Մուտք Smart Time Table</h1>", unsafe_allow_html=True)
+        st.markdown('<div class="login-card">', unsafe_allow_html=True)
         
-        with st.form("login_form", clear_on_submit=False):
-            username_input = st.text_input("Օգտատիրոջ անուն (Username)")
-            password_input = st.text_input("Գաղտնաբառ (Password)", type="password")
-            
-            submit_login = st.form_submit_button("Մուտք գործել", width='stretch', type="primary")
+        st.markdown(
+            "<h1 style='text-align: center; color: #0d6efd; font-size: 28px; font-weight: 800; margin-bottom: 5px;'>Smart Time Table</h1>"
+            "<p style='text-align: center; color: #6c757d; font-size: 14px; margin-bottom: 25px;'>Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար</p>", 
+            unsafe_allow_html=True
+        )
+        
+        username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
+        password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="••••••••")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        st.markdown('<div class="login-btn">', unsafe_allow_html=True)
+        submit_login = st.button("Մուտք գործել", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True) # Փակում ենք login-card-ը
             
         if submit_login:
-            user = check_user(username_input, password_input)
-            if user:
-                st.session_state.logged_in = True
-                st.session_state.username = user['username']
-                st.session_state.user_role = user['role']
-                
-                if user['role'] in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
-                    st.session_state.active_tab = "📊 Վահանակ"
-                else:
-                    st.session_state.active_tab = "📂 Վերջին պահպանվածը"
-
-                st.success(f"✅ Բարի գալուստ, {username_input}!")
-                st.snow() # ❄️ Գեղեցիկ անիմացիա լոգինից հետո
-                time.sleep(1)
-                st.rerun()
+            if not username_input or not password_input:
+                st.error("⚠️ Խնդրում ենք լրացնել բոլոր դաշտերը:")
             else:
-                st.error("❌ Սխալ օգտանուն կամ գաղտնաբառ")
+                user = check_user(username_input, password_input)
+                if user:
+                    st.session_state.logged_in = True
+                    st.session_state.username = user['username']
+                    st.session_state.user_role = user['role']
+                    
+                    if user['role'] in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
+                        st.session_state.active_tab = "📊 Վահանակ"
+                    else:
+                        st.session_state.active_tab = "📂 Վերջին պահպանվածը"
+
+                    st.toast(f"🎉 Բարի վերադարձ, {username_input}!", icon="🚀")
+                    st.snow() 
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error("❌ Սխալ օգտանուն կամ գաղտնաբառ:")
                 
     st.stop()
 
@@ -408,7 +444,7 @@ if st.sidebar.button("🚪 Ելք համակարգից", width='stretch'):
     st.session_state.logged_in = False
     st.rerun()
 
-# 🔥 ԱՆԻՄԱՑԻՈՆ ԿՈՃԱԿ
+
 if st.sidebar.button("🔄 Թարմացնել Cloud-ից", use_container_width=True):
     manual_refresh()
 
@@ -439,7 +475,7 @@ page = st.sidebar.radio("Նավիգացիա", available_pages, index=default_ind
 
 st.sidebar.divider()
 
-# 🔥 ԱՆԻՄԱՑԻՈՆ ԿՈՃԱԿ
+
 if st.sidebar.button("💾 Պահպանել Բոլորը", width='stretch', type="primary"):
     save_to_disk()
 
@@ -448,7 +484,7 @@ if st.session_state.user_role == 'owner':
     st.sidebar.divider()
     st.sidebar.markdown("<h3 style='color: #dc3545;'>⚠️ Վտանգավոր Գոտի</h3>", unsafe_allow_html=True)
     confirm_reset = st.sidebar.checkbox("Հաստատում եմ ամբողջական ջնջումը")
-    # 🔥 ԱՆԻՄԱՑԻՈՆ ԿԱՐՄԻՐ ԿՈՃԱԿ
+    
     if st.sidebar.button("🚨 Զրոյացնել Ամբողջ Բազան", type="primary", use_container_width=True, disabled=not confirm_reset):
         reset_all_data()
         st.rerun()
@@ -497,7 +533,6 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
     st.subheader("📋 Գրանցված Օգտատերեր")
     
     for i, u in enumerate(st.session_state.users_list):
-        # Օգտագործում ենք st.container() գեղեցիկ շրջանակի համար
         with st.container(border=True):
             c1, c2, c3 = st.columns([3, 3, 1])
             c1.markdown(f"👤 **{u['username']}**")
@@ -520,7 +555,6 @@ elif st.session_state.active_page == "normal":
     if st.session_state.active_tab == "📊 Վահանակ":
         st.title("📊 Ընդհանուր Վիճակագրություն")
         
-        # Օգտագործում ենք Columns + Metrics CSS ոճերով
         m1, m2, m3, m4 = st.columns(4)
         m1.metric(label="📚 Առարկաներ", value=len(st.session_state.subjects))
         m2.metric(label="👩‍🏫 Ուսուցիչներ", value=len(st.session_state.teachers))
@@ -638,9 +672,8 @@ elif st.session_state.active_page == "normal":
         with col2:
             if st.session_state.teachers and st.session_state.classes:
                 
-                # --- Ուսուցչի ընտրությունը FORM-ից դուրս (Անխաթար տրամաբանություն) ---
                 def on_teacher_change():
-                    pass # Ստիպում է Rerun լինել Ուսուցչին փոխելիս
+                    pass 
 
                 sel_t = st.selectbox(
                     "👩‍🏫 Ընտրեք Ուսուցչին", 
@@ -650,10 +683,8 @@ elif st.session_state.active_page == "normal":
                     on_change=on_teacher_change
                 )
 
-                # Ֆիլտրում ենք առարկաները
                 t_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
 
-                # --- Մնացած ձևաթուղթը ---
                 with st.form("as_form_fixed", clear_on_submit=True):
                     st.markdown("### 🔗 Կապել Դասարանին")
                     
@@ -704,10 +735,9 @@ elif st.session_state.active_page == "normal":
     elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
         
-        # 🔥 ԱՆԻՄԱՑԻՈՆ ԳԵՆԵՐԱՑՄԱՆ ԿՈՃԱԿ
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", width='stretch', type="primary"):
             with st.spinner("🧠 Ալգորիթմը մտածում է... Խնդրում ենք սպասել..."):
-                time.sleep(2.5) # Ավելի երկար դադար AI-ի տպավորություն թողնելու համար
+                time.sleep(2.5) 
                 
                 final_schedule = []
                 teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
@@ -764,19 +794,17 @@ elif st.session_state.active_page == "normal":
 
                 st.session_state.schedule = final_schedule
                 st.toast("✅ Դասացուցակը պատրաստ է:", icon="🚀")
-                st.balloons() # 🥳🥳🥳
+                st.balloons() 
 
         if st.session_state.schedule:
             df = pd.DataFrame(st.session_state.schedule)
             st.subheader("📋 Արդյունքներն ըստ Դասարանների")
-            # Օգտագործում ենք st.expander()՝ CSS ոճերով
             for c in df['Դասարան'].unique():
                 with st.expander(f"🏫 Դասարան՝ {c}", expanded=True):
                     cls_df = df[df['Դասարան'] == c].copy()
                     cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: x.split(" (")[0])
                     pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
                     
-                    # Ուղղում ենք օրերի հերթականությունը (Pandas-ի թերությունը)
                     existing_days = [day for day in DAYS_AM if day in pivot.columns]
                     if existing_days:
                         pivot = pivot[existing_days]
@@ -827,10 +855,8 @@ elif st.session_state.active_page == "normal":
                 t_data_clean = t_data.copy()
                 t_data_clean['Ցուցադրում'] = t_data_clean['Դասարան'] + " - " + t_data_clean['Առարկա'].apply(lambda x: x.split(" (")[0])
                 
-                # Pivot
                 pivot = t_data_clean.pivot(index='Ժամ', columns='Օր', values='Ցուցադրում').fillna("-")
                 
-                # Օրերի ճիշտ հերթականություն
                 existing_days = [day for day in DAYS_AM if day in pivot.columns]
                 if existing_days:
                     pivot = pivot[existing_days]
