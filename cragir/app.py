@@ -328,29 +328,28 @@ if "subjects" not in st.session_state:
     load_from_disk()
 
 
-# --- 🚪 ԼՈԳԻՆԻ ԷՋ (Էլեգանտ և Գեղեցիկ) ---
+# --- 🚪 ԼՈԳԻՆԻ ԷՋ (Վերջնական Ճշգրտված Տարբերակ) ---
 if not st.session_state.logged_in:
     left_col, center_col, right_col = st.columns([1, 1.5, 1])
 
     with center_col:
-        st.markdown('<div class="login-card">', unsafe_allow_html=True)
-        
+        # Սիրունացնում ենք միայն վերնագրերը (Card-ը կձևավորվի CSS-ով)
         st.markdown(
             "<h1 style='text-align: center; color: #0d6efd; font-size: 28px; font-weight: 800; margin-bottom: 5px;'>Smart Time Table</h1>"
             "<p style='text-align: center; color: #6c757d; font-size: 14px; margin-bottom: 25px;'>Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար</p>", 
             unsafe_allow_html=True
         )
         
+        # 📝 Դաշտերը (Form-ից դուրս)
         username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
         password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="••••••••")
         
         st.markdown("<br>", unsafe_allow_html=True)
         
+        # 🔥 Գրադիենտով Կոճակը
         st.markdown('<div class="login-btn">', unsafe_allow_html=True)
         submit_login = st.button("Մուտք գործել", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True) # Փակում ենք login-card-ը
             
         if submit_login:
             if not username_input or not password_input:
