@@ -218,47 +218,37 @@ def generate_pdf(schedule_data):
     pdf = FPDF()
     pdf.add_page()
     
-    pdf.set_font("Helvetica", size=12)
-    pdf.cell(200, 10, txt="Smart Time Table - School Schedule", ln=True, align='C')
+    # --- 1. Ավելացնում ենք քո գտած ֆայլը որպես հայերեն տառատեսակ ---
+    # (Եթե ֆայլի անունը ուրիշ է, փոխիր 'Sylfaen.ttf'-ի տեղը)
+    pdf.add_font('ArmenianFont', '', 'Sylfaen.ttf') 
+    pdf.set_font('ArmenianFont', size=11)
+    
+    pdf.cell(200, 10, txt="Smart Time Table - Դպրոցական Դասացուցակ", ln=True, align='C')
     pdf.ln(10)
 
     df = pd.DataFrame(schedule_data)
     
-    # Անգլերեն օրերի անուններ PDF-ի համար
-    days_eng = ["Mon", "Tue", "Wed", "Thu", "Fri"]
-    
     for cls in df['Դասարան'].unique():
-        pdf.set_font("Helvetica", style='B', size=11)
-        pdf.cell(0, 10, txt=f"Class: {cls}", ln=True)
-        pdf.set_font("Helvetica", size=10)
+        pdf.set_font('ArmenianFont', size=11)
+        pdf.cell(0, 10, txt=f"Դասարան` {cls}", ln=True)
+        pdf.set_font('ArmenianFont', size=10)
         
         cls_df = df[df['Դասարան'] == cls]
         cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: x.split(" (")[0])
-        
-        # Փոխարինում ենք հայերեն օրերը անգլերենով միայն PDF-ի համար
-        day_mapping = {
-            "Երկուշաբթի": "Mon",
-            "Երեքշաբթի": "Tue",
-            "Չորեքշաբթի": "Wed",
-            "Հինգշաբթի": "Thu",
-            "Ուրբաթ": "Fri"
-        }
-        cls_df['Օր'] = cls_df['Օր'].map(day_mapping)
-        
         pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
         
-        pdf.cell(15, 8, "Hour", border=1)
-        for day in days_eng:
-            pdf.cell(35, 8, day, border=1)
+        # Վերնագրեր (Արդեն հայերեն)
+        pdf.cell(15, 8, "Ժամ", border=1)
+        for day in DAYS_AM:
+            pdf.cell(35, 8, day[:3], border=1)
         pdf.ln()
 
+        # Տողեր
         for hour in pivot.index:
             pdf.cell(15, 8, str(hour), border=1)
-            for day in days_eng:
+            for day in DAYS_AM:
                 val = pivot.loc[hour, day] if day in pivot.columns else "-"
-                # Եթե առարկայի անունը հայերեն է, PDF-ում կգրենք "Lesson", որ սխալ չտա
-                cell_text = "Lesson" if any(ord(c) > 127 for c in str(val)) else str(val)
-                pdf.cell(35, 8, cell_text[:15], border=1)
+                pdf.cell(35, 8, str(val), border=1)
             pdf.ln()
         pdf.ln(10)
 
