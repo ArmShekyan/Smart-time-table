@@ -286,6 +286,11 @@ if st.sidebar.button("🔄 Թարմացնել Տվյալները", use_container
 st.sidebar.divider()
 
 # --- ԷՋԵՐԻ ՍԱՀՄԱՆԱՓԱԿՈՒՄ ԸՍՏ ԴԵՐԵՐԻ ---
+
+# Ստեղծում ենք ֆունկցիան, որ Python-ը NameError չտա
+def on_page_change():
+    st.session_state.active_page = "normal"
+
 available_pages = []
 
 # Եթե Admin կամ Owner է, տեսնում է ամեն ինչ
@@ -300,11 +305,11 @@ elif st.session_state.user_role == 'subject_editor':
 elif st.session_state.user_role == 'teacher_editor':
     available_pages = ["📊 Վահանակ", "👩‍🏫 Ուսուցիչներ", "📂 Վերջին պահպանվածը"]
 
-# 🎯 ՍԱ ՀԵՆՑ ՈՒՍՈՒՑԻՉՆԵՐԻ ՀԱՄԱՐ Է (user դերը)
+# 🎯 Սա հենց ուսուցիչների համար է (user դերը)
 else:
     available_pages = ["📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական"]
 
-# Էջի ընտրությունը
+# Ստեղծում ենք Sidebar-ի ռադիո կոճակը
 page = st.sidebar.radio("Նավիգացիա", available_pages, key="nav_radio", on_change=on_page_change)
 
 
