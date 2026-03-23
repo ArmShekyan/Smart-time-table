@@ -213,18 +213,19 @@ def get_subj_name(sid):
 def get_subj_complexity(sid):
     return next((s.complexity for s in st.session_state.subjects if s.id == sid), 3)
 
-# --- 📄 ԱՎԵԼԱՑՐԻՆՔ PDF-Ի ՍՏԵՂԾՄԱՆ ՖՈՒՆԿՑԻԱՆ ---
+#pdf
 def generate_pdf(schedule_data):
     pdf = FPDF()
     pdf.add_page()
     
-    # Նախնական Font (Առայժմ Helvetica, որ Error չտա)
     pdf.set_font("Helvetica", size=12)
-    
     pdf.cell(200, 10, txt="Smart Time Table - School Schedule", ln=True, align='C')
     pdf.ln(10)
 
     df = pd.DataFrame(schedule_data)
+    
+    # Անգլերեն օրերի անուններ PDF-ի համար
+    days_eng = ["Mon", "Tue", "Wed", "Thu", "Fri"]
     
     for cls in df['Դասարան'].unique():
         pdf.set_font("Helvetica", style='B', size=11)
@@ -233,22 +234,31 @@ def generate_pdf(schedule_data):
         
         cls_df = df[df['Դասարան'] == cls]
         cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: x.split(" (")[0])
+        
+        # Փոխարինում ենք հայերեն օրերը անգլերենով միայն PDF-ի համար
+        day_mapping = {
+            "Երկուշաբթի": "Mon",
+            "Երեքշաբթի": "Tue",
+            "Չորեքշաբթի": "Wed",
+            "Հինգշաբթի": "Thu",
+            "Ուրբաթ": "Fri"
+        }
+        cls_df['Օր'] = cls_df['Օր'].map(day_mapping)
+        
         pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
         
-        # Վերնագրեր
         pdf.cell(15, 8, "Hour", border=1)
-        for day in DAYS_AM:
-            pdf.cell(35, 8, day[:3], border=1) # Օրվա առաջին 3 տառը
+        for day in days_eng:
+            pdf.cell(35, 8, day, border=1)
         pdf.ln()
 
-        # Տողեր
         for hour in pivot.index:
             pdf.cell(15, 8, str(hour), border=1)
-            for day in DAYS_AM:
+            for day in days_eng:
                 val = pivot.loc[hour, day] if day in pivot.columns else "-"
-                # Կարճացնում ենք տեքստը, որ աղյուսակից դուրս չգա
-                cell_text = str(val)[:15] 
-                pdf.cell(35, 8, cell_text, border=1)
+                # Եթե առարկայի անունը հայերեն է, PDF-ում կգրենք "Lesson", որ սխալ չտա
+                cell_text = "Lesson" if any(ord(c) > 127 for c in str(val)) else str(val)
+                pdf.cell(35, 8, cell_text[:15], border=1)
             pdf.ln()
         pdf.ln(10)
 
