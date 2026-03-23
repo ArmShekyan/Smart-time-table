@@ -282,18 +282,24 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
                         
                         new_user_data = {"username": new_u, "password": new_p, "role": new_r}
                         
-                        # 1️⃣ Ավելացնում ենք ժամանակավոր Python ցուցակում
+                        # 1️⃣ Ավելացնում ենք Python-ի ժամանակավոր ցուցակում (որպեսզի էջում երևա)
                         st.session_state.users_list.append(new_user_data)
                         
-                        # 🔥 2️⃣ Ուղարկում ենք Supabase SQL-ի users աղյուսակ (REST API-ով)
+                        # 🔥 2️⃣ ԱՎՏՈՄԱՏ ՈՒՂԱՐԿՈՒՄ ԵՆՔ SUPABASE SQL (users աղյուսակ)
                         headers = get_supabase_headers()
                         if headers:
                             try:
+                                # Միանում ենք հենց users աղյուսակին
                                 url = f"{st.secrets['supabase_url']}/rest/v1/users"
-                                requests.post(url, headers=headers, data=json.dumps(new_user_data))
-                                st.success(f"✅ {new_u}-ն հաջողությամբ ավելացվեց SQL-ում և ցուցակում:")
-                            except Exception:
-                                st.warning("⚠️ Տեղական ցուցակում ավելացավ, բայց SQL Cloud չհասավ:")
+                                
+                                response = requests.post(url, headers=headers, data=json.dumps(new_user_data))
+                                
+                                if response.status_code in [200, 201]:
+                                    st.success(f"✅ {new_u}-ն հաջողությամբ ավելացվեց Supabase SQL-ում:")
+                                else:
+                                    st.warning(f"⚠️ SQL-ը պատասխանեց սխալով: {response.status_code}")
+                            except Exception as e:
+                                st.warning(f"⚠️ Չհաջողվեց կապնվել SQL Cloud-ի հետ. {e}")
                         
                         st.rerun()
                     else:
