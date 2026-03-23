@@ -109,8 +109,9 @@ def save_to_disk():
         json.dump(data, f, ensure_ascii=False, indent=4)
     st.sidebar.warning("⚠️ Պահպանվեց տեղական JSON ֆայլում:")
 
+
+# 🔥 ԱՎԵԼԱՑՐԻՆՔ ԶՐՈՅԱՑՄԱՆ ՖՈՒՆԿՑԻԱՆ
 def reset_all_data():
-    # 1. Մաքրում ենք Python-ի հիշողությունը (բացի օգտատերերից)
     st.session_state.subjects = []
     st.session_state.teachers = []
     st.session_state.classes = []
@@ -119,7 +120,6 @@ def reset_all_data():
     st.session_state.subj_pool = []
     st.session_state.teacher_pool = []
     
-    # 2. Ուղարկում ենք դատարկ տվյալներ Supabase
     data = {
         "subjects": [],
         "teachers": [],
@@ -128,7 +128,7 @@ def reset_all_data():
         "schedule": None,
         "subj_pool": [],
         "teacher_pool": [],
-        "users_list": st.session_state.users_list # 🔐 Օգտատերերը ՊԱՀՊԱՆՎՈՒՄ ԵՆ
+        "users_list": st.session_state.users_list # 🔐 Օգտատերերը ՉԵՆ ՋՆՋՎՈՒՄ
     }
 
     headers = get_supabase_headers()
@@ -143,7 +143,6 @@ def reset_all_data():
         except Exception:
             pass
 
-    # 3. Մաքրում ենք նաև տեղական JSON-ը
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     st.sidebar.warning("⚠️ Բազան զրոյացվեց տեղական ֆայլում:")
@@ -213,7 +212,7 @@ if "subjects" not in st.session_state:
         "username": "",           
         "user_role": "",         
         "active_page": "normal",
-        "active_tab": "📊 Վահանակ"  # ✅ Նոր փոփոխական, որ Sidebar-ն ու էջը միշտ Վահանակով բացվեն
+        "active_tab": "📊 Վահանակ" # ✅ Նավիգացիան ճիշտ պահելու համար
     })
     load_from_disk()
 
@@ -238,12 +237,11 @@ if not st.session_state.logged_in:
                 st.session_state.username = user['username']
                 st.session_state.user_role = user['role']
                 
-                # ✅ Լոգինից հետո ստիպում ենք, որ բացվի Վահանակը
                 if user['role'] in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
                     st.session_state.active_tab = "📊 Վահանակ"
                 else:
                     st.session_state.active_tab = "📂 Վերջին պահպանվածը"
-                    
+
                 st.success(f"✅ Բարի գալուստ, {username_input}!")
                 st.rerun()
             else:
@@ -265,17 +263,13 @@ def generate_pdf(schedule_data):
     pdf = FPDF()
     pdf.add_page()
     
-    # Օգտագործում ենք միայն ստանդարտ Helvetica, որպեսզի 100% Error չտա
     pdf.set_font("Helvetica", style='B', size=14)
     pdf.cell(200, 10, txt="Smart Time Table - School Schedule", ln=True, align='C')
     pdf.ln(10)
 
     df = pd.DataFrame(schedule_data)
-    
-    # Ամբողջական անգլերեն օրեր
     days_eng = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
     
-    # Օրերի թարգմանության մատրիցա
     day_mapping = {
         "Երկուշաբթի": "Monday",
         "Երեքշաբթի": "Tuesday",
@@ -295,7 +289,6 @@ def generate_pdf(schedule_data):
         
         pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
         
-        # Վերնագիրը՝ Day, և ամբողջական օրերը
         pdf.set_font("Helvetica", style='B', size=10)
         pdf.cell(15, 8, "Day", border=1, align='C')
         for day in days_eng:
@@ -307,12 +300,9 @@ def generate_pdf(schedule_data):
             pdf.cell(15, 8, str(hour), border=1, align='C')
             for day in days_eng:
                 val = pivot.loc[hour, day] if day in pivot.columns else "-"
-                
-                # Եթե պատահաբար հայերեն տառ մնա, անգլերեն PDF-ում գրում ենք "Lesson", որ չկախի
                 cell_text = str(val)
                 if any(ord(c) > 127 for c in cell_text):
-                    cell_text = "Lesson" # Սա փրկում է Error-ներից
-                    
+                    cell_text = "Lesson" 
                 pdf.cell(35, 8, cell_text[:15], border=1, align='C')
             pdf.ln()
         pdf.ln(10)
@@ -336,7 +326,6 @@ st.sidebar.divider()
 
 def on_page_change():
     st.session_state.active_page = "normal"
-    # ✅ Պահում ենք սեղմված Sidebar-ի կետը
     st.session_state.active_tab = st.session_state.nav_radio
 
 available_pages = []
@@ -350,7 +339,6 @@ elif st.session_state.user_role == 'teacher_editor':
 else:
     available_pages = ["📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական"]
 
-# ✅ Հաշվում ենք, թե որ index-ում է պահպանված էջը (սա կլուծի դաս համընկնելու խնդիրը)
 default_index = 0
 if st.session_state.active_tab in available_pages:
     default_index = available_pages.index(st.session_state.active_tab)
@@ -363,14 +351,11 @@ st.sidebar.divider()
 if st.sidebar.button("💾 Պահպանել Բոլորը", width='stretch', type="primary"):
     save_to_disk()
 
-# 🔥 Միայն Owner-ի համար տեսանելի Կարմիր Կոճակ
+# 🔥 ԱՎԵԼԱՑՐԻՆՔ FACTORY RESET-Ը ՄԻԱՅՆ OWNER-Ի ՀԱՄԱՐ
 if st.session_state.user_role == 'owner':
     st.sidebar.divider()
     st.sidebar.markdown("### ⚠️ Վտանգավոր Գոտի")
-    
-    # Որպեսզի պատահական չսեղմես, դնում ենք Checkbox-ով հաստատում
     confirm_reset = st.sidebar.checkbox("Հաստատում եմ ամբողջական ջնջումը")
-    
     if st.sidebar.button("🚨 Զրոյացնել Ամբողջ Բազան", type="primary", use_container_width=True, disabled=not confirm_reset):
         reset_all_data()
         st.rerun()
@@ -402,28 +387,17 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
             if st.form_submit_button("Ավելացնել Օգտատեր", width='stretch'):
                 if new_u and new_p:
                     if not any(u['username'] == new_u for u in st.session_state.users_list):
-                        
                         new_user_data = {"username": new_u, "password": new_p, "role": new_r}
-                        
                         st.session_state.users_list.append(new_user_data)
                         
                         headers = get_supabase_headers()
                         if headers:
                             try:
                                 url = f"{st.secrets['supabase_url']}/rest/v1/users"
-                                
                                 response = requests.post(url, headers=headers, data=json.dumps(new_user_data))
-                                
-                                if response.status_code in [200, 201]:
-                                    st.success(f"✅ {new_u}-ն հաջողությամբ ավելացվեց Supabase SQL-ում:")
-                                else:
-                                    st.warning(f"⚠️ SQL-ը պատասխանեց սխալով: {response.status_code}")
-                            except Exception as e:
-                                st.warning(f"⚠️ Չհաջողվեց կապնվել SQL Cloud-ի հետ. {e}")
-                        
+                            except Exception:
+                                pass
                         st.rerun()
-                    else:
-                        st.error("❌ Այս անունով օգտատեր արդեն կա:")
 
     st.divider()
     st.subheader("📋 Գրանցված Օգտատերեր")
@@ -434,9 +408,7 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
         c2.write(f"🎭 Դերը՝ `{u['role']}`")
         
         can_delete = True
-        if u['username'] == st.session_state.username:
-            can_delete = False 
-        elif u['role'] == 'owner':
+        if u['username'] == st.session_state.username or u['role'] == 'owner':
             can_delete = False 
         elif u['role'] == 'admin' and st.session_state.user_role != 'owner':
             can_delete = False
@@ -448,7 +420,6 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
 
 elif st.session_state.active_page == "normal":
 
-    # ✅ Հիմա պայմանները ստուգում են ոչ թե page փոփոխականը, այլ active_tab-ը
     if st.session_state.active_tab == "📊 Վահանակ":
         st.title("📊 Ընդհանուր Վիճակագրություն")
         
@@ -555,27 +526,36 @@ elif st.session_state.active_page == "normal":
                     st.markdown("### 🔗 Կապել Դասարանին")
                     sel_c = st.selectbox("Դասարան", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
                     
-                    # 1. Ընտրում ենք ուսուցչին
-                    sel_t = st.selectbox("Ուսուցիչ", st.session_state.teachers, format_func=lambda x: x.name)
+                    # 🔥 ՈՒՂՂՎԱԾ ՈՒՍՈՒՑՉԻ ՖԻԼՏՐԸ՝ ԱՆՄԻՋԱՊԵՍ RERUN ԼԻՆԵԼՈՒ ՀԱՄԱՐ
+                    def on_teacher_change():
+                        pass 
+
+                    sel_t = st.selectbox(
+                        "Ուսուցիչ", 
+                        st.session_state.teachers, 
+                        format_func=lambda x: x.name,
+                        key="selected_teacher_box",
+                        on_change=on_teacher_change
+                    )
                     
-                    # 🎯 2. ԱՀԱ ՖԻԼՏՐԸ: Թողնում ենք միայն այն առարկաները, որոնք դասավանդում է ԸՆՏՐՎԱԾ ուսուցիչը
+                    # 🎯 Միայն ընտրված ուսուցչի առարկաները
                     t_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
                     
-                    # 3. Ցույց ենք տալիս միայն ֆիլտրված առարկաները
                     if t_subjs:
                         sel_s = st.selectbox("Առարկա", t_subjs, format_func=lambda x: x.name)
                     else:
-                        st.warning("⚠️ Այս ուսուցիչը դեռ ոչ մի առարկայի հետ կապված չէ։")
+                        st.warning(f"⚠️ {sel_t.name}-ն դեռ ոչ մի առարկայի հետ կապված չէ:")
                         sel_s = None
 
                     hrs = st.number_input("Շաբաթական ժամեր", 1, 10, 2)
                     
                     if st.form_submit_button("Կապել", width='stretch'):
                         if not sel_s:
-                            st.error("❌ Չհաջողվեց կապել, քանի որ առարկա ընտրված չէ։")
+                            st.error("❌ Առարկա ընտրված չէ:")
                         else:
                             current_hrs = sum(a.lessons_per_week for a in st.session_state.assignments if a.class_id == sel_c.id)
                             
+                            # 🔥 ԲԱՑԱՌԻԿՈՒԹՅԱՆ ՍՏՈՒԳՈՒՄ
                             subject_already_assigned = any(
                                 a.class_id == sel_c.id and a.subject_id == sel_s.id 
                                 for a in st.session_state.assignments
@@ -605,25 +585,19 @@ elif st.session_state.active_page == "normal":
         
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", width='stretch', type="primary"):
             final_schedule = []
-            
-            # Զբաղվածության մատրիցա (Կոնֆլիկտները բացառելու համար)
             teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
             class_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
 
-            # Խառնում ենք դասարանները, որ ամեն անգամ տարբեր լինի
             shuffled_classes = list(st.session_state.classes)
             random.shuffle(shuffled_classes)
 
             for cls in shuffled_classes:
                 class_fund = []
                 assignments_for_cls = [a for a in st.session_state.assignments if a.class_id == cls.id]
-                
                 for ass in assignments_for_cls:
                     class_fund.extend([ass] * ass.lessons_per_week)
                 
-                # Սորտավորում ենք ըստ բարդության
                 class_fund.sort(key=lambda x: get_subj_complexity(x.subject_id), reverse=True)
-                
                 class_day_counts = {d: 0 for d in DAYS_AM}
                 
                 timeout = 0
@@ -640,12 +614,8 @@ elif st.session_state.active_page == "normal":
                     chosen_candidate_idx = -1
                     
                     for idx, candidate in enumerate(class_fund):
-                        subj_name = get_subj_name(candidate.subject_id)
-                        
-                        # Պրոֆեսիոնալ ստուգում
                         if (candidate.teacher_id not in teacher_occupancy[best_day][next_hour] and 
                             f"{cls.grade}{cls.section}" not in class_occupancy[best_day][next_hour]):
-                            
                             chosen_candidate_idx = idx
                             break 
 
@@ -680,9 +650,7 @@ elif st.session_state.active_page == "normal":
                     pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
                     st.dataframe(pivot, width='stretch')
 
-            # --- 📄 PDF-Ի ԿՈՃԱԿԸ ---
             pdf_bytes = generate_pdf(st.session_state.schedule)
-            
             st.download_button(
                 label="📥 Ներբեռնել Դասացուցակը (PDF - English Only)",
                 data=bytes(pdf_bytes),
@@ -723,7 +691,3 @@ elif st.session_state.active_page == "normal":
                 st.dataframe(pivot, width='stretch')
             else: st.warning("Այս ուսուցչի համար դեռևս դասեր չկան բաշխված։")
         else: st.info("Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
-        
-
-# py -m streamlit run app.py
-# ctrl c - cancel
