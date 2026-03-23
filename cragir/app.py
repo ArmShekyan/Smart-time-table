@@ -218,53 +218,55 @@ def generate_pdf(schedule_data):
     pdf = FPDF()
     pdf.add_page()
     
-    # --- 🔍 Խելացի որոնում պրոյեկտի մեջ ---
-    font_path = "sylfaen.ttf" # Սկզբից փնտրում ենք կողքը
-    
-    if not os.path.exists(font_path):
-        # Եթե կողքը չկա, փնտրում ենք մեկ թղթապանակ վերև (root-ում)
-        parent_path = os.path.join("..", "sylfaen.ttf")
-        if os.path.exists(parent_path):
-            font_path = parent_path
-
-    try:
-        pdf.add_font('ArmenianFont', '', font_path) 
-        pdf.set_font('ArmenianFont', size=11)
-    except Exception:
-        # Եթե էլի չգտնի, ստիպված կօգտագործի անգլերեն Helvetica, որ Error չտա
-        pdf.set_font("Helvetica", size=11)
-    
-    pdf.cell(200, 10, txt="Smart Time Table", ln=True, align='C')
+    # Օգտագործում ենք միայն ստանդարտ Helvetica, որպեսզի 100% Error չտա
+    pdf.set_font("Helvetica", style='B', size=14)
+    pdf.cell(200, 10, txt="Smart Time Table - School Schedule", ln=True, align='C')
     pdf.ln(10)
 
     df = pd.DataFrame(schedule_data)
     
+    # Ամբողջական անգլերեն օրեր
+    days_eng = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    
+    # Օրերի թարգմանության մատրիցա
+    day_mapping = {
+        "Երկուշաբթի": "Monday",
+        "Երեքշաբթի": "Tuesday",
+        "Չորեքշաբթի": "Wednesday",
+        "Հինգշաբթի": "Thursday",
+        "Ուրբաթ": "Friday"
+    }
+
     for cls in df['Դասարան'].unique():
-        # Եթե font-ը չկա, Helvetica-ն հայերեն չի տպի, բայց գոնե Error չի տա
-        try:
-            pdf.set_font('ArmenianFont', size=11)
-        except:
-            pdf.set_font('Helvetica', size=11)
-            
+        pdf.set_font("Helvetica", style='B', size=12)
         pdf.cell(0, 10, txt=f"Class: {cls}", ln=True)
+        pdf.set_font("Helvetica", size=10)
         
-        cls_df = df[df['Դասարան'] == cls]
+        cls_df = df[df['Դասարան'] == cls].copy()
+        cls_df['Օր'] = cls_df['Օր'].map(day_mapping)
         cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: x.split(" (")[0])
+        
         pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
         
-        pdf.cell(15, 8, "Hour", border=1)
-        for day in DAYS_AM:
-            pdf.cell(35, 8, day[:3], border=1)
+        # Վերնագիրը՝ Day, և ամբողջական օրերը
+        pdf.set_font("Helvetica", style='B', size=10)
+        pdf.cell(15, 8, "Day", border=1, align='C')
+        for day in days_eng:
+            pdf.cell(35, 8, day, border=1, align='C')
         pdf.ln()
 
+        pdf.set_font("Helvetica", size=10)
         for hour in pivot.index:
-            pdf.cell(15, 8, str(hour), border=1)
-            for day in DAYS_AM:
+            pdf.cell(15, 8, str(hour), border=1, align='C')
+            for day in days_eng:
                 val = pivot.loc[hour, day] if day in pivot.columns else "-"
                 
-                # Եթե Font-ը միացել է, տպում ենք հայերեն, եթե ոչ՝ կարճ անգլերեն
-                cell_text = str(val)[:15]
-                pdf.cell(35, 8, cell_text, border=1)
+                # Եթե պատահաբար հայերեն տառ մնա, անգլերեն PDF-ում գրում ենք "Lesson", որ չկախի
+                cell_text = str(val)
+                if any(ord(c) > 127 for c in cell_text):
+                    cell_text = "Lesson" # Սա փրկում է Error-ներից
+                    
+                pdf.cell(35, 8, cell_text[:15], border=1, align='C')
             pdf.ln()
         pdf.ln(10)
 
