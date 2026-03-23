@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass, asdict
 from typing import List
 from fpdf import FPDF
-import io
+from google import genai  # ✨ Google-ի պաշտոնական AI գրադարանը
 
 # --- ՄՈԴԵԼՆԵՐ ---
 @dataclass
@@ -220,7 +220,7 @@ def parse_data(data):
 # --- INITIALIZATION ---
 st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅")
 
-# 🔥🎨 ԱՆՀԱՏԱԿԱՆ CSS ՈՃԵՐ ԵՎ ԿԱՅՈՒՆ ԴԻԶԱՅՆ
+# 🔥🎨 ԱՆՀԱՏԱԿԱՆ CSS ՈՃԵՐ
 st.markdown("""
 <style>
     /* 1. Sidebar-ի սիրունացում */
@@ -240,7 +240,7 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
     }
 
-    /* 2. Հիմնական Աղյուսակների (Dataframe) սիրունացում */
+    /* 2. Հիմնական Աղյուսակների սիրունացում */
     [data-testid="stDataFrameDataframe"] div table {
         border-radius: 10px;
         overflow: hidden;
@@ -296,12 +296,13 @@ if "subjects" not in st.session_state:
         "username": "",           
         "user_role": "",         
         "active_page": "normal",
-        "active_tab": "📊 Վահանակ" 
+        "active_tab": "📊 Վահանակ",
+        "chat_history": []  # ✨ Պահում ենք AI-ի չաթի պատմությունը
     })
     load_from_disk()
 
 
-# --- 🚪 ԼՈԳԻՆԻ ԷՋ (Կայուն, մաքուր Streamlit տարբերակ) ---
+# --- 🚪 ԼՈԳԻՆԻ ԷՋ ---
 if not st.session_state.logged_in:
     left_col, center_col, right_col = st.columns([1, 1.5, 1])
 
@@ -429,13 +430,13 @@ def on_page_change():
 available_pages = []
 
 if st.session_state.user_role in ['owner', 'admin']:
-    available_pages = ["📊 Վահանակ", "📚 Առարկաներ", "👩‍🏫 Ուսուցիչներ", "🏫 Դասարաններ", "🚀 Գեներացում", "📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական"]
+    available_pages = ["📊 Վահանակ", "📚 Առարկաներ", "👩‍🏫 Ուսուցիչներ", "🏫 Դասարաններ", "🚀 Գեներացում", "📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական", "🤖 AI Օգնական"]
 elif st.session_state.user_role == 'subject_editor':
-    available_pages = ["📊 Վահանակ", "📚 Առարկաներ", "📂 Վերջին պահպանվածը"]
+    available_pages = ["📊 Վահանակ", "📚 Առարկաներ", "📂 Վերջին պահպանվածը", "🤖 AI Օգնական"]
 elif st.session_state.user_role == 'teacher_editor':
-    available_pages = ["📊 Վահանակ", "👩‍🏫 Ուսուցիչներ", "📂 Վերջին պահպանվածը"]
+    available_pages = ["📊 Վահանակ", "👩‍🏫 Ուսուցիչներ", "📂 Վերջին պահպանվածը", "🤖 AI Օգնական"]
 else:
-    available_pages = ["📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական"]
+    available_pages = ["📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական", "🤖 AI Օգնական"]
 
 default_index = 0
 if st.session_state.active_tab in available_pages:
@@ -835,3 +836,47 @@ elif st.session_state.active_page == "normal":
                 st.dataframe(pivot, width='stretch')
             else: st.warning("Այս ուսուցչի համար դեռևս դասեր չկան բաշխված։")
         else: st.info("Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
+
+    elif st.session_state.active_tab == "🤖 AI Օգնական":
+        st.title("🤖 AI Օգնական (Gemini)")
+        st.caption("Հարցրեք AI-ին դասացուցակի, կոդի կամ դպրոցական պլանների մասին։")
+
+        # 1. Արտածում ենք նախորդ չաթի հաղորդագրությունները
+        for message in st.session_state.chat_history:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+        # 2. Չաթի մուտքագրման դաշտը
+        if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
+            
+            st.session_state.chat_history.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            with st.chat_message("assistant"):
+                with st.spinner("🧠 Մտածում եմ..."):
+                    try:
+                        if "GEMINI_API_KEY" not in st.secrets:
+                            response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
+                        else:
+                            # Context-ի ստեղծում (AI-ը կիմանա քո դասացուցակը)
+                            context = "Դու 'Smart Time Table' պրոյեկտի AI օգնականն ես։ Պատասխանիր հստակ, հայերենով և սեղմ։\n"
+                            if st.session_state.schedule:
+                                context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
+                            else:
+                                context += "Դեռևս գեներացված դասացուցակ չկա։\n"
+                            
+                            context += f"Օգտատիրոջ հարցը՝ {prompt}"
+
+                            client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+                            response = client.models.generate_content(
+                                model='gemini-2.5-flash',
+                                contents=context,
+                            )
+                            response_text = response.text
+
+                    except Exception as e:
+                        response_text = f"❌ Սխալ տեղի ունեցավ API կանչի ժամանակ: {str(e)}"
+
+                    st.markdown(response_text)
+                    st.session_state.chat_history.append({"role": "assistant", "content": response_text})
