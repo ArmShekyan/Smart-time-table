@@ -218,37 +218,53 @@ def generate_pdf(schedule_data):
     pdf = FPDF()
     pdf.add_page()
     
-    # --- 1. Ավելացնում ենք քո գտած ֆայլը որպես հայերեն տառատեսակ ---
-    # (Եթե ֆայլի անունը ուրիշ է, փոխիր 'Sylfaen.ttf'-ի տեղը)
-    pdf.add_font('ArmenianFont', '', 'sylfaen.ttf') 
-    pdf.set_font('ArmenianFont', size=11)
+    # --- 🔍 Խելացի որոնում պրոյեկտի մեջ ---
+    font_path = "sylfaen.ttf" # Սկզբից փնտրում ենք կողքը
     
-    pdf.cell(200, 10, txt="Smart Time Table - Դպրոցական Դասացուցակ", ln=True, align='C')
+    if not os.path.exists(font_path):
+        # Եթե կողքը չկա, փնտրում ենք մեկ թղթապանակ վերև (root-ում)
+        parent_path = os.path.join("..", "sylfaen.ttf")
+        if os.path.exists(parent_path):
+            font_path = parent_path
+
+    try:
+        pdf.add_font('ArmenianFont', '', font_path) 
+        pdf.set_font('ArmenianFont', size=11)
+    except Exception:
+        # Եթե էլի չգտնի, ստիպված կօգտագործի անգլերեն Helvetica, որ Error չտա
+        pdf.set_font("Helvetica", size=11)
+    
+    pdf.cell(200, 10, txt="Smart Time Table", ln=True, align='C')
     pdf.ln(10)
 
     df = pd.DataFrame(schedule_data)
     
     for cls in df['Դասարան'].unique():
-        pdf.set_font('ArmenianFont', size=11)
-        pdf.cell(0, 10, txt=f"Դասարան` {cls}", ln=True)
-        pdf.set_font('ArmenianFont', size=10)
+        # Եթե font-ը չկա, Helvetica-ն հայերեն չի տպի, բայց գոնե Error չի տա
+        try:
+            pdf.set_font('ArmenianFont', size=11)
+        except:
+            pdf.set_font('Helvetica', size=11)
+            
+        pdf.cell(0, 10, txt=f"Class: {cls}", ln=True)
         
         cls_df = df[df['Դասարան'] == cls]
         cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: x.split(" (")[0])
         pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
         
-        # Վերնագրեր (Արդեն հայերեն)
-        pdf.cell(15, 8, "Ժամ", border=1)
+        pdf.cell(15, 8, "Hour", border=1)
         for day in DAYS_AM:
             pdf.cell(35, 8, day[:3], border=1)
         pdf.ln()
 
-        # Տողեր
         for hour in pivot.index:
             pdf.cell(15, 8, str(hour), border=1)
             for day in DAYS_AM:
                 val = pivot.loc[hour, day] if day in pivot.columns else "-"
-                pdf.cell(35, 8, str(val), border=1)
+                
+                # Եթե Font-ը միացել է, տպում ենք հայերեն, եթե ոչ՝ կարճ անգլերեն
+                cell_text = str(val)[:15]
+                pdf.cell(35, 8, cell_text, border=1)
             pdf.ln()
         pdf.ln(10)
 
