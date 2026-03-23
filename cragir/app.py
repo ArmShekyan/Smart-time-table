@@ -38,7 +38,6 @@ class Assignment:
 DB_FILE = "smart_timetable_final.json"
 DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
-# 🔥 Ավելացվեցին նոր Default օգտատերերը՝ փորձարկման համար
 DEFAULT_OWNER = {"username": "armshekyan", "password": "123", "role": "owner"}
 DEFAULT_ADMIN = {"username": "arsoo", "password": "123", "role": "admin"}
 DEFAULT_SUB_EDIT = {"username": "sub", "password": "123", "role": "subject_editor"}
@@ -95,10 +94,12 @@ def save_to_disk():
     if headers:
         try:
             url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
+            # Օգտագործում ենք upsert, որ եթե ID=1 կա, վրան գրի
             payload = {"id": 1, "data": data}
             headers["Prefer"] = "resolution=merge-duplicates"
+            
             requests.post(url, headers=headers, data=json.dumps(payload))
-            st.sidebar.success("✅ Տվյալները պահպանվեցին Cloud SQL-ում!")
+            st.sidebar.success("✅ Բոլոր տվյալները պահպանվեցին Cloud SQL-ում!")
             return
         except Exception:
             pass
@@ -224,7 +225,6 @@ if st.sidebar.button("🔄 Թարմացնել Տվյալները", use_container
 
 st.sidebar.divider()
 
-# 1. Նավիգացիայի էջերի ճիշտ բաշխում՝ ըստ պաշտոնի
 available_pages = ["📊 Վահանակ"]
 
 if st.session_state.user_role in ['owner', 'admin', 'subject_editor']:
@@ -245,7 +245,6 @@ def on_page_change():
 page = st.sidebar.radio("Նավիգացիա", available_pages, key="nav_radio", on_change=on_page_change)
 
 
-# 💾 ՊԱՀՊԱՆԵԼՈՒ ԿՈՃԱԿԸ
 st.sidebar.divider()
 
 if st.sidebar.button("💾 Պահպանել Բոլորը", width='stretch', type="primary"):
@@ -254,11 +253,11 @@ if st.sidebar.button("💾 Պահպանել Բոլորը", width='stretch', type
 st.sidebar.divider()
 
 
-# 2. ՀԱՏՈՒԿ ԷՋ՝ Օգտատերերի Կառավարում (Միայն Owner և Admin-ի համար)
 if st.session_state.user_role in ['owner', 'admin']:
     if st.sidebar.button("👥 Օգտատերերի Կառավարում", width='stretch'):
         st.session_state.active_page = "👥 Օգտատերեր"
         st.rerun()
+
 
 # --- ԷՋԵՐԻ ՄԱՐՄԻՆԸ ---
 
@@ -272,7 +271,6 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
             new_u = st.text_input("Username")
             new_p = st.text_input("Password")
             
-            # 🔥 Ավելացրինք նաև սովորական 'user'-ը ցուցակում
             roles_list = ["user", "subject_editor", "teacher_editor", "admin"]
             new_r = st.selectbox("Դերը", roles_list)
             
@@ -282,16 +280,12 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
                         
                         new_user_data = {"username": new_u, "password": new_p, "role": new_r}
                         
-                        # 1️⃣ Ավելացնում ենք Python-ի ժամանակավոր ցուցակում (որպեսզի էջում երևա)
                         st.session_state.users_list.append(new_user_data)
                         
-                        # 🔥 2️⃣ ԱՎՏՈՄԱՏ ՈՒՂԱՐԿՈՒՄ ԵՆՔ SUPABASE SQL (users աղյուսակ)
                         headers = get_supabase_headers()
                         if headers:
                             try:
-                                # Միանում ենք հենց users աղյուսակին
                                 url = f"{st.secrets['supabase_url']}/rest/v1/users"
-                                
                                 response = requests.post(url, headers=headers, data=json.dumps(new_user_data))
                                 
                                 if response.status_code in [200, 201]:
@@ -458,52 +452,52 @@ elif st.session_state.active_page == "normal":
                     st.session_state.assignments.pop(i); st.rerun()
 
     elif page == "🚀 Գեներացում":
-        st.title("🚀 Գեներացում")
+        st.title("🚀 Պրոֆեսիոնալ Գեներացում")
         
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", width='stretch', type="primary"):
             final_schedule = []
-            teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
             
-            for cls in st.session_state.classes:
+            # Կոնֆլիկտները ստուգելու համար (Ուսուցչի և Դասարանի զբաղվածություն)
+            teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
+            class_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
+            
+            shuffled_classes = list(st.session_state.classes)
+            random.shuffle(shuffled_classes)
+            
+            for cls in shuffled_classes:
                 class_fund = []
-                weekly_subject_hours = {}
                 assignments_for_cls = [a for a in st.session_state.assignments if a.class_id == cls.id]
                 for ass in assignments_for_cls:
                     class_fund.extend([ass] * ass.lessons_per_week)
-                    weekly_subject_hours[ass.subject_id] = ass.lessons_per_week
                 
+                # Սորտավորում ըստ բարդության
                 class_fund.sort(key=lambda x: get_subj_complexity(x.subject_id), reverse=True)
                 class_day_counts = {d: 0 for d in DAYS_AM}
                 
                 timeout = 0
-                while class_fund and timeout < 3000:
+                while class_fund and timeout < 5000:
                     timeout += 1
                     min_count = min(class_day_counts.values())
                     lightest_days = [d for d in DAYS_AM if class_day_counts[d] == min_count]
                     best_day = random.choice(lightest_days)
                     
                     if class_day_counts[best_day] >= 7:
-                        break 
+                        continue 
                     
                     next_hour = class_day_counts[best_day] + 1
                     chosen_candidate_idx = -1
                     
                     for idx, candidate in enumerate(class_fund):
                         subj_name = get_subj_name(candidate.subject_id)
-                        already_has_today = any(
-                            s["Դասարան"] == f"{cls.grade}{cls.section}" and s["Օր"] == best_day and s["Առարկա"].startswith(subj_name)
-                            for s in final_schedule
-                        )
                         
-                        if weekly_subject_hours.get(candidate.subject_id, 0) <= 5 and already_has_today:
-                            continue 
-
-                        if candidate.teacher_id not in teacher_occupancy[best_day][next_hour]:
+                        # Պրոֆեսիոնալ ստուգում. ոչ ուսուցիչը, ոչ դասարանը չպիտի զբաղված լինեն
+                        if (candidate.teacher_id not in teacher_occupancy[best_day][next_hour] and 
+                            f"{cls.grade}{cls.section}" not in class_occupancy[best_day][next_hour]):
                             chosen_candidate_idx = idx
                             break 
 
                     if chosen_candidate_idx == -1:
-                         continue
+                        continue
 
                     target = class_fund.pop(chosen_candidate_idx)
                     t_name = next((t.name for t in st.session_state.teachers if t.id == target.teacher_id), "Անհայտ")
@@ -517,10 +511,11 @@ elif st.session_state.active_page == "normal":
                     })
                     
                     teacher_occupancy[best_day][next_hour].add(target.teacher_id)
+                    class_occupancy[best_day][next_hour].add(f"{cls.grade}{cls.section}")
                     class_day_counts[best_day] += 1
 
             st.session_state.schedule = final_schedule
-            st.success("✅ Հաջողությամբ գեներացվեց")
+            st.success("✅ Դասացուցակը հաջողությամբ գեներացվեց առանց կոնֆլիկտների:")
 
         if st.session_state.schedule:
             df = pd.DataFrame(st.session_state.schedule)
