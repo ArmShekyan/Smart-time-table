@@ -285,23 +285,26 @@ if st.sidebar.button("🔄 Թարմացնել Տվյալները", use_container
 
 st.sidebar.divider()
 
-available_pages = ["📊 Վահանակ"]
+# --- ԷՋԵՐԻ ՍԱՀՄԱՆԱՓԱԿՈՒՄ ԸՍՏ ԴԵՐԵՐԻ ---
+available_pages = []
 
-if st.session_state.user_role in ['owner', 'admin', 'subject_editor']:
-    available_pages.append("📚 Առարկաներ")
-
-if st.session_state.user_role in ['owner', 'admin', 'teacher_editor']:
-    available_pages.append("👩‍🏫 Ուսուցիչներ")
-
+# Եթե Admin կամ Owner է, տեսնում է ամեն ինչ
 if st.session_state.user_role in ['owner', 'admin']:
-    available_pages.extend(["🏫 Դասարաններ", "🚀 Գեներացում"])
+    available_pages = ["📊 Վահանակ", "📚 Առարկաներ", "👩‍🏫 Ուսուցիչներ", "🏫 Դասարաններ", "🚀 Գեներացում", "📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական"]
 
-available_pages.extend(["📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական"])
+# Եթե միայն Առարկա խմբագրող է
+elif st.session_state.user_role == 'subject_editor':
+    available_pages = ["📊 Վահանակ", "📚 Առարկաներ", "📂 Վերջին պահպանվածը"]
 
+# Եթե միայն Ուսուցիչ խմբագրող է
+elif st.session_state.user_role == 'teacher_editor':
+    available_pages = ["📊 Վահանակ", "👩‍🏫 Ուսուցիչներ", "📂 Վերջին պահպանվածը"]
 
-def on_page_change():
-    st.session_state.active_page = "normal"
+# 🎯 ՍԱ ՀԵՆՑ ՈՒՍՈՒՑԻՉՆԵՐԻ ՀԱՄԱՐ Է (user դերը)
+else:
+    available_pages = ["📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական"]
 
+# Էջի ընտրությունը
 page = st.sidebar.radio("Նավիգացիա", available_pages, key="nav_radio", on_change=on_page_change)
 
 
