@@ -690,11 +690,14 @@ elif st.session_state.active_page == "normal":
                 t_data_clean = t_data.copy()
                 t_data_clean['Ցուցադրում'] = t_data_clean['Դասարան'] + " - " + t_data_clean['Առարկա'].apply(lambda x: x.split(" (")[0])
                 
-                # 🎯 ԱՀԱ ԼՈՒԾՈՒՄԸ: Ստիպում ենք Pandas-ին հասկանալ հայերեն օրերի ճիշտ հերթականությունը
-                t_data_clean['Օր'] = pd.Categorical(t_data_clean['Օր'], categories=DAYS_AM, ordered=True)
-                
-                # Սարքում ենք աղյուսակը (Pivot)
+                # 1. Սովորական Pivot ենք անում
                 pivot = t_data_clean.pivot(index='Ժամ', columns='Օր', values='Ցուցադրում').fillna("-")
+                
+                # 🎯 2. ԱՀԱ ԼՈՒԾՈՒՄԸ: Վերցնում ենք միայն այն օրերը, որոնք ԻՐԱԿԱՆՈՒՄ կան այս ուսուցչի մոտ, բայց DAYS_AM-ի հերթականությամբ
+                existing_days = [day for day in DAYS_AM if day in pivot.columns]
+                
+                if existing_days:
+                    pivot = pivot[existing_days] # Սա կդասավորի սյունակները ճիշտ հերթականությամբ
                 
                 st.dataframe(pivot, width='stretch')
             else:
