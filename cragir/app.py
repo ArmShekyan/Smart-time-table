@@ -673,16 +673,55 @@ elif st.session_state.active_page == "normal":
                             st.rerun()
 
         st.divider()
-        st.subheader("✅ Գրանցված Ուսուցիչներ")
-        for i, t in enumerate(st.session_state.teachers):
-            with st.container(border=True):
-                c1, c2 = st.columns([5,1])
-                c1.markdown(f"👤 **{t.name}** — <span style='color: #6c757d;'>{', '.join([get_subj_name(sid) for sid in t.subject_ids])}</span>", unsafe_allow_html=True)
-                if c2.button("🗑️", key=f"t_{t.id}"):
-                    st.session_state.assignments = [a for a in st.session_state.assignments if a.teacher_id != t.id]
-                    st.session_state.teachers.pop(i)
-                    st.toast(f"🗑️ Ուսուցիչը ջնջվեց:", icon="👩‍🏫")
-                    st.rerun()
+        st.subheader("📋 Դիտել Ուսուցիչներն ըստ Առարկաների")
+
+        if st.session_state.subjects and st.session_state.teachers:
+            # 1. Առարկաների ցուցակ Selectbox-ի համար (ավելացնում ենք «Բոլորը» տարբերակը)
+            all_subjects_option = Subject(id="all", name="🌐 Բոլոր Առարկաները", complexity=0)
+            subject_options = [all_subjects_option] + st.session_state.subjects
+
+            selected_subject_view = st.selectbox(
+                "🔍 Ֆիլտրել ըստ առարկայի", 
+                subject_options, 
+                format_func=lambda x: x.name
+            )
+
+            # 2. Ֆիլտրում ենք ուսուցիչներին
+            if selected_subject_view.id == "all":
+                filtered_teachers = [(i, t) for i, t in enumerate(st.session_state.teachers)]
+                st.markdown("📌 **Բոլոր գրանցված ուսուցիչները.**")
+            else:
+                filtered_teachers = [
+                    (i, t) for i, t in enumerate(st.session_state.teachers) 
+                    if selected_subject_view.id in t.subject_ids
+                ]
+                st.markdown(f"📌 **{selected_subject_view.name}** դասավանդող ուսուցիչները.")
+
+            # 3. Արտածում ենք ֆիլտրված ուսուցիչներին
+            if filtered_teachers:
+                for i, t in filtered_teachers:
+                    with st.container(border=True):
+                        c1, c2 = st.columns([5, 1])
+                        
+                        # Հավաքում ենք ուսուցչի բոլոր առարկաների անունները
+                        subj_names = [get_subj_name(sid) for sid in t.subject_ids]
+                        
+                        c1.markdown(
+                            f"👤 **{t.name}** — <span style='color: #6c757d;'>{', '.join(subj_names)}</span>", 
+                            unsafe_allow_html=True
+                        )
+                        
+                        if c2.button("🗑️", key=f"t_view_{i}"):
+                            # Ջնջում ենք ուսուցչին նաև կապերից (assignments)
+                            st.session_state.assignments = [a for a in st.session_state.assignments if a.teacher_id != t.id]
+                            st.session_state.teachers.pop(i)
+                            st.toast(f"🗑️ Ուսուցիչը ջնջվեց:", icon="👩‍🏫")
+                            st.rerun()
+            else:
+                st.info(f"ℹ️ {selected_subject_view.name} առարկայի համար դեռ ոչ մի ուսուցիչ չկա գրանցված։")
+        else:
+            st.info("ℹ️ Դեռևս չկան գրանցված առարկաներ կամ ուսուցիչներ։")
+            
 
     elif st.session_state.active_tab == "🏫 Դասարաններ":
         st.title("🏫 Դասարաններ և Ժամեր")
