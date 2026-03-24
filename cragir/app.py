@@ -827,20 +827,49 @@ elif st.session_state.active_page == "normal":
                                 st.rerun()
 
         st.divider()
-        st.subheader("📋 Դասավանդման Կապեր")
-        for i, a in enumerate(st.session_state.assignments):
-            t_name = next((t.name for t in st.session_state.teachers if t.id == a.teacher_id), "Անհայտ")
-            s_name = get_subj_name(a.subject_id)
-            c_name = next((f"{c.grade}{c.section}" for c in st.session_state.classes if c.id == a.class_id), "Անհայտ")
+        st.subheader("📋 Դասավանդման Կապեր (Ըստ Դասարանների)")
 
-            with st.container(border=True):
-                c1, c2 = st.columns([5, 1])
-                c1.markdown(f"🏫 **{c_name}** | 👩‍🏫 {t_name} — 📖 {s_name} | 🕒 {a.lessons_per_week} ժամ")
-                if c2.button("🗑️", key=f"a_{a.id}"):
-                    st.session_state.assignments.pop(i)
-                    st.toast(f"🗑️ Կապը ջնջվեց:", icon="🔗")
-                    st.rerun()
+        if st.session_state.classes:
+            # 1. Ստեղծում ենք ֆիլտր դասարանների համար
+            all_classes_option = ClassGroup(id="all", grade="🌐 Բոլոր", section="Դասարանները")
+            class_options = [all_classes_option] + st.session_state.classes
 
+            selected_class_view = st.selectbox(
+                "🔍 Ֆիլտրել կապերը ըստ դասարանի", 
+                class_options, 
+                format_func=lambda x: f"{x.grade}{x.section}" if x.id != "all" else x.grade
+            )
+
+            # 2. Ֆիլտրում ենք կապերը
+            if selected_class_view.id == "all":
+                filtered_assignments = [(i, a) for i, a in enumerate(st.session_state.assignments)]
+            else:
+                filtered_assignments = [
+                    (i, a) for i, a in enumerate(st.session_state.assignments) 
+                    if a.class_id == selected_class_view.id
+                ]
+
+            # 3. Արտածում ենք կապերը
+            if filtered_assignments:
+                for i, a in filtered_assignments:
+                    t_name = next((t.name for t in st.session_state.teachers if t.id == a.teacher_id), "Անհայտ")
+                    s_name = get_subj_name(a.subject_id)
+                    c_name = next((f"{c.grade}{c.section}" for c in st.session_state.classes if c.id == a.class_id), "Անհայտ")
+
+                    with st.container(border=True):
+                        c1, c2 = st.columns([5, 1])
+                        c1.markdown(f"🏫 **{c_name}** | 👩‍🏫 {t_name} — 📖 {s_name} | 🕒 {a.lessons_per_week} ժամ")
+                        
+                        if c2.button("🗑️", key=f"del_assign_{a.id}_{i}"):
+                            st.session_state.assignments.pop(i)
+                            st.toast(f"🗑️ Կապը ջնջվեց:", icon="🔗")
+                            st.rerun()
+            else:
+                st.info("ℹ️ Այս դասարանի համար դեռևս կապեր գրանցված չեն:")
+        else:
+            st.info("ℹ️ Դեռևս չկան գրանցված դասարաններ:")
+
+            
     # --- 🚀 ԷԿՐԱՆ 5: ԳԵՆԵՐԱՑՈՒՄ ---
     elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Գեներացնել Խելացի Դասացուցակ")
