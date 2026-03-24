@@ -38,6 +38,43 @@ class Assignment:
     class_id: str
     lessons_per_week: int
 
+
+# --- 📌 Ինստրուկցիայի Թռնող Պատուհան (Modal) ---
+@st.dialog("📖 Ինչպե՞ս օգտագործել Smart Time Table-ը")
+def show_instruction_modal():
+    st.markdown("""
+    Բարի գալուստ դպրոցական դասացուցակների կազմման խելացի համակարգ։ Հետևեք այս պարզ քայլերին՝ անթերի դասացուցակ ստանալու համար։
+    """)
+
+    with st.expander("🔑 Քայլ 1. Դերեր և Մուտք", expanded=True):
+        st.markdown("""
+        * 🔐 Կախված Ձեր պաշտոնից (**Տնօրեն, Ադմինիստրատոր, Ուսուցիչ**), համակարգը Ձեզ ցույց կտա միայն Ձեր էջերը։
+        """)
+
+    with st.expander("🛠️ Քայլ 2. Տվյալների Մուտքագրում (Պարտադիր Հերթականություն)"):
+        st.markdown("""
+        Որպեսզի համակարգի ալգորիթմը ճիշտ աշխատի, լրացրեք տվյալները հետևյալ հաջորդականությամբ.
+        1. **📚 Առարկաներ** — Ավելացրեք անվանումը և բարդության աստիճանը (1-ից 5)։
+        2. **👩‍🏫 Ուսուցիչներ** — Գրանցեք ուսուցչին և կապեք իր դասավանդած առարկաների հետ։
+        3. **🏫 Դասարաններ** — Ստեղծեք դասարանները և կապեք ուսուցիչներին շաբաթական ժամերի հետ։
+        """)
+
+    with st.expander("🚀 Քայլ 3. Ավտոմատ Գեներացում և Պահպանում"):
+        st.markdown("""
+        * Մտեք **«🚀 Գեներացում»** էջ և սեղմեք կապույտ կոճակը։ Համակարգը վայրկյանների ընթացքում կստեղծի օպտիմալ դասացուցակ։
+        * 💾 **ՇԱՏ ԿԱՐԵՎՈՐ:** Ցանկացած փոփոխությունից հետո սեղմեք ձախ մենյուի **«Պահպանել բոլորը»** կոճակը՝ տվյալները ամպային բազայում (Cloud) պահելու համար։
+        """)
+
+    with st.expander("🤖 Քայլ 4. Անձնական AI Օգնական (Gemini)"):
+        st.markdown("""
+        * Մտեք **«🤖 AI Օգնական»** էջ՝ Ձեր դասացուցակը վերլուծելու համար։ 
+        * 🔒 *Չաթն անձնական է. այլ օգտատերեր չեն տեսնի Ձեր հարցերը։*
+        """)
+    
+    if st.button("Հասկանալի է, անցնենք գործի! ✅", use_container_width=True, type="primary"):
+        st.rerun()
+
+
 DB_FILE = "smart_timetable_final.json"
 DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
@@ -220,10 +257,8 @@ def parse_data(data):
 # --- INITIALIZATION ---
 st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅")
 
-# 🔥🎨 ԱՆՀԱՏԱԿԱՆ CSS ՈՃԵՐ
 st.markdown("""
 <style>
-    /* 1. Sidebar-ի սիրունացում */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
         border-right: 1px solid #343a40;
@@ -239,8 +274,6 @@ st.markdown("""
         transform: scale(1.05);
         box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
     }
-
-    /* 2. Հիմնական Աղյուսակների սիրունացում */
     [data-testid="stDataFrameDataframe"] div table {
         border-radius: 10px;
         overflow: hidden;
@@ -250,27 +283,15 @@ st.markdown("""
         background-color: #343a40 !important;
         color: white !important;
     }
-    [data-testid="stDataFrameDataframe"] div table tbody tr:hover {
-        background-color: #f1f3f5 !important;
-    }
-
-    /* 3. Metrics (Վիճակագրություն) սիրունացում */
     [data-testid="stMetricValue"] {
         color: #0d6efd;
         font-weight: bold;
     }
-    [data-testid="stMetricLabel"] {
-        color: #6c757d;
-    }
-
-    /* 4. Expander-ի (Դասարանների) սիրունացում */
     .streamlit-expanderHeader {
         background-color: #e9ecef;
         border-radius: 8px;
         font-weight: bold;
     }
-
-    /* 5. Fade-in Անիմացիա էջը բացելիս */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -297,7 +318,8 @@ if "subjects" not in st.session_state:
         "user_role": "",         
         "active_page": "normal",
         "active_tab": "📊 Վահանակ",
-        "chat_histories": {} # Պահում ենք չաթի պատմությունները բոլոր օգտատերերի համար առանձին
+        "chat_histories": {},  # ✨ Անհատական AI չաթի պատմություններ
+        "show_readme": False   # ✨ Թռնող պատուհանի ստուգում
     })
     load_from_disk()
 
@@ -334,6 +356,8 @@ if not st.session_state.logged_in:
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
                         
+                        st.session_state.show_readme = True  # ✨ Ակտիվացնում ենք ինստրուկցիայի պատուհանը
+                        
                         if user['role'] in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
                             st.session_state.active_tab = "📊 Վահանակ"
                         else:
@@ -347,6 +371,12 @@ if not st.session_state.logged_in:
                         st.error("❌ Սխալ օգտանուն կամ գաղտնաբառ:")
                 
     st.stop()
+
+
+# --- 🔔 Թռնող Ինստրուկցիան Լոգինից հետո ---
+if st.session_state.get("show_readme", False):
+    st.session_state.show_readme = False
+    show_instruction_modal()
 
 
 # --- 🛠️ ՀԻՄՆԱԿԱՆ ԾՐԱԳԻՐ ---
@@ -508,7 +538,9 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
         with st.container(border=True):
             c1, c2, c3 = st.columns([3, 3, 1])
             c1.markdown(f"👤 **{u['username']}**")
-            c2.markdown(f"🎭 Դերը՝ `<span style='color: #0d6efd;'>{u['role']}</span>`", unsafe_allow_html=True)
+            
+            # ✅ Գունավոր դերեր `unsafe_allow_html=True`-ով
+            c2.markdown(f"🎭 Դերը՝ <span style='color: #0d6efd;'>{u['role']}</span>", unsafe_allow_html=True)
             
             can_delete = True
             if u['username'] == st.session_state.username or u['role'] == 'owner':
@@ -516,6 +548,7 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
             elif u['role'] == 'admin' and st.session_state.user_role != 'owner':
                 can_delete = False
                     
+            # ✅ Ջնջելու կոճակը ցույց է տրվում ճիշտ (երբ can_delete-ը True է), բայց մնացած տվյալները չեն թաքնվում
             if can_delete:
                 if c3.button("🗑️", key=f"del_user_{i}"):
                     st.session_state.users_list.pop(i)
@@ -837,13 +870,11 @@ elif st.session_state.active_page == "normal":
             else: st.warning("Այս ուսուցչի համար դեռևս դասեր չկան բաշխված։")
         else: st.info("Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
 
-
-
     elif st.session_state.active_tab == "🤖 AI Օգնական":
         st.title("🤖 AI Օգնական (Gemini)")
         st.caption(f"Բարև, **{st.session_state.username}**! Ես քո անձնական AI օգնականն եմ։")
 
-        # 🎯 Յուրաքանչյուր օգտատիրոջ համար ստեղծում ենք իր սեփական պատմությունը
+        # ✨ Յուրաքանչյուր օգտատիրոջ համար ստեղծում ենք իր սեփական պատմությունը
         current_user = st.session_state.username
         if current_user not in st.session_state.chat_histories:
             st.session_state.chat_histories[current_user] = []
@@ -856,7 +887,6 @@ elif st.session_state.active_page == "normal":
         # 2. Չաթի մուտքագրման դաշտը
         if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
             
-            # Ավելացնում ենք հենց այս օգտատիրոջ պատմության մեջ
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
@@ -867,7 +897,6 @@ elif st.session_state.active_page == "normal":
                         if "GEMINI_API_KEY" not in st.secrets:
                             response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
                         else:
-                            # Context-ի ստեղծում
                             context = f"Դու 'Smart Time Table' պրոյեկտի AI օգնականն ես։ Պատասխանիր հստակ, հայերենով և սեղմ։\n"
                             context += f"Դու խոսում ես {current_user}-ի հետ։\n"
                             if st.session_state.schedule:
