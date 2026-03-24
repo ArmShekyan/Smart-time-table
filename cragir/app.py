@@ -100,17 +100,12 @@ def show_instruction_modal():
         st.rerun()
 
 
+# --- 🔑 ՏՎՅԱԼՆԵՐԻ ԲԱԶԱՅԻ ԵՎ ԼՈԳԻՆԻ ՖՈՒՆԿՑԻԱՆԵՐ ---
+
+# 👑 Միակ Prime Admin-ը (Owner)
+DEFAULT_OWNER = {"username": "armshekyan", "password": "arms567", "role": "owner", "school_id": "prime_admin"}
 DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
-# Default Օգտատերեր
-DEFAULT_OWNER = {"username": "armshekyan", "password": "arms567", "role": "owner", "school_id": "master_admin"}
-DEFAULT_ADMIN = {"username": "arsoo", "password": "123", "role": "admin", "school_id": "school_1"}
-DEFAULT_SUB_EDIT = {"username": "sub", "password": "123", "role": "subject_editor", "school_id": "school_1"}
-DEFAULT_TEACH_EDIT = {"username": "teach", "password": "123", "role": "teacher_editor", "school_id": "school_1"}
-DEFAULT_USER = {"username": "user", "password": "123", "role": "user", "school_id": "school_1"}
-
-
-# --- 🔑 ՏՎՅԱԼՆԵՐԻ ԲԱԶԱՅԻ ԵՎ ԼՈԳԻՆԻ ՖՈՒՆԿՑԻԱՆԵՐ ---
 
 def get_supabase_headers():
     try:
@@ -179,7 +174,7 @@ def save_to_disk():
             except Exception:
                 pass
 
-        # 📁 2. Պահպանում Տեղական JSON-ում (Local Run-ի համար)
+        # 📁 2. Պահպանում Տեղական JSON-ում
         with open(dynamic_file, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
         st.toast(f"💾 Պահպանվեց տեղական ֆայլում ({dynamic_file})!", icon="📁")
@@ -285,7 +280,7 @@ def load_from_disk():
         except Exception:
             pass
     
-    st.session_state.users_list = [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_SUB_EDIT, DEFAULT_TEACH_EDIT, DEFAULT_USER]
+    st.session_state.users_list = [DEFAULT_OWNER]
 
 
 def parse_data(data):
@@ -296,7 +291,7 @@ def parse_data(data):
     st.session_state.schedule = data.get("schedule", None)
     st.session_state.subj_pool = data.get("subj_pool", [])
     st.session_state.teacher_pool = data.get("teacher_pool", [])
-    st.session_state.users_list = data.get("users_list", [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_SUB_EDIT, DEFAULT_TEACH_EDIT, DEFAULT_USER])
+    st.session_state.users_list = data.get("users_list", [DEFAULT_OWNER])
 
 
 # --- INITIALIZATION ---
@@ -619,8 +614,23 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
                     
             if can_delete:
                 if c3.button("🗑️", key=f"del_user_{i}"):
+                    deleted_username = u['username']
+                    
+                    # 🌐 1. Ջնջում ենք Supabase SQL բազայից
+                    headers = get_supabase_headers()
+                    if headers:
+                        try:
+                            url = f"{st.secrets['supabase_url']}/rest/v1/users?username=eq.{deleted_username}"
+                            response = requests.delete(url, headers=headers)
+                            if response.status_code in [200, 204]:
+                                st.toast(f"✅ {deleted_username}-ն ջնջվեց Cloud-ից:", icon="👨‍⚖️")
+                            else:
+                                st.error("❌ Չհաջողվեց ջնջել Cloud-ից:")
+                        except Exception as e:
+                            st.error(f"❌ Սխալ Cloud ջնջման ժամանակ: {e}")
+
+                    # 📁 2. Ջնջում ենք Session ցուցակից
                     st.session_state.users_list.pop(i)
-                    st.toast(f"🗑️ Օգտատերը ջնջվեց:", icon="👨‍⚖️")
                     st.rerun()
 
 elif st.session_state.active_page == "normal":
@@ -848,7 +858,6 @@ elif st.session_state.active_page == "normal":
                         for _ in range(assign.lessons_per_week):
                             pool.append(assign)
 
-                    # Պարզեցված խառնում (Future: Complexity ordering)
                     random.shuffle(pool)
 
                     hour_map = {day: 1 for day in DAYS_AM}
@@ -898,15 +907,12 @@ elif st.session_state.active_page == "normal":
             st.info("ℹ️ Դեռևս ոչ մի դասացուցակ գեներացված կամ պահպանված չէ:")
         else:
             df = pd.DataFrame(st.session_state.schedule)
-            
             classes_list = df['Դասարան'].unique()
             selected_class = st.selectbox("🎯 Ընտրեք Դասարանը", classes_list)
 
             if selected_class:
                 class_df = df[df['Դասարան'] == selected_class]
                 pivot = class_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
-                
-                # Ստանդարտացնում ենք օրերի հերթականությունը
                 for day in DAYS_AM:
                     if day not in pivot.columns:
                         pivot[day] = "-"
@@ -928,15 +934,12 @@ elif st.session_state.active_page == "normal":
 
             if selected_teacher:
                 df = pd.DataFrame(st.session_state.schedule)
-                
-                # Ֆիլտրում ենք այն տողերը, որտեղ առարկայի կողքին փակագծերում գրված է ուսուցչի անունը
                 teacher_df = df[df['Առարկա'].str.contains(f"\\({selected_teacher.name}\\)")]
 
                 if teacher_df.empty:
                     st.warning(f"⚠️ {selected_teacher.name}-ի համար դասեր չեն գտնվել:")
                 else:
                     teacher_pivot = teacher_df.pivot(index='Ժամ', columns='Օր', values='Դասարան').fillna("-")
-                    
                     for day in DAYS_AM:
                         if day not in teacher_pivot.columns:
                             teacher_pivot[day] = "-"
@@ -949,7 +952,6 @@ elif st.session_state.active_page == "normal":
     elif st.session_state.active_tab == "🤖 AI Օգնական":
         st.title("🤖 Խելացի AI Օգնական")
 
-        # Անձնական չաթի պատմության ստեղծում
         if st.session_state.username not in st.session_state.chat_histories:
             st.session_state.chat_histories[st.session_state.username] = []
 
@@ -964,7 +966,6 @@ elif st.session_state.active_page == "normal":
                 st.markdown(prompt)
             chat_history.append({"role": "user", "content": prompt})
 
-            # Հավաքում ենք համատեքստը (context) AI-ի համար
             context = f"""
             Համակարգում առկա տվյալներ՝
             Առարկաներ՝ {len(st.session_state.subjects)}
@@ -976,12 +977,8 @@ elif st.session_state.active_page == "normal":
 
             with st.chat_message("assistant"):
                 message_placeholder = st.empty()
-                
                 try:
-                    # ✅ Google-ի նոր genai գրադարանը (Gemini 2.5)
                     client = genai.Client(api_key=st.secrets["gemini_key"])
-                    
-                    # Ուղարկում ենք համատեքստը և հարցը
                     full_prompt = f"{context}\n\nՕգտատիրոջ հարցը՝ {prompt}"
                     
                     response = client.models.generate_content(
@@ -992,8 +989,7 @@ elif st.session_state.active_page == "normal":
                     answer = response.text
                     message_placeholder.markdown(answer)
                     chat_history.append({"role": "assistant", "content": answer})
-
                 except Exception as e:
-                    error_msg = f"❌ Սխալ API հարցման ժամանակ (ստուգեք gemini_key-ը st.secrets-ում)։ {e}"
+                    error_msg = f"❌ Սխալ API հարցման ժամանակ։ {e}"
                     message_placeholder.markdown(error_msg)
                     chat_history.append({"role": "assistant", "content": error_msg})
