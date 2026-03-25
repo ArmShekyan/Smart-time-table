@@ -143,35 +143,68 @@ def check_user(username, password):
     return None
 
 
+# ✅ ՆՈՐ ԿՈԴԸ (Պատճենիր և դիր հին save_to_disk-ի տեղը)
 def save_to_disk():
     with st.spinner("⏳ Պահպանվում է..."):
         time.sleep(1)
-        data = {
-            "subjects": [asdict(s) for s in st.session_state.subjects],
-            "teachers": [asdict(t) for t in st.session_state.teachers],
-            "classes": [asdict(c) for c in st.session_state.classes],
-            "assignments": [asdict(a) for a in st.session_state.assignments],
+        
+        local_data = {
+            "subjects": {s.id: asdict(s) for s in st.session_state.subjects},
+            "teachers": {t.id: asdict(t) for t in st.session_state.teachers},
+            "classes": {c.id: asdict(c) for c in st.session_state.classes},
+            "assignments": {a.id: asdict(a) for a in st.session_state.assignments},
             "schedule": st.session_state.schedule,
-            "subj_pool": st.session_state.subj_pool,
-            "teacher_pool": st.session_state.teacher_pool,
-            "users_list": st.session_state.users_list 
+            "subj_pool": list(set(st.session_state.subj_pool)),
+            "teacher_pool": list(set(st.session_state.teacher_pool)),
+            "users_list": st.session_state.users_list
         }
 
         headers = get_supabase_headers()
+        cloud_data = {}
+        if headers:
+            try:
+                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
+                response = requests.get(url, headers=headers)
+                if response.status_code == 200 and response.json():
+                    cloud_data = response.json()[0]["data"]
+            except Exception:
+                pass
+
+        merged_subjects = {**{s["id"]: s for s in cloud_data.get("subjects", [])}, **local_data["subjects"]}
+        merged_teachers = {**{t["id"]: t for t in cloud_data.get("teachers", [])}, **local_data["teachers"]}
+        merged_classes = {**{c["id"]: c for c in cloud_data.get("classes", [])}, **local_data["classes"]}
+        merged_assignments = {**{a["id"]: a for a in cloud_data.get("assignments", [])}, **local_data["assignments"]}
+        
+        merged_subj_pool = list(set(cloud_data.get("subj_pool", []) + local_data["subj_pool"]))
+        merged_teacher_pool = list(set(cloud_data.get("teacher_pool", []) + local_data["teacher_pool"]))
+
+        final_data = {
+            "subjects": list(merged_subjects.values()),
+            "teachers": list(merged_teachers.values()),
+            "classes": list(merged_classes.values()),
+            "assignments": list(merged_assignments.values()),
+            "schedule": local_data["schedule"],
+            "subj_pool": merged_subj_pool,
+            "teacher_pool": merged_teacher_pool,
+            "users_list": local_data["users_list"]
+        }
+
         if headers:
             try:
                 url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
-                payload = {"id": 1, "data": data}
+                payload = {"id": 1, "data": final_data}
                 headers["Prefer"] = "resolution=merge-duplicates"
                 requests.post(url, headers=headers, data=json.dumps(payload))
-                st.toast("✅ Տվյալները պահպանվեցին Cloud-ում!", icon="🌐")
+                st.toast("✅ Տվյալները միացվեցին և պահպանվեցին Cloud-ում!", icon="🌐")
+                parse_data(final_data)
                 return
             except Exception:
                 pass
 
         with open(DB_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-        st.toast("⚠️ Պահպանվեց տեղական ֆայլում:", icon="💾")
+            json.dump(final_data, f, ensure_ascii=False, indent=4)
+        st.toast("⚠️ Պահպանվեց տեղական ֆայլում (Local):", icon="💾")
+        parse_data(final_data)
 
 
 def reset_all_data():
@@ -834,70 +867,89 @@ elif st.session_state.active_page == "normal":
     elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
         
-        if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", width='stretch', type="primary"):
-            with st.spinner("🧠 Ալգորիթմը մտածում է... Խնդրում ենք սպասել..."):
-                time.sleep(2.5) 
-                
-                final_schedule = []
-                teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
-                class_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
-
-                shuffled_classes = list(st.session_state.classes)
-                random.shuffle(shuffled_classes)
-
-                for cls in shuffled_classes:
-                    class_fund = []
-                    assignments_for_cls = [a for a in st.session_state.assignments if a.class_id == cls.id]
-                    for ass in assignments_for_cls:
-                        class_fund.extend([ass] * ass.lessons_per_week)
+        if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", use_container_width=True, type="primary"):
+            if not st.session_state.classes or not st.session_state.assignments:
+                st.error("❌ Բացակայում են դասարանները կամ ժամերը գեներացման համար:")
+            else:
+                with st.spinner("🧠 Ալգորիթմը մտածում է... Խնդրում ենք սպասել..."):
+                    time.sleep(2.5) 
                     
-                    class_fund.sort(key=lambda x: get_subj_complexity(x.subject_id), reverse=True)
-                    class_day_counts = {d: 0 for d in DAYS_AM}
-                    
-                    timeout = 0
-                    while class_fund and timeout < 3000:
-                        timeout += 1
-                        min_count = min(class_day_counts.values())
-                        lightest_days = [d for d in DAYS_AM if class_day_counts[d] == min_count]
-                        best_day = random.choice(lightest_days)
-                        
-                        if class_day_counts[best_day] >= 7:
-                            continue 
-                        
-                        next_hour = class_day_counts[best_day] + 1
-                        chosen_candidate_idx = -1
-                        
-                        for idx, candidate in enumerate(class_fund):
-                            if (candidate.teacher_id not in teacher_occupancy[best_day][next_hour] and 
-                                f"{cls.grade}{cls.section}" not in class_occupancy[best_day][next_hour]):
-                                chosen_candidate_idx = idx
-                                break 
+                    final_schedule = []
+                    # 👩‍🏫 Ուսուցիչների և դասարանների զբաղվածության ստուգման քարտեզ
+                    teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
+                    class_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
 
-                        if chosen_candidate_idx == -1:
-                            continue
+                    shuffled_classes = list(st.session_state.classes)
+                    random.shuffle(shuffled_classes)
 
-                        target = class_fund.pop(chosen_candidate_idx)
-                        t_name = next((t.name for t in st.session_state.teachers if t.id == target.teacher_id), "Անհայտ")
-                        subj_name = get_subj_name(target.subject_id)
+                    success = True
+
+                    for cls in shuffled_classes:
+                        class_fund = []
+                        assignments_for_cls = [a for a in st.session_state.assignments if a.class_id == cls.id]
+                        for ass in assignments_for_cls:
+                            class_fund.extend([ass] * ass.lessons_per_week)
                         
-                        final_schedule.append({
-                            "Դասարան": f"{cls.grade}{cls.section}",
-                            "Օր": best_day, 
-                            "Ժամ": next_hour, 
-                            "Առարկա": f"{subj_name} ({t_name})" 
-                        })
+                        # ✅ Սորտավորում ենք ըստ բարդության (Քո գրած խելացի մասը)
+                        class_fund.sort(key=lambda x: get_subj_complexity(x.subject_id), reverse=True)
+                        class_day_counts = {d: 0 for d in DAYS_AM}
                         
-                        teacher_occupancy[best_day][next_hour].add(target.teacher_id)
-                        class_occupancy[best_day][next_hour].add(f"{cls.grade}{cls.section}")
-                        class_day_counts[best_day] += 1
+                        timeout = 0
+                        # 🔄 Գեներացման ցիկլ
+                        while class_fund and timeout < 3000:
+                            timeout += 1
+                            min_count = min(class_day_counts.values())
+                            lightest_days = [d for d in DAYS_AM if class_day_counts[d] == min_count]
+                            best_day = random.choice(lightest_days)
+                            
+                            if class_day_counts[best_day] >= 7:
+                                continue 
+                            
+                            next_hour = class_day_counts[best_day] + 1
+                            chosen_candidate_idx = -1
+                            
+                            for idx, candidate in enumerate(class_fund):
+                                # 🛑 ՍՏՈՒԳՈՒՄ՝ Արդյոք ուսուցիչը կամ դասարանն ազատ են այս ժամին
+                                if (candidate.teacher_id not in teacher_occupancy[best_day][next_hour] and 
+                                    f"{cls.grade}{cls.section}" not in class_occupancy[best_day][next_hour]):
+                                    chosen_candidate_idx = idx
+                                    break 
 
-                st.session_state.schedule = final_schedule
-                st.toast("✅ Դասացուցակը պատրաստ է:", icon="🚀")
-                st.balloons() 
+                            if chosen_candidate_idx == -1:
+                                continue
 
-        if st.session_state.schedule:
+                            target = class_fund.pop(chosen_candidate_idx)
+                            t_name = next((t.name for t in st.session_state.teachers if t.id == target.teacher_id), "Անհայտ")
+                            subj_name = get_subj_name(target.subject_id)
+                            
+                            final_schedule.append({
+                                "Դասարան": f"{cls.grade}{cls.section}",
+                                "Օր": best_day, 
+                                "Ժամ": next_hour, 
+                                "Առարկա": f"{subj_name} ({t_name})" 
+                            })
+                            
+                            # 🔒 Գրանցում ենք զբաղվածությունը
+                            teacher_occupancy[best_day][next_hour].add(target.teacher_id)
+                            class_occupancy[best_day][next_hour].add(f"{cls.grade}{cls.section}")
+                            class_day_counts[best_day] += 1
+
+                        if timeout >= 3000:
+                            success = False
+                            break
+
+                if success:
+                    st.session_state.schedule = final_schedule
+                    st.success("🎉 Դասացուցակը հաջողությամբ գեներացվեց:")
+                    st.balloons() 
+                else:
+                    st.error("⚠️ Ալգորիթմը խճճվեց բախումների մեջ։ Փորձեք նորից սեղմել կոճակը կամ թեթևացրեք ժամաքանակը։")
+
+        # 📊 ԱՐԴՅՈՒՆՔՆԵՐԻ ՑՈՒՑԱԴՐՈՒՄ
+        if st.session_state.get('schedule'):
             df = pd.DataFrame(st.session_state.schedule)
             st.subheader("📋 Արդյունքներն ըստ Դասարանների")
+            
             for c in df['Դասարան'].unique():
                 with st.expander(f"🏫 Դասարան՝ {c}", expanded=True):
                     cls_df = df[df['Դասարան'] == c].copy()
@@ -906,7 +958,9 @@ elif st.session_state.active_page == "normal":
                     
                     existing_days = [day for day in DAYS_AM if day in pivot.columns]
                     if existing_days:
-                        pivot = pivot[existing_days]
+                        # 📆 Դասավորում ենք օրերը ճիշտ հերթականությամբ՝ Երկուշաբթիից Ուրբաթ
+                        ordered_days = [d for d in DAYS_AM if d in existing_days]
+                        pivot = pivot[ordered_days]
 
                     st.dataframe(pivot, width='stretch')
 
