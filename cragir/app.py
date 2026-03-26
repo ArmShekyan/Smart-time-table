@@ -117,6 +117,19 @@ def get_db_file_name():
     return f"data_{school}.json"
 
 
+# ✅ Նոր Ֆունկցիա: Եզակի Cloud ID ըստ դպրոցի (որպեսզի 190-ի հին տվյալները մնան id=1-ի տակ ու չկորեն)
+def get_cloud_id():
+    school = st.session_state.get('school_id', 'school_default')
+    if school in ['system_owner', 'school_190', 'school_default']:
+        return 1  # 👈 190-ը միշտ կարդում է id=1-ից, որպեսզի հին դասացուցակդ չկորչի
+    else:
+        # Եթե նոր դպրոց է (օր. school_200), սարքում է նոր ID Supabase-ի համար (օր. 200)
+        try:
+            return int(''.join(filter(str.isdigit, school)))
+        except:
+            return 999
+
+
 # --- 🔑 ՏՎՅԱԼՆԵՐԻ ԲԱԶԱՅԻ ԵՎ ԼՈԳԻՆԻ ՖՈՒՆԿՑԻԱՆԵՐ ---
 
 def get_supabase_headers():
@@ -165,11 +178,12 @@ def save_to_disk():
             "users_list": st.session_state.users_list
         }
 
+        current_cloud_id = get_cloud_id() # 👈 Վերցնում ենք դպրոցի Cloud ID-ն
         headers = get_supabase_headers()
         cloud_data = {}
         if headers:
             try:
-                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
+                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.{current_cloud_id}&select=data"
                 response = requests.get(url, headers=headers)
                 if response.status_code == 200 and response.json():
                     cloud_data = response.json()[0]["data"]
@@ -198,10 +212,10 @@ def save_to_disk():
         if headers:
             try:
                 url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
-                payload = {"id": 1, "data": final_data}
+                payload = {"id": current_cloud_id, "data": final_data} # 👈 Պահում ենք ճիշտ ID-ի վրա
                 headers["Prefer"] = "resolution=merge-duplicates"
                 requests.post(url, headers=headers, data=json.dumps(payload))
-                st.toast("✅ Տվյալները միացվեցին և պահպանվեցին Cloud-ում!", icon="🌐")
+                st.toast(f"✅ Տվյալները միացվեցին և պահպանվեցին Cloud-ում (ID: {current_cloud_id})!", icon="🌐")
                 parse_data(final_data)
                 return
             except Exception:
@@ -237,14 +251,15 @@ def reset_all_data():
             "users_list": st.session_state.users_list 
         }
 
+        current_cloud_id = get_cloud_id()
         headers = get_supabase_headers()
         if headers:
             try:
                 url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
-                payload = {"id": 1, "data": data}
+                payload = {"id": current_cloud_id, "data": data}
                 headers["Prefer"] = "resolution=merge-duplicates"
                 requests.post(url, headers=headers, data=json.dumps(payload))
-                st.toast("💥 Բազան զրոյացվեց Cloud-ում:", icon="💣")
+                st.toast(f"💥 Բազան զրոյացվեց Cloud-ում (ID: {current_cloud_id}):", icon="💣")
                 st.balloons()
                 return
             except Exception:
@@ -261,15 +276,16 @@ def reset_all_data():
 def manual_refresh():
     with st.spinner("🔄 Տվյալները թարմացվում են Cloud-ից..."):
         time.sleep(1.5)
+        current_cloud_id = get_cloud_id()
         headers = get_supabase_headers()
         if headers:
             try:
-                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
+                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.{current_cloud_id}&select=data"
                 response = requests.get(url, headers=headers)
                 if response.status_code == 200 and response.json():
                     data = response.json()[0]["data"]
                     parse_data(data)
-                    st.toast("✅ Տվյալները թարմ են:", icon="🔄")
+                    st.toast(f"✅ Տվյալները թարմ են (Cloud ID: {current_cloud_id}):", icon="🔄")
                     st.rerun()
                     return
             except Exception:
@@ -289,10 +305,11 @@ def manual_refresh():
 
 
 def load_from_disk():
+    current_cloud_id = get_cloud_id()
     headers = get_supabase_headers()
     if headers:
         try:
-            url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
+            url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.{current_cloud_id}&select=data"
             response = requests.get(url, headers=headers)
             if response.status_code == 200 and response.json():
                 data = response.json()[0]["data"]
@@ -469,57 +486,6 @@ def get_subj_name(sid):
 
 def get_subj_complexity(sid):
     return next((s.complexity for s in st.session_state.subjects if s.id == sid), 3)
-
-
-def generate_pdf(schedule_data):
-    pdf = FPDF()
-    pdf.add_page()
-    
-    pdf.set_font("Helvetica", style='B', size=14)
-    pdf.cell(200, 10, txt="Smart Time Table - School Schedule", ln=True, align='C')
-    pdf.ln(10)
-
-    df = pd.DataFrame(schedule_data)
-    days_eng = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    
-    day_mapping = {
-        "Երկուշաբթի": "Monday",
-        "Երեքշաբթի": "Tuesday",
-        "Չորեքշաբթի": "Wednesday",
-        "Հինգշաբթի": "Thursday",
-        "Ուրբաթ": "Friday"
-    }
-
-    for cls in df['Դասարան'].unique():
-        pdf.set_font("Helvetica", style='B', size=12)
-        pdf.cell(0, 10, txt=f"Class: {cls}", ln=True)
-        pdf.set_font("Helvetica", size=10)
-        
-        cls_df = df[df['Դասարան'] == cls].copy()
-        cls_df['Օր'] = cls_df['Օր'].map(day_mapping)
-        cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: x.split(" (")[0])
-        
-        pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
-        
-        pdf.set_font("Helvetica", style='B', size=10)
-        pdf.cell(15, 8, "Day", border=1, align='C')
-        for day in days_eng:
-            pdf.cell(35, 8, day, border=1, align='C')
-        pdf.ln()
-
-        pdf.set_font("Helvetica", size=10)
-        for hour in pivot.index:
-            pdf.cell(15, 8, str(hour), border=1, align='C')
-            for day in days_eng:
-                val = pivot.loc[hour, day] if day in pivot.columns else "-"
-                cell_text = str(val)
-                if any(ord(c) > 127 for c in cell_text):
-                    cell_text = "Lesson" 
-                pdf.cell(35, 8, cell_text[:15], border=1, align='C')
-            pdf.ln()
-        pdf.ln(10)
-
-    return pdf.output()
 
 
 st.sidebar.title(f"👤 {st.session_state.username}")
