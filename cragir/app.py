@@ -133,15 +133,16 @@ def get_cloud_id():
 
 
 def get_supabase_headers():
-    try:
-        if "supabase_key" in st.secrets and "supabase_url" in st.secrets:
-            return {
-                "apikey": st.secrets["supabase_key"],
-                "Authorization": f"Bearer {st.secrets['supabase_key']}",
-                "Content-Type": "application/json"
-            }
-    except Exception:
-        pass
+    # Ստուգում ենք փոքրատառով կամ մեծատառով գրված գաղտնի բանալիները
+    url = st.secrets.get("supabase_url") or st.secrets.get("SUPABASE_URL")
+    key = st.secrets.get("supabase_key") or st.secrets.get("SUPABASE_KEY")
+    
+    if url and key:
+        return {
+            "apikey": key,
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json"
+        }
     return None
 
 
@@ -313,32 +314,36 @@ def load_from_disk():
     current_cloud_id = get_cloud_id()
     headers = get_supabase_headers()
     
-    # 👥 1. Բեռնում ենք Օգտատերերին Supabase-ի Users (ՄԵԾԱՏԱՌՈՎ) աղյուսակից
+    # 👥 1. Բեռնում ենք Օգտատերերին Supabase-ից
     if headers:
         try:
-            base_url = st.secrets['supabase_url'].strip("/")
-            users_url = f"{base_url}/rest/v1/Users?select=*" # 👈 Ուշադրություն մեծատառին
+            # Ստուգում ենք URL-ները երկու ձևով էլ
+            raw_url = st.secrets.get("supabase_url") or st.secrets.get("SUPABASE_URL")
+            base_url = raw_url.strip("/")
+            
+            users_url = f"{base_url}/rest/v1/users?select=*" # Փոքրատառով users
             users_response = requests.get(users_url, headers=headers)
             
             if users_response.status_code == 200:
                 cloud_users = users_response.json()
                 
                 if st.session_state.get('user_role') == 'owner':
-                    # Owner-ը տեսնում է միայն այն, ինչ կա Supabase-ում (առանց լոկալների միավորման)
                     st.session_state.users_list = cloud_users
                 else:
                     current_school = st.session_state.get('school_id')
                     st.session_state.users_list = [u for u in cloud_users if u.get('school_id') == current_school]
+                
+                # Եթե հաջողությամբ կարդաց, թողնում ենք միայն բազայի մարդկանց ու return չենք անում, որ անցնի դասացուցակին
             else:
-                # Եթե սխալ կա, թողնում ենք դատարկ, որպեսզի Default-ները չխանգարեն
-                st.session_state.users_list = []
+                st.session_state.users_list = [] # Եթե սխալ կա, դատարկ ենք թողնում
         except Exception:
             st.session_state.users_list = []
 
     # 📂 2. Դասացուցակի բեռնում
     if headers:
         try:
-            base_url = st.secrets['supabase_url'].strip("/")
+            raw_url = st.secrets.get("supabase_url") or st.secrets.get("SUPABASE_URL")
+            base_url = raw_url.strip("/")
             url = f"{base_url}/rest/v1/timetable_data?id=eq.{current_cloud_id}&select=data"
             response = requests.get(url, headers=headers)
             if response.status_code == 200 and response.json():
@@ -348,7 +353,7 @@ def load_from_disk():
         except Exception:
             pass
 
-    # 📁 3. Ֆայլային կարդում
+    # 📁 3. Ֆայլային կարդում (եթե ինտերնետ չկա)
     current_db_file = get_db_file_name()
     if os.path.exists(current_db_file):
         try:
