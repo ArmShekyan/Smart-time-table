@@ -635,7 +635,17 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
             c1.markdown(f"👤 **{u['username']}**")
             
             u_role = u.get('role', 'user')
-            u_school = u.get('school_id', 'Default')
+            
+            # ✅ Ավելացնում ենք ավտոմատ ստուգումը նաև ցուցակի մեջ
+            db_school = u.get('school_id')
+            
+            if db_school and db_school not in ['Default', 'school_default']:
+                u_school = db_school
+            elif u_role == 'owner':
+                u_school = 'system_owner'
+            else:
+                u_school = 'school_190' # Բոլոր մյուսների համար
+                
             c2.markdown(f"🎭 Դերը՝ <span style='color: #0d6efd;'>{u_role}</span> | 🏫 Դպրոց՝ {u_school}", unsafe_allow_html=True)
             
             can_delete = True
