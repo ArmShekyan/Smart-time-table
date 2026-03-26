@@ -184,10 +184,23 @@ def save_to_disk():
         cloud_data = {}
         if headers:
             try:
-                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.{current_cloud_id}&select=data"
-                response = requests.get(url, headers=headers)
-                if response.status_code == 200 and response.json():
-                    cloud_data = response.json()[0]["data"]
+                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
+                payload = {"id": current_cloud_id, "data": final_data}
+                
+                # ✅ Սա կախարդական տողն է, որը Supabase-ին ստիպում է ավտոմատ ստեղծել նոր տողեր
+                headers["Prefer"] = "resolution=merge-duplicates" 
+                
+                # Փորձում ենք ուղարկել տվյալները
+                response = requests.post(url, headers=headers, data=json.dumps(payload))
+                
+                # Եթե Supabase-ում տողը չկար ու POST-ը սխալ տվեց, փորձում ենք Upsert անել
+                if response.status_code != 201 and response.status_code != 200:
+                    headers["Prefer"] = "return=representation" # Ստիպում ենք ստեղծել
+                    requests.post(url, headers=headers, data=json.dumps(payload))
+
+                st.toast(f"✅ Տվյալները պահպանվեցին Cloud-ում (Դպրոց ID: {current_cloud_id})!", icon="🌐")
+                parse_data(final_data)
+                return
             except Exception:
                 pass
 
