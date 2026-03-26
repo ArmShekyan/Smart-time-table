@@ -104,8 +104,10 @@ DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի",
 
 DEFAULT_OWNER = {"username": "armshekyan", "password": "arms567", "role": "owner", "school_id": "system_owner"}
 DEFAULT_ADMIN = {"username": "arsoo", "password": "123", "role": "admin", "school_id": "school_190"}
-DEFAULT_SUB_EDIT = {"username": "sub", "password": "123", "role": "subject_editor", "school_id": "school_190"}
-DEFAULT_TEACH_EDIT = {"username": "teach", "password": "123", "role": "teacher_editor", "school_id": "school_190"}
+
+DEFAULT_SUB_EDIT = {"username": "sub", "password": "123", "role": "subject_editor", "school_id": "system_owner"}
+DEFAULT_TEACH_EDIT = {"username": "teach", "password": "123", "role": "teacher_editor", "school_id": "system_owner"}
+
 DEFAULT_USER = {"username": "user", "password": "123", "role": "user", "school_id": "school_190"}
 
 
