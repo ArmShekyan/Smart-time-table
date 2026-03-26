@@ -315,24 +315,32 @@ def load_from_disk():
     
     if headers:
         try:
-            users_url = f"{st.secrets['supabase_url']}/rest/v1/users?select=*"
+            # 🧹 Մաքրում ենք URL-ի վերջի ավելորդ "/" նշանները, եթե կան
+            base_url = st.secrets['supabase_url'].strip("/")
+            users_url = f"{base_url}/rest/v1/users?select=*"
+            
             users_response = requests.get(users_url, headers=headers)
+            
             if users_response.status_code == 200:
                 all_users = users_response.json()
                 
-                # ✅ Ուղղված ֆիլտր
                 if st.session_state.get('user_role') == 'owner':
                     st.session_state.users_list = all_users
                 else:
                     current_school = st.session_state.get('school_id')
-                    # Ֆիլտրում ենք, բայց եթե ոչինչ չգտնի, դատարկ ենք թողնում (ոչ թե Default-ներն ենք բերում)
                     st.session_state.users_list = [u for u in all_users if u.get('school_id') == current_school]
-        except Exception:
-            pass
+            else:
+                # 🔴 Սա թույլ կտա տեսնել Supabase-ի իրական սխալը էկրանին
+                st.error(f"Supabase Users API-ի սխալ! Կոդ: {users_response.status_code} - {users_response.text}")
+                
+        except Exception as e:
+            st.error(f"Կապի սխալ Users բազայի հետ: {str(e)}")
 
+    # 📂 2. Դասացուցակի բեռնում
     if headers:
         try:
-            url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.{current_cloud_id}&select=data"
+            base_url = st.secrets['supabase_url'].strip("/")
+            url = f"{base_url}/rest/v1/timetable_data?id=eq.{current_cloud_id}&select=data"
             response = requests.get(url, headers=headers)
             if response.status_code == 200 and response.json():
                 data = response.json()[0]["data"]
@@ -341,6 +349,7 @@ def load_from_disk():
         except Exception:
             pass
 
+    # 📁 3. Ֆայլային կարդում
     current_db_file = get_db_file_name()
     if os.path.exists(current_db_file):
         try:
@@ -351,8 +360,7 @@ def load_from_disk():
         except Exception:
             pass
     
-    # ✅ Default-ները բերում ենք միայն եթե ընդհանրապես ոչ մի users_list չկա Session-ում
-    if "users_list" not in st.session_state or not st.session_state.users_list:
+    if not st.session_state.get("users_list"):
         st.session_state.users_list = [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_SUB_EDIT, DEFAULT_TEACH_EDIT, DEFAULT_USER]
 
 
