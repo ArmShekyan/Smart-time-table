@@ -118,21 +118,18 @@ def get_db_file_name():
 
 # ✅ Cloud ID-ի կառավարում (Owner-ն ու 190-ը միասին կարդում են 1-ից)
 def get_cloud_id():
-    # Վերցնում ենք school_id-ն session-ից
     school = st.session_state.get('school_id', 'school_default')
     
-    # Եթե system_owner է կամ 190, գնում ենք id=1 (որտեղ քո հին բազան է)
     if school in ['system_owner', 'school_190', 'school_default']:
         return 1 
     else:
-        # Բաժանում ենք school_300 տեքստը և վերցնում ենք միայն թիվը (օր. 300)
         try:
             if "_" in str(school):
                 return int(str(school).split("_")[1])
             else:
                 return int(''.join(filter(str.isdigit, str(school))))
         except:
-            return 999 # Եթե ինչ-որ բան սխալ գնա
+            return 999 
 
 
 def get_supabase_headers():
@@ -217,7 +214,6 @@ def save_to_disk():
                 url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
                 payload = {"id": current_cloud_id, "data": final_data}
                 
-                # ✅ Upsert կախարդական համակարգը (նոր տողերն ավտոմատ ստեղծվում են)
                 headers["Prefer"] = "resolution=merge-duplicates" 
                 
                 response = requests.post(url, headers=headers, data=json.dumps(payload))
@@ -312,11 +308,12 @@ def manual_refresh():
     st.rerun()
 
 
+# ✅ ՈՒՂՂՎԱԾ LOAD_FROM_DISK (Առանձին օգտատերերի ֆիլտրում)
 def load_from_disk():
     current_cloud_id = get_cloud_id()
     headers = get_supabase_headers()
     
-    # 👥 1. Բեռնում ենք Օգտատերերին Supabase-ից (որպեսզի ոչ մեկ չկորչի)
+    # 👥 1. Բեռնում ենք Օգտատերերին Supabase-ի Users աղյուսակից
     if headers:
         try:
             users_url = f"{st.secrets['supabase_url']}/rest/v1/users?select=*"
@@ -324,15 +321,16 @@ def load_from_disk():
             if users_response.status_code == 200:
                 all_users = users_response.json()
                 
-                # Եթե Owner ես՝ քաշում ես բոլորին, եթե սովորական ադմին՝ միայն քո դպրոցի օգտատերերին
+                # ✅ ՊԱՅՄԱՆ. Owner-ը տեսնում է բոլորին, Admin-ները՝ միայն իրենց դպրոցի մարդկանց
                 if st.session_state.get('user_role') == 'owner':
                     st.session_state.users_list = all_users
                 else:
-                    st.session_state.users_list = [u for u in all_users if u.get('school_id') == st.session_state.get('school_id')]
+                    current_school = st.session_state.get('school_id')
+                    st.session_state.users_list = [u for u in all_users if u.get('school_id') == current_school]
         except Exception:
             pass
 
-    # 📂 2. Բեռնում ենք Դասացուցակի տվյալները Supabase-ից
+    # 📂 2. Բեռնում ենք Դասացուցակի տվյալները (timetable_data)
     if headers:
         try:
             url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.{current_cloud_id}&select=data"
@@ -340,11 +338,11 @@ def load_from_disk():
             if response.status_code == 200 and response.json():
                 data = response.json()[0]["data"]
                 parse_data(data)
-                return # 👈 Հիմա արդեն կարող ենք return անել
+                return 
         except Exception:
             pass
 
-    # 📁 3. Եթե Ինտերնետ կամ Supabase չկա, կարդում ենք Ֆայլից
+    # 📁 3. Եթե Ինտերնետ կամ Supabase չկա՝ Ֆայլից
     current_db_file = get_db_file_name()
     if os.path.exists(current_db_file):
         try:
@@ -356,10 +354,11 @@ def load_from_disk():
             pass
     
     # Եթե ընդհանրապես ոչինչ չկա, վերականգնում ենք Default-ները
-    if not st.session_state.users_list:
+    if not st.session_state.get("users_list"):
         st.session_state.users_list = [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_SUB_EDIT, DEFAULT_TEACH_EDIT, DEFAULT_USER]
 
 
+# ✅ ՈՒՂՂՎԱԾ PARSE_DATA (Որպեսզի users_list-ը չջնջվի նոր դպրոցներում)
 def parse_data(data):
     st.session_state.subjects = [Subject(**s) for s in data.get("subjects", [])]
     st.session_state.teachers = [Teacher(**t) for t in data.get("teachers", [])]
@@ -368,7 +367,12 @@ def parse_data(data):
     st.session_state.schedule = data.get("schedule", None)
     st.session_state.subj_pool = data.get("subj_pool", [])
     st.session_state.teacher_pool = data.get("teacher_pool", [])
-    st.session_state.users_list = data.get("users_list", [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_SUB_EDIT, DEFAULT_TEACH_EDIT, DEFAULT_USER])
+    
+    # ✅ ՈՒՂՂՈՒՄ. Եթե Cloud-ի data-ի մեջ users_list կա և այն դատարկ չէ, նոր թարմացնում ենք
+    new_users = data.get("users_list")
+    if new_users and len(new_users) > 0:
+        st.session_state.users_list = new_users
+
 
 # --- INITIALIZATION ---
 st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅")
@@ -482,8 +486,7 @@ if not st.session_state.logged_in:
                         else:
                             st.session_state.school_id = 'school_190' 
 
-                        # ✅ ԱՎՏՈՄԱՏ ԿԱՐԴՈՒՄ ԵՎ ՄԱՔՐՈՒՄ ՄՈՒՏՔԻ ԺԱՄԱՆԱԿ
-                        load_from_disk() # 👈 Անմիջապես կարդում է միայն այս մտնողի տվյալները Cloud-ից
+                        load_from_disk() 
 
                         st.session_state.show_readme = True  
                         
