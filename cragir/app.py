@@ -463,7 +463,7 @@ if not st.session_state.logged_in:
                         if db_school and db_school != 'school_default':
                             st.session_state.school_id = db_school
                         elif user['role'] == 'owner':
-                            st.session_state.school_id = 'school_190' # 👈 Ավտոմատ կցում ենք 190-ին, որպեսզի հին տվյալներդ բացվեն
+                            st.session_state.school_id = 'system_owner'
                         else:
                             st.session_state.school_id = 'school_190' 
 
