@@ -1050,10 +1050,54 @@ elif st.session_state.active_page == "normal":
         if current_user not in st.session_state.chat_histories:
             st.session_state.chat_histories[current_user] = []
 
+        # Ստեղծում ենք վիճակ փոփոխության հաստատման համար (Pending Proposal)
+        if "pending_proposal" not in st.session_state:
+            st.session_state.pending_proposal = None
+
+        # 💬 1. Ցուցադրում ենք չաթի հին պատմությունը
         for message in st.session_state.chat_histories[current_user]:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
+        # 🎛️ 2. Եթե կա սպասվող առաջարկ (Pending), ցույց ենք տալիս կոճակները
+        if st.session_state.pending_proposal:
+            with st.chat_message("assistant"):
+                st.warning("💡 AI-ն ունի առաջարկ։ Ցանկանու՞մ եք տեսնել փոփոխված տարբերակը ձեր մտքում։")
+                
+                col_yes, col_no = st.columns(2)
+                
+                if col_yes.button("✅ Կիրառել (Տեսնել նոր աղյուսակը)", use_container_width=True, type="primary"):
+                    proposal_text = st.session_state.pending_proposal
+                    st.session_state.pending_proposal = None # Մաքրում ենք սպասումը
+                    
+                    with st.spinner("🧠 Գեներացվում է նոր աղյուսակը..."):
+                        try:
+                            # Այստեղ կոնտեքստը փոխվում է՝ AI-ին հրահանգելով ցույց տալ արդյունքը
+                            context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
+                            context += "Օգտատերը ՀԱՄԱՁԱՅՆԵՑ քո նախորդ առաջարկին։ Հիմա քո մտքում արա այդ փոփոխությունը և ցույց տուր ՆՈՐ ԴԱՍԱՑՈՒՑԱԿԸ տեքստային աղյուսակով չաթի մեջ։\n"
+                            
+                            if st.session_state.schedule:
+                                context += f"Նախնական դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
+
+                            client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+                            response = client.models.generate_content(
+                                model='gemini-2.5-flash',
+                                contents=context + f"\nՔո նախորդ առաջարկը, որին համաձայնեցին՝ {proposal_text}",
+                            )
+                            response_text = response.text
+
+                            st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
+                            st.rerun()
+
+                        except Exception as e:
+                            st.error(f"❌ Սխալ: {str(e)}")
+
+                if col_no.button("❌ Չեղարկել", use_container_width=True):
+                    st.session_state.pending_proposal = None # Մաքրում ենք սպասումը
+                    st.toast("Առաջարկը չեղարկվեց", icon="🗑️")
+                    st.rerun()
+
+        # ⌨️ 3. Նոր հարցերի մուտքագրում (Երբ օգտատերը գրում է չաթում)
         if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
             
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
@@ -1066,13 +1110,19 @@ elif st.session_state.active_page == "normal":
                         if "GEMINI_API_KEY" not in st.secrets:
                             response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
                         else:
-                            context = f"Դու 'Smart Time Table' պրոյեկտի AI օգնականն ես։ Պատասխանիր հստակ, հայերենով և սեղմ։\n"
+                            # Գլխավոր կոնտեքստը, որը միավորում է Տեղեկատուն և Խորհրդատուն
+                            context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
                             context += f"Դու խոսում ես {current_user}-ի հետ։\n"
+                            context += "⚠️ ՔՈ ԴԵՐԵՐԸ ԵՎ ԿԱՆՈՆՆԵՐԸ:\n"
+                            context += "1. ℹ️ ՏԵՂԵԿԱՏՈՒ ԲՈՏ: Եթե աշակերտը կամ ծնողը հարցնում են դասացուցակի մասին (օր.՝ 'Քանի՞ դաս ունի 10-Ա-ն այսօր' կամ 'Ո՞վ է ֆիզիկայի ուսուցիչը'), արագ կարդա տրված բազան և տուր հստակ պատասխան:\n"
+                            context += "2. 💡 ԽՈՐՀՐԴԱՏՈՒ: Եթե հարցը վերաբերում է դասացուցակի լավացմանը, տեղափոխմանը կամ swap անելուն, առաջարկիր միտքը, բայց ՄԻԱՆԳԱՄԻՑ ԱՂՅՈՒՍԱԿ ՄԻ՛ ՑՈՒՅՑ ՏՈՒՐ: Բացատրիր գաղափարը և ասա, որ օգտատերը կարող է սեղմել 'Կիրառել' կոճակը:\n"
+                            context += "3. 🛑 Արգելվում է ինքնուրույն փոփոխել `st.session_state.schedule`-ը կամ բազան:\n"
+
                             if st.session_state.schedule:
                                 context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
                             else:
                                 context += "Դեռևս գեներացված դասացուցակ չկա։\n"
-                            
+
                             context += f"Օգտատիրոջ հարցը՝ {prompt}"
 
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
@@ -1082,8 +1132,16 @@ elif st.session_state.active_page == "normal":
                             )
                             response_text = response.text
 
+                            # Եթե AI-ն առաջարկ է արել, մենք այն պահում ենք, որպեսզի էջը թարմանա ու կոճակները բացվեն
+                            if "առաջարկ" in response_text.lower() or "փոխել" in response_text.lower() or "տեղափոխ" in response_text.lower() or "swap" in response_text.lower():
+                                st.session_state.pending_proposal = response_text
+
                     except Exception as e:
                         response_text = f"❌ Սխալ տեղի ունեցավ API կանչի ժամանակ: {str(e)}"
 
                     st.markdown(response_text)
                     st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
+                    
+                    # Եթե առաջարկ կա, թարմացնում ենք էջը, որպեսզի կոճակները անմիջապես հայտնվեն
+                    if st.session_state.pending_proposal:
+                        st.rerun()
