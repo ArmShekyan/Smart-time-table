@@ -102,7 +102,8 @@ def show_instruction_modal():
 
 DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
-DEFAULT_OWNER = {"username": "armshekyan", "password": "arms567", "role": "owner", "school_id": "system_owner"}
+# ✅ Այստեղ սահմանում ենք, որ Owner-ը ժամանակավորապես մնա school_190-ի տակ, որպեսզի տվյալներդ չկորեն
+DEFAULT_OWNER = {"username": "armshekyan", "password": "arms567", "role": "owner", "school_id": "school_190"}
 DEFAULT_ADMIN = {"username": "arsoo", "password": "123", "role": "admin", "school_id": "school_190"}
 
 DEFAULT_SUB_EDIT = {"username": "sub", "password": "123", "role": "subject_editor", "school_id": "system_owner"}
@@ -117,7 +118,7 @@ def get_db_file_name():
     return f"data_{school}.json"
 
 
-# ✅ Նոր Ֆունկցիա: Եզակի Cloud ID ըստ դպրոցի (որպեսզի 190-ի հին տվյալները մնան id=1-ի տակ ու չկորեն)
+# ✅ Ֆունկցիա: Եզակի Cloud ID ըստ դպրոցի (որպեսզի 190-ի հին տվյալները մնան id=1-ի տակ ու չկորեն)
 def get_cloud_id():
     school = st.session_state.get('school_id', 'school_default')
     if school in ['system_owner', 'school_190', 'school_default']:
@@ -178,7 +179,7 @@ def save_to_disk():
             "users_list": st.session_state.users_list
         }
 
-        current_cloud_id = get_cloud_id() # 👈 Վերցնում ենք դպրոցի Cloud ID-ն
+        current_cloud_id = get_cloud_id()
         headers = get_supabase_headers()
         cloud_data = {}
         if headers:
@@ -212,7 +213,7 @@ def save_to_disk():
         if headers:
             try:
                 url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
-                payload = {"id": current_cloud_id, "data": final_data} # 👈 Պահում ենք ճիշտ ID-ի վրա
+                payload = {"id": current_cloud_id, "data": final_data}
                 headers["Prefer"] = "resolution=merge-duplicates"
                 requests.post(url, headers=headers, data=json.dumps(payload))
                 st.toast(f"✅ Տվյալները միացվեցին և պահպանվեցին Cloud-ում (ID: {current_cloud_id})!", icon="🌐")
@@ -221,7 +222,6 @@ def save_to_disk():
             except Exception:
                 pass
 
-        # ✅ Roadmap Կետ 2: Պահպանում ենք դինամիկ JSON-ում
         current_db_file = get_db_file_name()
         with open(current_db_file, "w", encoding="utf-8") as f:
             json.dump(final_data, f, ensure_ascii=False, indent=4)
@@ -265,7 +265,6 @@ def reset_all_data():
             except Exception:
                 pass
 
-        # ✅ Roadmap Կետ 2: Զրոյացում դինամիկ ֆայլում
         current_db_file = get_db_file_name()
         with open(current_db_file, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
@@ -291,7 +290,6 @@ def manual_refresh():
             except Exception:
                 pass
 
-        # ✅ Roadmap Կետ 2: Թարմացում դինամիկ ֆայլից
         current_db_file = get_db_file_name()
         if os.path.exists(current_db_file):
             try:
@@ -318,7 +316,6 @@ def load_from_disk():
         except Exception:
             pass
 
-    # ✅ Roadmap Կետ 2: Բեռնում դինամիկ ֆայլից
     current_db_file = get_db_file_name()
     if os.path.exists(current_db_file):
         try:
@@ -405,7 +402,7 @@ if "subjects" not in st.session_state:
         "logged_in": False,       
         "username": "",           
         "user_role": "",         
-        "school_id": "", # ✅ Ավելացվել է դպրոցի ID-ի վիճակը
+        "school_id": "", 
         "active_page": "normal",
         "active_tab": "📊 Վահանակ",
         "chat_histories": {},  
@@ -446,15 +443,14 @@ if not st.session_state.logged_in:
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
                         
-                        # ✅ Ավտոմատ ստուգում՝ եթե բազայում դատարկ է, ճիշտ դպրոցը դնի
                         db_school = user.get('school_id')
                         
                         if db_school and db_school != 'school_default':
                             st.session_state.school_id = db_school
                         elif user['role'] == 'owner':
-                            st.session_state.school_id = 'system_owner'
+                            st.session_state.school_id = 'school_190' # 👈 Ավտոմատ կցում ենք 190-ին, որպեսզի հին տվյալներդ բացվեն
                         else:
-                            st.session_state.school_id = 'school_190'  # 👈 Սա ավտոմատ կաշխատի Admin-ի համար
+                            st.session_state.school_id = 'school_190' 
 
                         st.session_state.show_readme = True  
                         
@@ -473,13 +469,10 @@ if not st.session_state.logged_in:
     st.stop()
 
 
-# --- 🔔 Թռնող Ինստրուկցիան Լոգինից հետո ---
 if st.session_state.get("show_readme", False):
     st.session_state.show_readme = False
     show_instruction_modal()
 
-
-# --- 🛠️ ՀԻՄՆԱԿԱՆ ԾՐԱԳԻՐ ---
 
 def get_subj_name(sid):
     return next((s.name for s in st.session_state.subjects if s.id == sid), "Անհայտ")
@@ -491,7 +484,6 @@ def get_subj_complexity(sid):
 st.sidebar.title(f"👤 {st.session_state.username}")
 st.sidebar.caption(f"Պաշտոն՝ **{st.session_state.user_role}**")
 
-# ✅ Roadmap Կետ 4: Դպրոցի անվան (ID) ցուցադրում Sidebar-ում
 current_school = st.session_state.get('school_id', 'Անհայտ')
 st.sidebar.markdown(f"🏫 Դպրոց՝ <span style='color: #28a745; font-weight: bold;'>{current_school}</span>", unsafe_allow_html=True)
 
@@ -569,7 +561,6 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
             roles_list = ["user", "subject_editor", "teacher_editor", "admin"]
             new_r = st.selectbox("Դերը", roles_list)
             
-            # ✅ Roadmap Կետ 1: Երկակի school_id-ի տրամաբանություն
             if st.session_state.user_role == 'owner':
                 target_school_id = st.text_input("School ID (Օրինակ՝ school_190)", placeholder="Մուտքագրեք դպրոցի ID-ն")
             else:
@@ -604,15 +595,14 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
             
             u_role = u.get('role', 'user')
             
-            # ✅ Ավելացնում ենք ավտոմատ ստուգումը նաև ցուցակի մեջ
             db_school = u.get('school_id')
             
             if db_school and db_school not in ['Default', 'school_default']:
                 u_school = db_school
             elif u_role == 'owner':
-                u_school = 'system_owner'
+                u_school = 'school_190'
             else:
-                u_school = 'school_190' # Բոլոր մյուսների համար
+                u_school = 'school_190' 
                 
             c2.markdown(f"🎭 Դերը՝ <span style='color: #0d6efd;'>{u_role}</span> | 🏫 Դպրոց՝ {u_school}", unsafe_allow_html=True)
             
@@ -964,17 +954,6 @@ elif st.session_state.active_page == "normal":
 
                     st.dataframe(pivot, use_container_width=True)
 
-            st.divider()
-            pdf_bytes = generate_pdf(st.session_state.schedule)
-            st.download_button(
-                label="📥 Ներբեռնել PDF (English Only)",
-                data=bytes(pdf_bytes),
-                file_name="School_Timetable.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-                type="primary"
-            )
-
     elif st.session_state.active_tab == "📂 Վերջին պահպանվածը":
         st.title("📂 Պահպանված Դասացուցակ")
         if st.session_state.schedule:
@@ -1042,12 +1021,12 @@ elif st.session_state.active_page == "normal":
                         if "GEMINI_API_KEY" not in st.secrets:
                             response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
                         else:
-                            context = f"Դու 'Smart Time Table' պրոյեկտի AI օգնականն ես։ Պատասխանիր հստակ, հայերենով և սեղմ։\n"
-                            context += f"Դու խոսում ես {current_user}-ի հետ։\n"
+                            context = f"Դու 'Smart Time Table' պրոյեկտի AI օգնականն ես։ Պատասխանիր հստակ, հայերենով և սեղմ։\\n"
+                            context += f"Դու խոսում ես {current_user}-ի հետ։\\n"
                             if st.session_state.schedule:
-                                context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
+                                context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\\n"
                             else:
-                                context += "Դեռևս գեներացված դասացուցակ չկա։\n"
+                                context += "Դեռևս գեներացված դասացուցակ չկա։\\n"
                             
                             context += f"Օգտատիրոջ հարցը՝ {prompt}"
 
