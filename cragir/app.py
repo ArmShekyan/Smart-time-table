@@ -609,8 +609,21 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
             # ✅ Ջնջելու կոճակը ցույց է տրվում ճիշտ (երբ can_delete-ը True է), բայց մնացած տվյալները չեն թաքնվում
             if can_delete:
                 if c3.button("🗑️", key=f"del_user_{i}"):
+                    user_to_delete = st.session_state.users_list[i]
+                    
+                    # 🗑️ 1. Ջնջում ենք Supabase SQL-ից (ըստ username-ի)
+                    headers = get_supabase_headers()
+                    if headers:
+                        try:
+                            base_url = st.secrets['supabase_url'].strip("/")
+                            delete_url = f"{base_url}/rest/v1/users?username=eq.{user_to_delete['username']}"
+                            requests.delete(delete_url, headers=headers)
+                            st.toast(f"✅ {user_to_delete['username']}-ն ջնջվեց Cloud-ում:", icon="☁️")
+                        except Exception:
+                            pass
+
+                    # 🗑️ 2. Ջնջում ենք նաև Python-ի լոկալ հիշողությունից
                     st.session_state.users_list.pop(i)
-                    st.toast(f"🗑️ Օգտատերը ջնջվեց:", icon="👨‍⚖️")
                     st.rerun()
 
 elif st.session_state.active_page == "normal":
