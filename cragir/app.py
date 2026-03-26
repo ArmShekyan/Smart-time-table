@@ -103,7 +103,8 @@ def show_instruction_modal():
 DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
 # ✅ Այստեղ սահմանում ենք, որ Owner-ը ժամանակավորապես մնա school_190-ի տակ, որպեսզի տվյալներդ չկորեն
-DEFAULT_OWNER = {"username": "armshekyan", "password": "arms567", "role": "owner", "school_id": "school_190"}
+# ✅ Ճիշտ տարբերակը՝
+DEFAULT_OWNER = {"username": "armshekyan", "password": "arms567", "role": "owner", "school_id": "system_owner"}
 DEFAULT_ADMIN = {"username": "arsoo", "password": "123", "role": "admin", "school_id": "school_190"}
 
 DEFAULT_SUB_EDIT = {"username": "sub", "password": "123", "role": "subject_editor", "school_id": "system_owner"}
@@ -121,10 +122,11 @@ def get_db_file_name():
 def get_cloud_id():
     school = st.session_state.get('school_id', 'school_default')
     
-    # Այստեղ ստիպում ենք, որ system_owner-ն էլ կարդա id=1-ի հին տվյալները, որպեսզի ոչինչ չկորչի
+    # Եթե գլխավոր owner-ն է կամ 190 դպրոցը, կարդում ենք id=1-ից (որպեսզի հին բազադ չկորչի)
     if school in ['system_owner', 'school_190', 'school_default']:
         return 1 
     else:
+        # Եթե նոր դպրոց է (օր. school_200), վերցնում ենք միայն թվերը որպես Cloud ID
         try:
             return int(''.join(filter(str.isdigit, school)))
         except:
