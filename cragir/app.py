@@ -313,28 +313,27 @@ def load_from_disk():
     current_cloud_id = get_cloud_id()
     headers = get_supabase_headers()
     
+    # 👥 1. Բեռնում ենք Օգտատերերին Supabase-ի Users (ՄԵԾԱՏԱՌՈՎ) աղյուսակից
     if headers:
         try:
-            # 🧹 Մաքրում ենք URL-ի վերջի ավելորդ "/" նշանները, եթե կան
             base_url = st.secrets['supabase_url'].strip("/")
-            users_url = f"{base_url}/rest/v1/users?select=*"
-            
+            users_url = f"{base_url}/rest/v1/Users?select=*" # 👈 Ուշադրություն մեծատառին
             users_response = requests.get(users_url, headers=headers)
             
             if users_response.status_code == 200:
-                all_users = users_response.json()
+                cloud_users = users_response.json()
                 
                 if st.session_state.get('user_role') == 'owner':
-                    st.session_state.users_list = all_users
+                    # Owner-ը տեսնում է միայն այն, ինչ կա Supabase-ում (առանց լոկալների միավորման)
+                    st.session_state.users_list = cloud_users
                 else:
                     current_school = st.session_state.get('school_id')
-                    st.session_state.users_list = [u for u in all_users if u.get('school_id') == current_school]
+                    st.session_state.users_list = [u for u in cloud_users if u.get('school_id') == current_school]
             else:
-                # 🔴 Սա թույլ կտա տեսնել Supabase-ի իրական սխալը էկրանին
-                st.error(f"Supabase Users API-ի սխալ! Կոդ: {users_response.status_code} - {users_response.text}")
-                
-        except Exception as e:
-            st.error(f"Կապի սխալ Users բազայի հետ: {str(e)}")
+                # Եթե սխալ կա, թողնում ենք դատարկ, որպեսզի Default-ները չխանգարեն
+                st.session_state.users_list = []
+        except Exception:
+            st.session_state.users_list = []
 
     # 📂 2. Դասացուցակի բեռնում
     if headers:
@@ -359,10 +358,6 @@ def load_from_disk():
                 return
         except Exception:
             pass
-    
-    if not st.session_state.get("users_list"):
-        st.session_state.users_list = [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_SUB_EDIT, DEFAULT_TEACH_EDIT, DEFAULT_USER]
-
 
 # ✅ ՈՒՂՂՎԱԾ PARSE_DATA (Որպեսզի users_list-ը չջնջվի նոր դպրոցներում)
 def parse_data(data):
