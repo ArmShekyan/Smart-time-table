@@ -252,19 +252,30 @@ def manual_refresh():
     with st.spinner("🔄 Տվյալները թարմացվում են Cloud-ից..."):
         time.sleep(1.5)
         headers = get_supabase_headers()
+        
         if headers:
             try:
-                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
-                response = requests.get(url, headers=headers)
+                base_url = st.secrets['supabase_url'].strip("/")
+                
+                # 👥 1. Թարմացնում ենք օգտատերերին SQL բազայից
+                users_url = f"{base_url}/rest/v1/users?select=*"
+                users_response = requests.get(users_url, headers=headers)
+                if users_response.status_code == 200:
+                    st.session_state.users_list = users_response.json()
+
+                # 📂 2. Թարմացնում ենք դասացուցակի տվյալները
+                timetable_url = f"{base_url}/rest/v1/timetable_data?id=eq.1&select=data"
+                response = requests.get(timetable_url, headers=headers)
                 if response.status_code == 200 and response.json():
                     data = response.json()[0]["data"]
                     parse_data(data)
-                    st.toast("✅ Տվյալները թարմ են:", icon="🔄")
+                    st.toast("✅ Տվյալները թարմացվեցին Cloud-ից!", icon="🔄")
                     st.rerun()
                     return
             except Exception:
                 pass
 
+        # 📁 Եթե Cloud-ը չստացվի, կարդում ենք լոկալ ֆայլից
         if os.path.exists(DB_FILE):
             try:
                 with open(DB_FILE, "r", encoding="utf-8") as f:
