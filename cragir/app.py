@@ -315,6 +315,24 @@ def manual_refresh():
 def load_from_disk():
     current_cloud_id = get_cloud_id()
     headers = get_supabase_headers()
+    
+    # 👥 1. Բեռնում ենք Օգտատերերին Supabase-ից (որպեսզի ոչ մեկ չկորչի)
+    if headers:
+        try:
+            users_url = f"{st.secrets['supabase_url']}/rest/v1/users?select=*"
+            users_response = requests.get(users_url, headers=headers)
+            if users_response.status_code == 200:
+                all_users = users_response.json()
+                
+                # Եթե Owner ես՝ քաշում ես բոլորին, եթե սովորական ադմին՝ միայն քո դպրոցի օգտատերերին
+                if st.session_state.get('user_role') == 'owner':
+                    st.session_state.users_list = all_users
+                else:
+                    st.session_state.users_list = [u for u in all_users if u.get('school_id') == st.session_state.get('school_id')]
+        except Exception:
+            pass
+
+    # 📂 2. Բեռնում ենք Դասացուցակի տվյալները Supabase-ից
     if headers:
         try:
             url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.{current_cloud_id}&select=data"
@@ -322,10 +340,11 @@ def load_from_disk():
             if response.status_code == 200 and response.json():
                 data = response.json()[0]["data"]
                 parse_data(data)
-                return
+                return # 👈 Հիմա արդեն կարող ենք return անել
         except Exception:
             pass
 
+    # 📁 3. Եթե Ինտերնետ կամ Supabase չկա, կարդում ենք Ֆայլից
     current_db_file = get_db_file_name()
     if os.path.exists(current_db_file):
         try:
@@ -336,7 +355,9 @@ def load_from_disk():
         except Exception:
             pass
     
-    st.session_state.users_list = [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_SUB_EDIT, DEFAULT_TEACH_EDIT, DEFAULT_USER]
+    # Եթե ընդհանրապես ոչինչ չկա, վերականգնում ենք Default-ները
+    if not st.session_state.users_list:
+        st.session_state.users_list = [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_SUB_EDIT, DEFAULT_TEACH_EDIT, DEFAULT_USER]
 
 
 def parse_data(data):
