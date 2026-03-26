@@ -426,8 +426,17 @@ if not st.session_state.logged_in:
                         st.session_state.logged_in = True
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
-                        st.session_state.school_id = user.get('school_id', 'school_default') # ✅ Roadmap Կետ 3: Login-ի ժամանակ կարդում ենք school_id-ն
                         
+                        # ✅ Ավտոմատ ստուգում՝ եթե բազայում դատարկ է, ճիշտ դպրոցը դնի
+                        db_school = user.get('school_id')
+                        
+                        if db_school and db_school != 'school_default':
+                            st.session_state.school_id = db_school
+                        elif user['role'] == 'owner':
+                            st.session_state.school_id = 'system_owner'
+                        else:
+                            st.session_state.school_id = 'school_190'  # 👈 Սա ավտոմատ կաշխատի Admin-ի համար
+
                         st.session_state.show_readme = True  
                         
                         if user['role'] in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
