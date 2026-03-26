@@ -118,13 +118,13 @@ def get_db_file_name():
     return f"data_{school}.json"
 
 
-# ✅ Ֆունկցիա: Եզակի Cloud ID ըստ դպրոցի (որպեսզի 190-ի հին տվյալները մնան id=1-ի տակ ու չկորեն)
 def get_cloud_id():
     school = st.session_state.get('school_id', 'school_default')
+    
+    # Այստեղ ստիպում ենք, որ system_owner-ն էլ կարդա id=1-ի հին տվյալները, որպեսզի ոչինչ չկորչի
     if school in ['system_owner', 'school_190', 'school_default']:
-        return 1  # 👈 190-ը միշտ կարդում է id=1-ից, որպեսզի հին դասացուցակդ չկորչի
+        return 1 
     else:
-        # Եթե նոր դպրոց է (օր. school_200), սարքում է նոր ID Supabase-ի համար (օր. 200)
         try:
             return int(''.join(filter(str.isdigit, school)))
         except:
