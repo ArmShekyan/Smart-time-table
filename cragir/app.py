@@ -451,9 +451,12 @@ if not st.session_state.logged_in:
                         if db_school and db_school != 'school_default':
                             st.session_state.school_id = db_school
                         elif user['role'] == 'owner':
-                            st.session_state.school_id = 'system_owner' # 👈 Լիարժեք system_owner
+                            st.session_state.school_id = 'system_owner'
                         else:
                             st.session_state.school_id = 'school_190' 
+
+                        # ✅ ԱՎՏՈՄԱՏ ԿԱՐԴՈՒՄ ԵՎ ՄԱՔՐՈՒՄ ՄՈՒՏՔԻ ԺԱՄԱՆԱԿ
+                        load_from_disk() # 👈 Անմիջապես կարդում է միայն այս մտնողի տվյալները Cloud-ից
 
                         st.session_state.show_readme = True  
                         
