@@ -411,7 +411,7 @@ if not st.session_state.logged_in:
             
             with st.form("login_panel", clear_on_submit=False):
                 username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
-                password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="••••••••")
+                password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="Ներմուծեք ձեր գաղտնաբառը")
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
