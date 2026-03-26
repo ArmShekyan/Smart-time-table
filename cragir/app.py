@@ -314,14 +314,13 @@ def load_from_disk():
     current_cloud_id = get_cloud_id()
     headers = get_supabase_headers()
     
-    # 👥 1. Բեռնում ենք Օգտատերերին Supabase-ից
+    # Սկզբից դատարկում ենք ցուցակը, որ լոկալ մարդիկ չհայտնվեն
+    st.session_state.users_list = []
+
     if headers:
         try:
-            # Ստուգում ենք URL-ները երկու ձևով էլ
-            raw_url = st.secrets.get("supabase_url") or st.secrets.get("SUPABASE_URL")
-            base_url = raw_url.strip("/")
-            
-            users_url = f"{base_url}/rest/v1/users?select=*" # Փոքրատառով users
+            base_url = st.secrets['supabase_url'].strip("/")
+            users_url = f"{base_url}/rest/v1/users?select=*"
             users_response = requests.get(users_url, headers=headers)
             
             if users_response.status_code == 200:
@@ -333,17 +332,17 @@ def load_from_disk():
                     current_school = st.session_state.get('school_id')
                     st.session_state.users_list = [u for u in cloud_users if u.get('school_id') == current_school]
                 
-                # Եթե հաջողությամբ կարդաց, թողնում ենք միայն բազայի մարդկանց ու return չենք անում, որ անցնի դասացուցակին
+                # 🛑 Եթե հաջողվեց կարդալ Supabase-ից, կանգնեցնում ենք ֆունկցիան (Return), որպեսզի լոկալին չհասնի
+                return 
             else:
-                st.session_state.users_list = [] # Եթե սխալ կա, դատարկ ենք թողնում
-        except Exception:
-            st.session_state.users_list = []
+                st.error(f"❌ Supabase-ի Users աղյուսակից պատասխան չկա (Կոդ: {users_response.status_code})")
+        except Exception as e:
+            st.error(f"❌ Կապի սխալ Users բազայի հետ: {str(e)}")
 
-    # 📂 2. Դասացուցակի բեռնում
+    # 📂 Դասացուցակի բեռնում
     if headers:
         try:
-            raw_url = st.secrets.get("supabase_url") or st.secrets.get("SUPABASE_URL")
-            base_url = raw_url.strip("/")
+            base_url = st.secrets['supabase_url'].strip("/")
             url = f"{base_url}/rest/v1/timetable_data?id=eq.{current_cloud_id}&select=data"
             response = requests.get(url, headers=headers)
             if response.status_code == 200 and response.json():
@@ -352,18 +351,7 @@ def load_from_disk():
                 return 
         except Exception:
             pass
-
-    # 📁 3. Ֆայլային կարդում (եթե ինտերնետ չկա)
-    current_db_file = get_db_file_name()
-    if os.path.exists(current_db_file):
-        try:
-            with open(current_db_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                parse_data(data)
-                return
-        except Exception:
-            pass
-
+            
 # ✅ ՈՒՂՂՎԱԾ PARSE_DATA (Որպեսզի users_list-ը չջնջվի նոր դպրոցներում)
 def parse_data(data):
     st.session_state.subjects = [Subject(**s) for s in data.get("subjects", [])]
