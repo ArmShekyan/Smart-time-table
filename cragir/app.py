@@ -102,8 +102,6 @@ def show_instruction_modal():
 
 DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
-# ✅ Այստեղ սահմանում ենք, որ Owner-ը ժամանակավորապես մնա school_190-ի տակ, որպեսզի տվյալներդ չկորեն
-# ✅ Ճիշտ տարբերակը՝
 DEFAULT_OWNER = {"username": "armshekyan", "password": "arms567", "role": "owner", "school_id": "system_owner"}
 DEFAULT_ADMIN = {"username": "arsoo", "password": "123", "role": "admin", "school_id": "school_190"}
 
@@ -113,27 +111,23 @@ DEFAULT_TEACH_EDIT = {"username": "teach", "password": "123", "role": "teacher_e
 DEFAULT_USER = {"username": "user", "password": "123", "role": "user", "school_id": "school_190"}
 
 
-# ✅ Roadmap Կետ 2: Դինամիկ ֆայլի անուն ըստ դպրոցի
 def get_db_file_name():
     school = st.session_state.get('school_id', 'default')
     return f"data_{school}.json"
 
 
+# ✅ Cloud ID-ի կառավարում (Owner-ն ու 190-ը միասին կարդում են 1-ից)
 def get_cloud_id():
     school = st.session_state.get('school_id', 'school_default')
     
-    # Եթե գլխավոր owner-ն է կամ 190 դպրոցը, կարդում ենք id=1-ից (որպեսզի հին բազադ չկորչի)
     if school in ['system_owner', 'school_190', 'school_default']:
         return 1 
     else:
-        # Եթե նոր դպրոց է (օր. school_200), վերցնում ենք միայն թվերը որպես Cloud ID
         try:
             return int(''.join(filter(str.isdigit, school)))
         except:
             return 999
 
-
-# --- 🔑 ՏՎՅԱԼՆԵՐԻ ԲԱԶԱՅԻ ԵՎ ԼՈԳԻՆԻ ՖՈՒՆԿՑԻԱՆԵՐ ---
 
 def get_supabase_headers():
     try:
@@ -186,23 +180,10 @@ def save_to_disk():
         cloud_data = {}
         if headers:
             try:
-                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
-                payload = {"id": current_cloud_id, "data": final_data}
-                
-                # ✅ Սա կախարդական տողն է, որը Supabase-ին ստիպում է ավտոմատ ստեղծել նոր տողեր
-                headers["Prefer"] = "resolution=merge-duplicates" 
-                
-                # Փորձում ենք ուղարկել տվյալները
-                response = requests.post(url, headers=headers, data=json.dumps(payload))
-                
-                # Եթե Supabase-ում տողը չկար ու POST-ը սխալ տվեց, փորձում ենք Upsert անել
-                if response.status_code != 201 and response.status_code != 200:
-                    headers["Prefer"] = "return=representation" # Ստիպում ենք ստեղծել
-                    requests.post(url, headers=headers, data=json.dumps(payload))
-
-                st.toast(f"✅ Տվյալները պահպանվեցին Cloud-ում (Դպրոց ID: {current_cloud_id})!", icon="🌐")
-                parse_data(final_data)
-                return
+                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.{current_cloud_id}&select=data"
+                response = requests.get(url, headers=headers)
+                if response.status_code == 200 and response.json():
+                    cloud_data = response.json()[0]["data"]
             except Exception:
                 pass
 
@@ -229,9 +210,17 @@ def save_to_disk():
             try:
                 url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
                 payload = {"id": current_cloud_id, "data": final_data}
-                headers["Prefer"] = "resolution=merge-duplicates"
-                requests.post(url, headers=headers, data=json.dumps(payload))
-                st.toast(f"✅ Տվյալները միացվեցին և պահպանվեցին Cloud-ում (ID: {current_cloud_id})!", icon="🌐")
+                
+                # ✅ Upsert կախարդական համակարգը (նոր տողերն ավտոմատ ստեղծվում են)
+                headers["Prefer"] = "resolution=merge-duplicates" 
+                
+                response = requests.post(url, headers=headers, data=json.dumps(payload))
+                
+                if response.status_code != 201 and response.status_code != 200:
+                    headers["Prefer"] = "return=representation"
+                    requests.post(url, headers=headers, data=json.dumps(payload))
+
+                st.toast(f"✅ Տվյալները պահպանվեցին Cloud-ում (Դպրոց ID: {current_cloud_id})!", icon="🌐")
                 parse_data(final_data)
                 return
             except Exception:
@@ -354,7 +343,6 @@ def parse_data(data):
     st.session_state.teacher_pool = data.get("teacher_pool", [])
     st.session_state.users_list = data.get("users_list", [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_SUB_EDIT, DEFAULT_TEACH_EDIT, DEFAULT_USER])
 
-
 # --- INITIALIZATION ---
 st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅")
 
@@ -463,7 +451,7 @@ if not st.session_state.logged_in:
                         if db_school and db_school != 'school_default':
                             st.session_state.school_id = db_school
                         elif user['role'] == 'owner':
-                            st.session_state.school_id = 'system_owner'
+                            st.session_state.school_id = 'system_owner' # 👈 Լիարժեք system_owner
                         else:
                             st.session_state.school_id = 'school_190' 
 
@@ -1036,12 +1024,12 @@ elif st.session_state.active_page == "normal":
                         if "GEMINI_API_KEY" not in st.secrets:
                             response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
                         else:
-                            context = f"Դու 'Smart Time Table' պրոյեկտի AI օգնականն ես։ Պատասխանիր հստակ, հայերենով և սեղմ։\\n"
-                            context += f"Դու խոսում ես {current_user}-ի հետ։\\n"
+                            context = f"Դու 'Smart Time Table' պրոյեկտի AI օգնականն ես։ Պատասխանիր հստակ, հայերենով և սեղմ։\n"
+                            context += f"Դու խոսում ես {current_user}-ի հետ։\n"
                             if st.session_state.schedule:
-                                context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\\n"
+                                context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
                             else:
-                                context += "Դեռևս գեներացված դասացուցակ չկա։\\n"
+                                context += "Դեռևս գեներացված դասացուցակ չկա։\n"
                             
                             context += f"Օգտատիրոջ հարցը՝ {prompt}"
 
