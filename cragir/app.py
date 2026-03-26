@@ -118,15 +118,21 @@ def get_db_file_name():
 
 # ✅ Cloud ID-ի կառավարում (Owner-ն ու 190-ը միասին կարդում են 1-ից)
 def get_cloud_id():
+    # Վերցնում ենք school_id-ն session-ից
     school = st.session_state.get('school_id', 'school_default')
     
+    # Եթե system_owner է կամ 190, գնում ենք id=1 (որտեղ քո հին բազան է)
     if school in ['system_owner', 'school_190', 'school_default']:
         return 1 
     else:
+        # Բաժանում ենք school_300 տեքստը և վերցնում ենք միայն թիվը (օր. 300)
         try:
-            return int(''.join(filter(str.isdigit, school)))
+            if "_" in str(school):
+                return int(str(school).split("_")[1])
+            else:
+                return int(''.join(filter(str.isdigit, str(school))))
         except:
-            return 999
+            return 999 # Եթե ինչ-որ բան սխալ գնա
 
 
 def get_supabase_headers():
