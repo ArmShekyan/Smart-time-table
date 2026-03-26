@@ -313,7 +313,6 @@ def load_from_disk():
     current_cloud_id = get_cloud_id()
     headers = get_supabase_headers()
     
-    # 👥 1. Բեռնում ենք Օգտատերերին Supabase-ի Users աղյուսակից
     if headers:
         try:
             users_url = f"{st.secrets['supabase_url']}/rest/v1/users?select=*"
@@ -321,16 +320,16 @@ def load_from_disk():
             if users_response.status_code == 200:
                 all_users = users_response.json()
                 
-                # ✅ ՊԱՅՄԱՆ. Owner-ը տեսնում է բոլորին, Admin-ները՝ միայն իրենց դպրոցի մարդկանց
+                # ✅ Ուղղված ֆիլտր
                 if st.session_state.get('user_role') == 'owner':
                     st.session_state.users_list = all_users
                 else:
                     current_school = st.session_state.get('school_id')
+                    # Ֆիլտրում ենք, բայց եթե ոչինչ չգտնի, դատարկ ենք թողնում (ոչ թե Default-ներն ենք բերում)
                     st.session_state.users_list = [u for u in all_users if u.get('school_id') == current_school]
         except Exception:
             pass
 
-    # 📂 2. Բեռնում ենք Դասացուցակի տվյալները (timetable_data)
     if headers:
         try:
             url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.{current_cloud_id}&select=data"
@@ -342,7 +341,6 @@ def load_from_disk():
         except Exception:
             pass
 
-    # 📁 3. Եթե Ինտերնետ կամ Supabase չկա՝ Ֆայլից
     current_db_file = get_db_file_name()
     if os.path.exists(current_db_file):
         try:
@@ -353,8 +351,8 @@ def load_from_disk():
         except Exception:
             pass
     
-    # Եթե ընդհանրապես ոչինչ չկա, վերականգնում ենք Default-ները
-    if not st.session_state.get("users_list"):
+    # ✅ Default-ները բերում ենք միայն եթե ընդհանրապես ոչ մի users_list չկա Session-ում
+    if "users_list" not in st.session_state or not st.session_state.users_list:
         st.session_state.users_list = [DEFAULT_OWNER, DEFAULT_ADMIN, DEFAULT_SUB_EDIT, DEFAULT_TEACH_EDIT, DEFAULT_USER]
 
 
