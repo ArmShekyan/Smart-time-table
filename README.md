@@ -37,4 +37,4 @@
 ---
 
 ### 👤 Հեղինակ
-* **Developer**՝ Arman (ArmsHekyan) 💻
+* **Developer**՝ Arman Shekyan(ArmsHekyan) 💻
