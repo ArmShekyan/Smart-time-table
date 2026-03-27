@@ -1162,8 +1162,10 @@ elif st.session_state.active_page == "normal":
                     
                     with st.spinner("🧠 Գեներացվում է նոր աղյուսակը..."):
                         try:
+                            # 🎯 Խնդրում ենք Gemini-ին տվյալները վերադարձնել միայն JSON ֆորմատով
                             context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
-                            context += "Օգտատերը ՀԱՄԱՁԱՅՆԵՑ քո նախորդ առաջարկին։ Հիմա քո մտքում արա այդ փոփոխությունը և ցույց տուր ՆՈՐ ԴԱՍԱՑՈՒՑԱԿԸ տեքստային աղյուսակով չաթի մեջ։\n"
+                            context += "Օգտատերը ՀԱՄԱՁԱՅՆԵՑ քո առաջարկին։ Հիմա արա այդ փոփոխությունը և արդյունքը տուր ՄԻԱՅՆ JSON ֆորմատով (առանց ավելորդ տեքստերի)։\n"
+                            context += "JSON-ի կառուցվածքը պետք է լինի այսպես՝ [{\"Դասարան\": \"10-Ա\", \"Օր\": \"Երկուշաբթի\", \"Ժամ\": 1, \"Առարկա\": \"Մաթեմ (Արթուր)\"}, ...]\n"
                             
                             if st.session_state.schedule:
                                 context += f"Նախնական դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
@@ -1175,11 +1177,46 @@ elif st.session_state.active_page == "normal":
                             )
                             response_text = response.text
 
-                            st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
+                            # --- ✨ ՆՈՐ։ Փոխարկում ենք հորիզոնական գեղեցիկ աղյուսակի ---
+                            try:
+                                # Մաքրում ենք markdown-ի կոդի սահմանները (եթե AI-ն ```json է դրել)
+                                clean_json = response_text.replace("```json", "").replace("```", "").strip()
+                                new_sched_list = json.loads(clean_json)
+                                
+                                # Սարքում ենք Pandas DataFrame
+                                df_new = pd.DataFrame(new_sched_list)
+                                
+                                # Ձևափոխում ենք հորիզոնականի (Pivot)
+                                df_new['Առարկա_Կարճ'] = df_new['Առարկա'].apply(lambda x: x.split(" (")[0])
+                                
+                                # Ցուցադրում ենք աղյուսակները ըստ դասարանների
+                                for c in df_new['Դասարան'].unique():
+                                    cls_df = df_new[df_new['Դասարան'] == c]
+                                    pivot_new = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա_Կարճ').fillna("-")
+                                    
+                                    # Պահպանում ենք օրերի հերթականությունը
+                                    ordered_days = [d for d in DAYS_AM if d in pivot_new.columns]
+                                    if ordered_days:
+                                        pivot_new = pivot_new[ordered_days]
+
+                                    # Պատրաստում ենք ցուցադրումը չաթի մեջ
+                                    st.markdown(f"##### 🏫 Նոր դասացուցակ դասարան {c}-ի համար․")
+                                    st.dataframe(pivot_new, use_container_width=True)
+
+                                st.session_state.chat_histories[current_user].append({
+                                    "role": "assistant", 
+                                    "content": "✅ Առաջարկը հաջողությամբ կիրառվեց և դասացուցակները թարմացվեցին։"
+                                })
+
+                            except Exception as json_err:
+                                # Եթե JSON չհաջողվի (սովորական տեքստ), կցուցադրի տեքստը
+                                st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
+
                             st.rerun()
 
                         except Exception as e:
                             st.error(f"❌ Սխալ: {str(e)}")
+                            
 
                 if col_no.button("❌ Չեղարկել", use_container_width=True):
                     st.session_state.pending_proposal = None
