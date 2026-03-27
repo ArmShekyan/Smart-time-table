@@ -9,6 +9,7 @@ import time
 from dataclasses import dataclass, asdict
 from typing import List
 from fpdf import FPDF
+from streamlit_cookies_controller import CookieController
 from google import genai  # ✨ Google-ի պաշտոնական AI գրադարանը
 
 # --- ՄՈԴԵԼՆԵՐ ---
@@ -374,6 +375,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+# 🔥 --- COOKIES ԿԱՌԱՎԱՐԻՉ --- 🔥
+cookies = CookieController()
+
 if "subjects" not in st.session_state:
     st.session_state.update({
         "subjects": [], 
@@ -393,6 +397,21 @@ if "subjects" not in st.session_state:
         "show_readme": False
     })
     load_from_disk()
+
+# 🔥 --- COOKIE-Ի ՍՏՈՒԳՈՒՄ ՍԿԶԲՆԱՄԱՍՈՒՄ (Refresh-ի համար) --- 🔥
+if not st.session_state.logged_in:
+    saved_user = cookies.get("saved_username")
+    saved_role = cookies.get("saved_role")
+    
+    if saved_user and saved_role:
+        st.session_state.logged_in = True
+        st.session_state.username = saved_user
+        st.session_state.user_role = saved_role
+        
+        if saved_role in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
+            st.session_state.active_tab = "📊 Վահանակ"
+        else:
+            st.session_state.active_tab = "📂 Վերջին պահպանվածը"
 
 
 # --- 🚪 ԼՈԳԻՆԻ ԷՋ ---
@@ -426,6 +445,10 @@ if not st.session_state.logged_in:
                         st.session_state.logged_in = True
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
+                        
+                        # 🔥 ՊԱՀՈՒՄ ԵՆՔ ՏՎՅԱԼՆԵՐԸ COOKIE-ՈՒՄ 🔥
+                        cookies.set("saved_username", user['username'])
+                        cookies.set("saved_role", user['role'])
                         
                         st.session_state.show_readme = True 
                         
@@ -510,8 +533,15 @@ def generate_pdf(schedule_data):
 st.sidebar.title(f"👤 {st.session_state.username}")
 st.sidebar.caption(f"Պաշտոն՝ **{st.session_state.user_role}**")
 
+# 🔥 --- ՓՈՓՈԽՎԱԾ ԵԼՔԻ ԿՈՃԱԿԸ (ՋՆՋՈՒՄ Է COOKIE-ՆԵՐԸ) --- 🔥
 if st.sidebar.button("🚪 Ելք համակարգից", use_container_width=True):
     st.session_state.logged_in = False
+    st.session_state.username = ""
+    st.session_state.user_role = ""
+    
+    cookies.remove("saved_username")
+    cookies.remove("saved_role")
+    
     st.rerun()
 
 
