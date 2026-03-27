@@ -745,7 +745,7 @@ elif st.session_state.active_page == "normal":
                     subj_hours[s_name] = subj_hours.get(s_name, 0) + assign.lessons_per_week
 
                 df_s_hours = pd.DataFrame(list(subj_hours.items()), columns=["Առարկա", "Ընդհանուր Ժամեր"])
-                df_s_hours = df_s_hours.sort_values(by="Ընդհանուր Ժեր", ascending=False)
+                df_s_hours = df_s_hours.sort_values(by="Ընդհանուր Ժամեր", ascending=False)
 
                 # ✨ Հորիզոնական անուններով գրաֆիկ (Altair-ով)
                 chart_s = alt.Chart(df_s_hours).mark_bar(color='#ff7f0e').encode(
