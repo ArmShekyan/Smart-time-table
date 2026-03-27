@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass, asdict
 from typing import List
 from fpdf import FPDF
-import streamlit_authenticator as stauth  # 🔥 Պաշտոնական Auth գրադարանը
+import streamlit_authenticator as stauth
 from google import genai
 
 # --- ՄՈԴԵԼՆԵՐ ---
@@ -380,24 +380,23 @@ if "subjects" not in st.session_state:
 
 # 🔥 --- ՍՊԱՍԱՐԿՈՒՄ ԵՆՔ STREAMLIT-AUTHENTICATOR-ԻՆ --- 🔥
 
-# Ֆորմատավորում ենք օգտատերերի բազան authenticator-ի համար
 credentials = {"usernames": {}}
 for u in st.session_state.users_list:
     credentials["usernames"][u["username"]] = {
         "name": u["username"],
-        "password": u["password"], # Authenticator-ը կհասկանա Plain տեքստը կամ Hash-ը
+        "password": u["password"],
         "role": u.get("role", "user")
     }
 
 authenticator = stauth.Authenticate(
     credentials,
-    "smart_timetable_cookie", # Cookie-ի անունը
-    "smart_timetable_key",     # Cookie-ի բանալին
-    cookie_expiry_days=30      # 🔥 ՀԻՇԵԼՈՒ Է 30 ՕՐ 🔥
+    "smart_timetable_cookie",
+    "smart_timetable_key",
+    cookie_expiry_days=30
 )
 
-# Ցուցադրում ենք մուտքի պատրաստի UI-ը
-name, authentication_status, username = authenticator.login("👤 Մուտք համակարգ", "unrendered")
+# 🔥 Ուղղված տարբերակը ('main' -ով)
+name, authentication_status, username = authenticator.login("👤 Մուտք համակարգ", "main")
 
 
 if authentication_status == False:
@@ -405,12 +404,10 @@ if authentication_status == False:
 elif authentication_status == None:
     st.warning("⚠️ Խնդրում ենք մուտքագրել Ձեր տվյալները")
 elif authentication_status:
-    # Եթե մուտքը հաջող է, պահում ենք տվյալները Session State-ում
     if not st.session_state.logged_in:
         st.session_state.logged_in = True
         st.session_state.username = username
         
-        # Գտնում ենք օգտատիրոջ դերը մեր սեփական ցուցակից
         user_role = "user"
         for u in st.session_state.users_list:
             if u["username"] == username:
@@ -499,10 +496,9 @@ st.sidebar.title(f"👤 {st.session_state.username}")
 st.sidebar.caption(f"Պաշտոն՝ **{st.session_state.user_role}**")
 
 
-# 🔥 --- ՊԱՇՏՈՆԱԿԱՆ ԵԼՔԻ ԿՈՃԱԿԸ --- 🔥
 authenticator.logout("🚪 Ելք համակարգից", "sidebar")
 
-# Ձեռքով զրոյացնում ենք մեր session state-ը եթե authenticator-ը զրոյացրել է մուտքը
+
 if not authentication_status:
     st.session_state.logged_in = False
     st.session_state.username = ""
