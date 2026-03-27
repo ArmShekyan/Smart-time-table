@@ -1152,7 +1152,7 @@ elif st.session_state.active_page == "normal":
 
         if st.session_state.pending_proposal:
             with st.chat_message("assistant"):
-                st.warning("💡 AI-ն ունի առաջարկ։ Ցանկանու՞մ եք տեսնել փոփոխված տարբերակը ձեր մտքում։")
+                st.warning("💡 AI-ն ունի առաջարկ։ Ցանկանու՞մ եք տեսնել փոփոխված տարբերակը։")
                 
                 col_yes, col_no = st.columns(2)
                 
