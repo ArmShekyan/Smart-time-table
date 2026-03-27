@@ -3,4 +3,4 @@ requests
 pandas
 fpdf2
 google_genai
-streamlit-cookies-controller
+streamlit-authenticator
