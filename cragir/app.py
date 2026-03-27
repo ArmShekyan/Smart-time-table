@@ -397,7 +397,7 @@ authenticator = stauth.Authenticate(
 )
 
 # Ցուցադրում ենք մուտքի պատրաստի UI-ը
-name, authentication_status, username = authenticator.login("👤 Մուտք համակարգ", "main")
+name, authentication_status, username = authenticator.login("👤 Մուտք համակարգ", "unrendered")
 
 
 if authentication_status == False:
