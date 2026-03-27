@@ -36,5 +36,8 @@
 
 ---
 
-### 👤 Հեղինակ
-* **Developer**՝ Arman Shekyan(ArmsHekyan) 💻
+---
+
+## 👥 Authors & Contributors
+
+* **Arman Shekyan (ArmShekyan)** — Lead Developer 💻
