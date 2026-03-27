@@ -658,7 +658,6 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
 
     st.divider()
     
-    # 🆕 ԿՈՃԱԿ՝ ՄԻԱՅՆ ՕԳՏԱՏԵՐԵՐԻ ՑՈՒՑԱԿԸ SQL-ԻՑ ԹԱՐՄԱՑՆԵԼՈՒ ՀԱՄԱՐ
     if st.button("🔄 Թարմացնել Ցուցակը (Կարդալ SQL բազայից)", use_container_width=True):
         refresh_users_only()
 
@@ -678,7 +677,6 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
                 can_delete = False
                     
             if can_delete:
-                # 🆕 Կոճակը հիմա բացում է հաստատման Modal-ը
                 if c3.button("🗑️", key=f"del_user_{i}"):
                     confirm_delete_user_modal(i)
 
@@ -692,6 +690,41 @@ elif st.session_state.active_page == "normal":
         m2.metric(label="👩‍🏫 Ուսուցիչներ", value=len(st.session_state.teachers))
         m3.metric(label="🏫 Դասարաններ", value=len(st.session_state.classes))
         m4.metric(label="📋 Կապեր/Ժամեր", value=len(st.session_state.assignments))
+
+        st.divider()
+
+        # 🔥 --- ՎԻԶՈՒԱԼ ԳՐԱՖԻԿՆԵՐ --- 🔥
+        st.subheader("📈 Տվյալների Վերլուծություն")
+
+        col_chart1, col_chart2 = st.columns(2)
+
+        with col_chart1:
+            st.markdown("#### 👩‍🏫 Ուսուցիչների Շաբաթական Ժամերը")
+            if st.session_state.assignments and st.session_state.teachers:
+                teacher_hours = {}
+                for assign in st.session_state.assignments:
+                    t_name = next((t.name for t in st.session_state.teachers if t.id == assign.teacher_id), "Անհայտ")
+                    teacher_hours[t_name] = teacher_hours.get(t_name, 0) + assign.lessons_per_week
+
+                df_t_hours = pd.DataFrame(list(teacher_hours.items()), columns=["Ուսուցիչ", "Ժամերի Քանակ"])
+                df_t_hours = df_t_hours.sort_values(by="Ժամերի Քանակ", ascending=False)
+                st.bar_chart(df_t_hours.set_index("Ուսուցիչ"))
+            else:
+                st.info("ℹ️ Դեռևս կապեր ստեղծված չեն գրաֆիկը ցույց տալու համար։")
+
+        with col_chart2:
+            st.markdown("#### 📚 Առարկաների Բաշխվածությունը")
+            if st.session_state.assignments and st.session_state.subjects:
+                subj_hours = {}
+                for assign in st.session_state.assignments:
+                    s_name = next((s.name for s in st.session_state.subjects if s.id == assign.subject_id), "Անհայտ")
+                    subj_hours[s_name] = subj_hours.get(s_name, 0) + assign.lessons_per_week
+
+                df_s_hours = pd.DataFrame(list(subj_hours.items()), columns=["Առարկա", "Ընդհանուր Ժամեր"])
+                df_s_hours = df_s_hours.sort_values(by="Ընդհանուր Ժամեր", ascending=False)
+                st.bar_chart(df_s_hours.set_index("Առարկա"))
+            else:
+                st.info("ℹ️ Դեռևս առարկաներ կապված չեն։")
 
         st.divider()
 
@@ -1080,16 +1113,13 @@ elif st.session_state.active_page == "normal":
         if current_user not in st.session_state.chat_histories:
             st.session_state.chat_histories[current_user] = []
 
-        # Ստեղծում ենք վիճակ փոփոխության հաստատման համար (Pending Proposal)
         if "pending_proposal" not in st.session_state:
             st.session_state.pending_proposal = None
 
-        # 💬 1. Ցուցադրում ենք չաթի հին պատմությունը
         for message in st.session_state.chat_histories[current_user]:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        # 🎛️ 2. Եթե կա սպասվող առաջարկ (Pending), ցույց ենք տալիս կոճակները
         if st.session_state.pending_proposal:
             with st.chat_message("assistant"):
                 st.warning("💡 AI-ն ունի առաջարկ։ Ցանկանու՞մ եք տեսնել փոփոխված տարբերակը ձեր մտքում։")
@@ -1098,11 +1128,10 @@ elif st.session_state.active_page == "normal":
                 
                 if col_yes.button("✅ Կիրառել (Տեսնել նոր աղյուսակը)", use_container_width=True, type="primary"):
                     proposal_text = st.session_state.pending_proposal
-                    st.session_state.pending_proposal = None # Մաքրում ենք սպասումը
+                    st.session_state.pending_proposal = None
                     
                     with st.spinner("🧠 Գեներացվում է նոր աղյուսակը..."):
                         try:
-                            # Այստեղ կոնտեքստը փոխվում է՝ AI-ին հրահանգելով ցույց տալ արդյունքը
                             context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
                             context += "Օգտատերը ՀԱՄԱՁԱՅՆԵՑ քո նախորդ առաջարկին։ Հիմա քո մտքում արա այդ փոփոխությունը և ցույց տուր ՆՈՐ ԴԱՍԱՑՈՒՑԱԿԸ տեքստային աղյուսակով չաթի մեջ։\n"
                             
@@ -1123,11 +1152,10 @@ elif st.session_state.active_page == "normal":
                             st.error(f"❌ Սխալ: {str(e)}")
 
                 if col_no.button("❌ Չեղարկել", use_container_width=True):
-                    st.session_state.pending_proposal = None # Մաքրում ենք սպասումը
+                    st.session_state.pending_proposal = None
                     st.toast("Առաջարկը չեղարկվեց", icon="🗑️")
                     st.rerun()
 
-        # ⌨️ 3. Նոր հարցերի մուտքագրում (Երբ օգտատերը գրում է չաթում)
         if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
             
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
@@ -1140,7 +1168,6 @@ elif st.session_state.active_page == "normal":
                         if "GEMINI_API_KEY" not in st.secrets:
                             response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
                         else:
-                            # Գլխավոր կոնտեքստը, որը միավորում է Տեղեկատուն և Խորհրդատուն
                             context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
                             context += f"Դու խոսում ես {current_user}-ի հետ։\n"
                             context += "⚠️ ՔՈ ԴԵՐԵՐԸ ԵՎ ԿԱՆՈՆՆԵՐԸ:\n"
@@ -1162,7 +1189,6 @@ elif st.session_state.active_page == "normal":
                             )
                             response_text = response.text
 
-                            # Եթե AI-ն առաջարկ է արել, մենք այն պահում ենք, որպեսզի էջը թարմանա ու կոճակները բացվեն
                             if "առաջարկ" in response_text.lower() or "փոխել" in response_text.lower() or "տեղափոխ" in response_text.lower() or "swap" in response_text.lower():
                                 st.session_state.pending_proposal = response_text
 
@@ -1172,6 +1198,5 @@ elif st.session_state.active_page == "normal":
                     st.markdown(response_text)
                     st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
                     
-                    # Եթե առաջարկ կա, թարմացնում ենք էջը, որպեսզի կոճակները անմիջապես հայտնվեն
                     if st.session_state.pending_proposal:
                         st.rerun()
