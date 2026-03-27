@@ -1135,6 +1135,7 @@ elif st.session_state.active_page == "normal":
             else: st.warning("Այս ուսուցչի համար դեռևս դասեր չկան բաշխված։")
         else: st.info("Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
 
+
     elif st.session_state.active_tab == "🤖 AI Օգնական":
         st.title("🤖 AI Օգնական (Gemini)")
         st.caption(f"Բարև, **{st.session_state.username}**! Ես քո անձնական AI օգնականն եմ։")
@@ -1232,5 +1233,4 @@ elif st.session_state.active_page == "normal":
                     st.markdown(response_text)
                     st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
                     
-                    if st.session_state.pending_proposal:
-                        st.rerun()
+                    # 🔥 Անվերջ rerun-ի տողերը հանվել են այստեղից, որպեսզի էջը կանգնի
