@@ -375,8 +375,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# 🔥 --- COOKIES ԿԱՌԱՎԱՐԻՉ --- 🔥
-cookies = CookieController()
+# 🔥 --- ԱՐԱԳԱՑՎԱԾ COOKIES ԿԱՌԱՎԱՐԻՉ --- 🔥
+@st.cache_resource
+def get_cookie_controller():
+    return CookieController()
+
+
+cookies = get_cookie_controller()
 
 if "subjects" not in st.session_state:
     st.session_state.update({
