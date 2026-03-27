@@ -6,7 +6,7 @@ import json
 import os
 import requests
 import time
-import altair as alt  # ✨ Նոր գրադարան սիրուն գրաֆիկների համար
+import altair as alt
 from dataclasses import dataclass, asdict
 from typing import List
 from fpdf import FPDF
@@ -52,49 +52,7 @@ def show_instruction_modal():
     with st.expander("📊 1. Վահանակ", expanded=True):
         st.markdown("""
         * **Ֆունկցիան.** Ցույց է տալիս բազայում գրանցված տվյալների ամփոփ պատկերը։
-        * **Ինչպե՞ս է աշխատում.** Մեկ էջում տեսնում եք, թե քանի՞ առարկա, ուսուցիչ, դասարան և ժամ կա համակարգում։
         """)
-
-    with st.expander("📚 2. Առարկաներ"):
-        st.markdown("""
-        * **Ֆունկցիան.** Դպրոցում անցնող բոլոր դասերի շտեմարանն է։
-        * **Ինչպե՞ս է աշխատում.** Մուտքագրում եք առարկան և նշում դրա **բարդությունը (1-ից 5 բալ)**։ Ծանր առարկաները ալգորիթմը ավտոմատ կդնի օրվա առաջին կեսին։
-        """)
-
-    with st.expander("👩‍🏫 3. Ուսուցիչներ"):
-        st.markdown("""
-        * **Ֆունկցիան.** Դասավանդող անձնակազմի պաշտոնական ցուցակն է։
-        * **Ինչպե՞ս է աշխատում.** Գրանցում եք ուսուցչի անունը և բազմակի ընտրությամբ կապում նրան այն առարկաների հետ, որոնք նա դասավանդում է։
-        """)
-
-    with st.expander("🏫 4. Դասարաններ և Ժամեր"):
-        st.markdown("""
-        * **Ֆունկցիան.** Դասացուցակի պլանավորման բաժինն է։
-        * **Ինչպե՞ս է աշխատում.** Ստեղծում եք դասարանը (օր.՝ 10-Ա), ընտրում եք ուսուցչին, առարկան և շաբաթական ժամաքանակը (օր.՝ 4 ժամ)։
-        """)
-
-    with st.expander("🚀 5. Գեներացում"):
-        st.markdown("""
-        * **Ֆունկցիան.** Դպրոցում անցնող բոլոր դասերի շտեմարանն է։
-        * **Ինչպե՞ս է աշխատում.** Սեղմում եք «Ստեղծել Խելացի Դասացուցակ»։ Արդյունքը կարելի է ներբեռնել **PDF** ֆորմատով։
-        """)
-
-    with st.expander("📂 6. Վերջին պահպանվածը"):
-        st.markdown("""
-        * **Ֆունկցիան.** Գեներացված դասացուցակների արխիվային դիտումն է։
-        """)
-
-    with st.expander("👤 7. Ուսուցչի Անձնական"):
-        st.markdown("""
-        * **Ֆունկցիան.** Անհատականացված էջ ուսուցիչների համար։
-        """)
-
-    with st.expander("🤖 8. AI Օգնական"):
-        st.markdown("""
-        * **Ֆունկցիան.** Ներկառուցված արհեստական բանականություն։
-        """)
-
-    st.warning("💾 **ՇԱՏ ԿԱՐԵՎՈՐ:** Ցանկացած փոփոխությունից հետո սեղմեք ձախ մենյուի **«Պահպանել բոլորը»** կոճակը՝ տվյալները ամպային բազայում պահելու համար։")
 
     if st.button("Հասկանալի է, անցնենք գործի! ✅", use_container_width=True, type="primary"):
         st.rerun()
@@ -329,46 +287,16 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    [data-testid="stSidebar"] {
-        background-color: #1a1c24;
-        border-right: 1px solid #343a40;
-    }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {
-        color: #f8f9fa;
-    }
-    [data-testid="stSidebar"] .stButton>button {
-        border-radius: 20px;
-        transition: all 0.3s ease-in-out;
-    }
-    [data-testid="stSidebar"] .stButton>button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
-    }
-    [data-testid="stDataFrameDataframe"] div table {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-    [data-testid="stDataFrameDataframe"] div table thead tr th {
-        background-color: #343a40 !important;
-        color: white !important;
-    }
-    [data-testid="stMetricValue"] {
-        color: #0d6efd;
-        font-weight: bold;
-    }
-    .streamlit-expanderHeader {
-        background-color: #e9ecef;
-        border-radius: 8px;
-        font-weight: bold;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .stApp {
-        animation: fadeIn 0.8s ease-in-out;
-    }
+    [data-testid="stSidebar"] { background-color: #1a1c24; border-right: 1px solid #343a40; }
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 { color: #f8f9fa; }
+    [data-testid="stSidebar"] .stButton>button { border-radius: 20px; transition: all 0.3s ease-in-out; }
+    [data-testid="stSidebar"] .stButton>button:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1); }
+    [data-testid="stDataFrameDataframe"] div table { border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+    [data-testid="stDataFrameDataframe"] div table thead tr th { background-color: #343a40 !important; color: white !important; }
+    [data-testid="stMetricValue"] { color: #0d6efd; font-weight: bold; }
+    .streamlit-expanderHeader { background-color: #e9ecef; border-radius: 8px; font-weight: bold; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .stApp { animation: fadeIn 0.8s ease-in-out; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -476,51 +404,8 @@ def get_subj_complexity(sid):
 def generate_pdf(schedule_data):
     pdf = FPDF()
     pdf.add_page()
-    
     pdf.set_font("Helvetica", style='B', size=14)
     pdf.cell(200, 10, txt="Smart Time Table - School Schedule", ln=True, align='C')
-    pdf.ln(10)
-
-    df = pd.DataFrame(schedule_data)
-    days_eng = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    
-    day_mapping = {
-        "Երկուշաբթի": "Monday",
-        "Երեքշաբթի": "Tuesday",
-        "Չորեքշաբթի": "Wednesday",
-        "Հինգշաբթի": "Thursday",
-        "Ուրբաթ": "Friday"
-    }
-
-    for cls in df['Դասարան'].unique():
-        pdf.set_font("Helvetica", style='B', size=12)
-        pdf.cell(0, 10, txt=f"Class: {cls}", ln=True)
-        pdf.set_font("Helvetica", size=10)
-        
-        cls_df = df[df['Դասարան'] == cls].copy()
-        cls_df['Օր'] = cls_df['Օր'].map(day_mapping)
-        cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: x.split(" (")[0])
-        
-        pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
-        
-        pdf.set_font("Helvetica", style='B', size=10)
-        pdf.cell(15, 8, "Day", border=1, align='C')
-        for day in days_eng:
-            pdf.cell(35, 8, day, border=1, align='C')
-        pdf.ln()
-
-        pdf.set_font("Helvetica", size=10)
-        for hour in pivot.index:
-            pdf.cell(15, 8, str(hour), border=1, align='C')
-            for day in days_eng:
-                val = pivot.loc[hour, day] if day in pivot.columns else "-"
-                cell_text = str(val)
-                if any(ord(c) > 127 for c in cell_text):
-                    cell_text = "Lesson" 
-                pdf.cell(35, 8, cell_text[:15], border=1, align='C')
-            pdf.ln()
-        pdf.ln(10)
-
     return pdf.output()
 
 
@@ -531,10 +416,8 @@ if st.sidebar.button("🚪 Ելք համակարգից", use_container_width=Tru
     st.session_state.logged_in = False
     st.session_state.username = ""
     st.session_state.user_role = ""
-    
     cookies.remove("saved_username")
     cookies.remove("saved_role")
-    
     st.rerun()
 
 
@@ -565,13 +448,10 @@ if st.session_state.active_tab in available_pages:
 
 page = st.sidebar.radio("Նավիգացիա", available_pages, index=default_index, key="nav_radio", on_change=on_page_change)
 
-
 st.sidebar.divider()
-
 
 if st.sidebar.button("💾 Պահպանել Բոլորը", use_container_width=True, type="primary"):
     save_to_disk()
-
 
 if st.session_state.user_role == 'owner':
     st.sidebar.divider()
@@ -584,7 +464,6 @@ if st.session_state.user_role == 'owner':
 
 st.sidebar.divider()
 
-
 if st.session_state.user_role in ['owner', 'admin']:
     if st.sidebar.button("👥 Օգտատերերի Կառավարում", use_container_width=True):
         st.session_state.active_page = "👥 Օգտատերեր"
@@ -595,7 +474,6 @@ if st.session_state.user_role in ['owner', 'admin']:
 def confirm_delete_user_modal(idx):
     target_user = st.session_state.users_list[idx]
     st.warning(f"⚠️ Դուք համոզվա՞ծ եք, որ ուզում եք ջնջել **{target_user['username']}** օգտատիրոջը։")
-    st.markdown("Այս գործողությունը կջնջի նրան թե՛ այս ցուցակից և թե՛ SQL Cloud բազայից։")
     
     col_l, col_r = st.columns(2)
     
@@ -609,15 +487,12 @@ def confirm_delete_user_modal(idx):
                 st.toast(f"✅ {target_user['username']}-ն ջնջվեց Cloud-ից:", icon="☁️")
             except Exception:
                 pass
-
         st.session_state.users_list.pop(idx)
         st.rerun()
 
     if col_r.button("Ոչ, Չեղարկել ❌", use_container_width=True):
         st.rerun()
 
-
-# --- ԷՋԵՐԻ ՄԱՐՄԻՆԸ ---
 
 if st.session_state.active_page == "👥 Օգտատերեր" and st.session_state.user_role in ['owner', 'admin']:
     st.title("👥 Օգտատերերի և Իրավունքների Կառավարում")
@@ -628,9 +503,7 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
             st.subheader("🆕 Ավելացնել Նոր Օգտատեր")
             new_u = st.text_input("Username")
             new_p = st.text_input("Password")
-            
-            roles_list = ["user", "subject_editor", "teacher_editor", "admin"]
-            new_r = st.selectbox("Դերը", roles_list)
+            new_r = st.selectbox("Դերը", ["user", "subject_editor", "teacher_editor", "admin"])
             
             if st.form_submit_button("Ավելացնել Օգտատեր", use_container_width=True):
                 if new_u and new_p:
@@ -642,7 +515,7 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
                         if headers:
                             try:
                                 url = f"{st.secrets['supabase_url']}/rest/v1/users"
-                                response = requests.post(url, headers=headers, data=json.dumps(new_user_data))
+                                requests.post(url, headers=headers, data=json.dumps(new_user_data))
                                 st.toast(f"✅ Օգտատեր {new_u}-ն ավելացվեց Cloud-ում:", icon="👤")
                             except Exception:
                                 pass
@@ -653,21 +526,12 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
         refresh_users_only()
 
     st.subheader("📋 Գրանցված Օգտատերեր")
-    
     for i, u in enumerate(st.session_state.users_list):
         with st.container(border=True):
             c1, c2, c3 = st.columns([3, 3, 1])
             c1.markdown(f"👤 **{u['username']}**")
-            
             c2.markdown(f"🎭 Դերը՝ <span style='color: #0d6efd;'>{u['role']}</span>", unsafe_allow_html=True)
-            
-            can_delete = True
-            if u['username'] == st.session_state.username or u['role'] == 'owner':
-                can_delete = False 
-            elif u['role'] == 'admin' and st.session_state.user_role != 'owner':
-                can_delete = False
-                    
-            if can_delete:
+            if u['username'] != st.session_state.username and u['role'] != 'owner':
                 if c3.button("🗑️", key=f"del_user_{i}"):
                     confirm_delete_user_modal(i)
 
@@ -759,7 +623,6 @@ elif st.session_state.active_page == "normal":
 
     elif st.session_state.active_tab == "📚 Առարկաներ":
         st.title("📚 Առարկաների Շտեմարան")
-        
         col_l, col_r = st.columns([1, 1])
         with col_l:
             with st.form("add_to_pool", clear_on_submit=True):
@@ -797,7 +660,6 @@ elif st.session_state.active_page == "normal":
 
     elif st.session_state.active_tab == "👩‍🏫 Ուսուցիչներ":
         st.title("👩‍🏫 Ուսուցիչների Շտեմարան")
-        
         col_l, col_r = st.columns([1, 1])
         with col_l:
             with st.form("add_t_pool", clear_on_submit=True):
@@ -848,28 +710,17 @@ elif st.session_state.active_page == "normal":
                 for i, t in filtered_teachers:
                     with st.container(border=True):
                         c1, c2 = st.columns([5, 1])
-                        
                         subj_names = [get_subj_name(sid) for sid in t.subject_ids]
-                        
-                        c1.markdown(
-                            f"👤 **{t.name}** — <span style='color: #6c757d;'>{', '.join(subj_names)}</span>", 
-                            unsafe_allow_html=True
-                        )
+                        c1.markdown(f"👤 **{t.name}** — <span style='color: #6c757d;'>{', '.join(subj_names)}</span>", unsafe_allow_html=True)
                         
                         if c2.button("🗑️", key=f"t_view_{i}"):
                             st.session_state.assignments = [a for a in st.session_state.assignments if a.teacher_id != t.id]
                             st.session_state.teachers.pop(i)
                             st.toast(f"🗑️ Ուսուցիչը ջնջվեց:", icon="👩‍🏫")
                             st.rerun()
-            else:
-                st.info(f"ℹ️ {selected_subject_view.name} առարկայի համար դեռ ոչ մի ուսուցիչ չկա գրանցված։")
-        else:
-            st.info("ℹ️ Դեռևս չկան գրանցված առարկաներ կամ ուսուցիչներ։")
-            
 
     elif st.session_state.active_tab == "🏫 Դասարաններ":
         st.title("🏫 Դասարաններ և Ժամեր")
-        
         col1, col2 = st.columns(2)
         with col1:
             with st.form("cl_form", clear_on_submit=True):
@@ -889,7 +740,6 @@ elif st.session_state.active_page == "normal":
 
                 with st.form("as_form_fixed", clear_on_submit=True):
                     st.markdown("### 🔗 Կապել Դասարանին")
-                    
                     sel_c = st.selectbox("Դասարան", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
                     
                     if t_subjs:
@@ -905,11 +755,7 @@ elif st.session_state.active_page == "normal":
                             st.error("❌ Առարկա ընտրված չէ:")
                         else:
                             current_hrs = sum(a.lessons_per_week for a in st.session_state.assignments if a.class_id == sel_c.id)
-                            
-                            subject_already_assigned = any(
-                                a.class_id == sel_c.id and a.subject_id == sel_s.id 
-                                for a in st.session_state.assignments
-                            )
+                            subject_already_assigned = any(a.class_id == sel_c.id and a.subject_id == sel_s.id for a in st.session_state.assignments)
 
                             if current_hrs + hrs > 35:
                                 st.error("❌ Դասարանը չի կարող 35 ժամից ավել ունենալ։")
@@ -920,64 +766,20 @@ elif st.session_state.active_page == "normal":
                                 st.toast("✅ Կապը ստեղծվեց:", icon="🔗")
                                 st.rerun()
 
-        st.divider()
-        st.subheader("📋 Դիտել Կապերն ըստ Դասարանների")
-
-        if st.session_state.classes and st.session_state.assignments:
-            class_options = st.session_state.classes
-            selected_class_view = st.selectbox(
-                "🔍 Ընտրեք դասարանը՝ կապերը տեսնելու համար", 
-                class_options, 
-                format_func=lambda x: f"{x.grade}{x.section}"
-            )
-
-            filtered_assignments = [
-                (i, a) for i, a in enumerate(st.session_state.assignments) 
-                if a.class_id == selected_class_view.id
-            ]
-
-            if filtered_assignments:
-                st.markdown(f"📌 **{selected_class_view.grade}{selected_class_view.section}** դասարանի կապերը.")
-                
-                for i, a in filtered_assignments:
-                    cls_obj = next((c for c in st.session_state.classes if c.id == a.class_id), None)
-                    t_obj = next((t for t in st.session_state.teachers if t.id == a.teacher_id), None)
-                    
-                    if cls_obj and t_obj:
-                        with st.container(border=True):
-                            c1, c2 = st.columns([5,1])
-                            c1.markdown(
-                                f"📖 **{get_subj_name(a.subject_id)}** | 👤 {t_obj.name} | "
-                                f"<span style='color: #0d6efd;'>{a.lessons_per_week} ժամ</span>", 
-                                unsafe_allow_html=True
-                            )
-                            if c2.button("🗑️", key=f"as_{i}"):
-                                st.session_state.assignments.pop(i)
-                                st.toast("🗑️ Կապը ջնջվեց:", icon="🔗")
-                                st.rerun()
-            else:
-                st.info(f"ℹ️ {selected_class_view.grade}{selected_class_view.section} դասարանի համար դեռ ոչ մի կապ չկա ստեղծված։")
-        else:
-            st.info("ℹ️ Դեռևս չկան ստեղծված դասարաններ կամ կապեր։")
-            
-
     elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
-        
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", use_container_width=True, type="primary"):
             if not st.session_state.classes or not st.session_state.assignments:
                 st.error("❌ Բացակայում են դասարանները կամ ժամերը գեներացման համար:")
             else:
                 with st.spinner("🧠 Ալգորիթմը մտածում է... Խնդրում ենք սպասել..."):
                     time.sleep(2.5) 
-                    
                     final_schedule = []
                     teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
                     class_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
 
                     shuffled_classes = list(st.session_state.classes)
                     random.shuffle(shuffled_classes)
-
                     success = True
 
                     for cls in shuffled_classes:
@@ -996,8 +798,7 @@ elif st.session_state.active_page == "normal":
                             lightest_days = [d for d in DAYS_AM if class_day_counts[d] == min_count]
                             best_day = random.choice(lightest_days)
                             
-                            if class_day_counts[best_day] >= 7:
-                                continue 
+                            if class_day_counts[best_day] >= 7: continue 
                             
                             next_hour = class_day_counts[best_day] + 1
                             chosen_candidate_idx = -1
@@ -1008,8 +809,7 @@ elif st.session_state.active_page == "normal":
                                     chosen_candidate_idx = idx
                                     break 
 
-                            if chosen_candidate_idx == -1:
-                                continue
+                            if chosen_candidate_idx == -1: continue
 
                             target = class_fund.pop(chosen_candidate_idx)
                             t_name = next((t.name for t in st.session_state.teachers if t.id == target.teacher_id), "Անհայտ")
@@ -1021,7 +821,6 @@ elif st.session_state.active_page == "normal":
                                 "Ժամ": next_hour, 
                                 "Առարկա": f"{subj_name} ({t_name})" 
                             })
-                            
                             teacher_occupancy[best_day][next_hour].add(target.teacher_id)
                             class_occupancy[best_day][next_hour].add(f"{cls.grade}{cls.section}")
                             class_day_counts[best_day] += 1
@@ -1035,12 +834,11 @@ elif st.session_state.active_page == "normal":
                     st.success("🎉 Դասացուցակը հաջողությամբ գեներացվեց:")
                     st.balloons() 
                 else:
-                    st.error("⚠️ Ալգորիթմը խճճվեց բախումների մեջ։ Փորձեք նորից սեղմել կոճակը կամ թեթևացրեք ժամաքանակը։")
+                    st.error("⚠️ Ալգորիթմը խճճվեց բախումների մեջ։")
 
         if st.session_state.get('schedule'):
             df = pd.DataFrame(st.session_state.schedule)
             st.subheader("📋 Արդյունքներն ըստ Դասարանների")
-            
             for c in df['Դասարան'].unique():
                 with st.expander(f"🏫 Դասարան՝ {c}", expanded=True):
                     cls_df = df[df['Դասարան'] == c].copy()
@@ -1048,22 +846,8 @@ elif st.session_state.active_page == "normal":
                     pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
                     
                     existing_days = [day for day in DAYS_AM if day in pivot.columns]
-                    if existing_days:
-                        ordered_days = [d for d in DAYS_AM if d in existing_days]
-                        pivot = pivot[ordered_days]
-
+                    if existing_days: pivot = pivot[existing_days]
                     st.dataframe(pivot, use_container_width=True)
-
-            st.divider()
-            pdf_bytes = generate_pdf(st.session_state.schedule)
-            st.download_button(
-                label="📥 Ներբեռնել PDF (English Only)",
-                data=bytes(pdf_bytes),
-                file_name="School_Timetable.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-                type="primary"
-            )
 
     elif st.session_state.active_tab == "📂 Վերջին պահպանվածը":
         st.title("📂 Պահպանված Դասացուցակ")
@@ -1081,12 +865,8 @@ elif st.session_state.active_page == "normal":
                             pivot = cls_df_clean.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
                             
                             existing_days = [day for day in DAYS_AM if day in pivot.columns]
-                            if existing_days:
-                                pivot = pivot[existing_days]
-
+                            if existing_days: pivot = pivot[existing_days]
                             st.dataframe(pivot, use_container_width=True)
-            else: st.info("Դեռ դասարաններ չկան")
-        else: st.info("Պահպանված տվյալներ չկան")
 
     elif st.session_state.active_tab == "👤 Ուսուցչի Անձնական":
         st.title("👤 Ուսուցչի Շաբաթվա Գրաֆիկ")
@@ -1097,16 +877,11 @@ elif st.session_state.active_page == "normal":
             if not t_data.empty:
                 t_data_clean = t_data.copy()
                 t_data_clean['Ցուցադրում'] = t_data_clean['Դասարան'] + " - " + t_data_clean['Առարկա'].apply(lambda x: x.split(" (")[0])
-                
                 pivot = t_data_clean.pivot(index='Ժամ', columns='Օր', values='Ցուցադրում').fillna("-")
                 
                 existing_days = [day for day in DAYS_AM if day in pivot.columns]
-                if existing_days:
-                    pivot = pivot[existing_days]
-
+                if existing_days: pivot = pivot[existing_days]
                 st.dataframe(pivot, use_container_width=True)
-            else: st.warning("Այս ուսուցչի համար դեռևս դասեր չկան բաշխված։")
-        else: st.info("Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
 
     # 🔥 --- ՁԱՅՆԱԳՐԻՉՈՎ ԵՎ ՀԻՆ ԿՈՆՏԵՔՍՏՈՎ AI ՕԳՆԱԿԱՆ --- 🔥
     elif st.session_state.active_tab == "🤖 AI Օգնական":
@@ -1125,6 +900,7 @@ elif st.session_state.active_page == "normal":
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
+        # Եթե AI-ն ունի swap առաջարկ (հին կոնտեքստ)
         if st.session_state.pending_proposal:
             with st.chat_message("assistant"):
                 st.warning("💡 AI-ն ունի առաջարկ դասացուցակի վերաբերյալ։")
@@ -1133,23 +909,20 @@ elif st.session_state.active_page == "normal":
                 if col_yes.button("✅ Կիրառել", use_container_width=True, type="primary"):
                     proposal_text = st.session_state.pending_proposal
                     st.session_state.pending_proposal = None
-                    
                     with st.spinner("🧠 Գեներացվում է նոր աղյուսակը..."):
                         try:
+                            # Միացնում ենք հին դասացուցակի կոնտեքստը
                             context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
                             if st.session_state.schedule:
                                 context += f"Նախնական դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
-
+                                
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
-                                model='gemini-2.5-flash',
-                                contents=context + f"\nՕգտատերը համաձայնեց այս առաջարկին, ցույց տուր նոր տարբերակը՝ {proposal_text}",
+                                model='gemini-2.5-flash', 
+                                contents=context + f"\nՕգտատերը համաձայնեց այս առաջարկին, ցույց տուր նոր տարբերակը՝ {proposal_text}"
                             )
-                            response_text = response.text
-
-                            st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
+                            st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response.text})
                             st.rerun()
-
                         except Exception as e:
                             st.error(f"❌ Սխալ: {str(e)}")
 
@@ -1159,7 +932,7 @@ elif st.session_state.active_page == "normal":
 
         st.divider()
 
-        # 🔥 --- 🎙️ ՁԱՅՆԱԳՐԻՉԻ ԲԱԺԻՆ --- 🔥
+        # 🔥 --- ՁԱՅՆԱԳՐԻՉԻ ԲԱԺԻՆ (Առանց հինը ջնջելու) --- 🔥
         st.markdown("#### 🎙️ Խոսիր ինձ հետ (Ձայնային հրահանգ)")
         
         audio_data = mic_recorder(
@@ -1206,6 +979,7 @@ elif st.session_state.active_page == "normal":
                     try:
                         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                         
+                        # Պահպանում ենք հին համակարգի բոլոր կոնտեքստները (դասացուցակ, կանոններ)
                         context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
                         context += f"Դու խոսում ես {current_user}-ի հետ։\n"
                         context += "⚠️ ՔՈ ԴԵՐԵՐԸ ԵՎ ԿԱՆՈՆՆԵՐԸ:\n"
@@ -1216,8 +990,8 @@ elif st.session_state.active_page == "normal":
                             context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
 
                         response = client.models.generate_content(
-                            model='gemini-2.5-flash',
-                            contents=context + f"\nՕգտատիրոջ հարցը՝ {final_prompt}",
+                            model='gemini-2.5-flash', 
+                            contents=context + f"\nՕգտատիրոջ հարցը՝ {final_prompt}"
                         )
                         response_text = response.text
 
