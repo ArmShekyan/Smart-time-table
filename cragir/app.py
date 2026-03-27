@@ -9,8 +9,8 @@ import time
 from dataclasses import dataclass, asdict
 from typing import List
 from fpdf import FPDF
-from streamlit_cookies_controller import CookieController
-from google import genai  # ✨ Google-ի պաշտոնական AI գրադարանը
+import streamlit_authenticator as stauth  # 🔥 Պաշտոնական Auth գրադարանը
+from google import genai
 
 # --- ՄՈԴԵԼՆԵՐ ---
 @dataclass
@@ -100,13 +100,14 @@ def show_instruction_modal():
     if st.button("Հասկանալի է, անցնենք գործի! ✅", use_container_width=True, type="primary"):
         st.rerun()
 
+
 DB_FILE = "smart_timetable_final.json"
 DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
 DEFAULT_OWNER = {"username": "armshekyan", "password": "arms567", "role": "owner"}
 
 
-# --- 🔑 ՏՎՅԱԼՆԵՐԻ ԲԱԶԱՅԻ ԵՎ ԼՈԳԻՆԻ ՖՈՒՆԿՑԻԱՆԵՐ ---
+# --- 🔑 ՏՎՅԱԼՆԵՐԻ ԲԱԶԱՅԻ ՖՈՒՆԿՑԻԱՆԵՐ ---
 
 def get_supabase_headers():
     try:
@@ -118,24 +119,6 @@ def get_supabase_headers():
             }
     except Exception:
         pass
-    return None
-
-
-def check_user(username, password):
-    for u in st.session_state.users_list:
-        if u["username"] == username and u["password"] == password:
-            return u
-
-    headers = get_supabase_headers()
-    if headers:
-        url = f"{st.secrets['supabase_url']}/rest/v1/users?username=eq.{username}&password=eq.{password}"
-        try:
-            response = requests.get(url, headers=headers)
-            if response.status_code == 200 and response.json():
-                return response.json()[0]
-        except Exception:
-            pass
-
     return None
 
 
@@ -271,7 +254,6 @@ def manual_refresh():
     st.rerun()
 
 
-# 🆕 ՍԱ ԱՅՆ ՖՈՒՆԿՑԻԱՆ Է, ՈՐ ՄԻԱՅՆ ՕԳՏԱՏԵՐԵՐԻՆ Է ԲԵՐՈՒՄ SQL-ԻՑ
 def refresh_users_only():
     with st.spinner("🔄 Բեռնվում են օգտատերերը SQL բազայից..."):
         time.sleep(1)
@@ -375,9 +357,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# 🔥 --- COOKIES ԿԱՌԱՎԱՐԻՉ --- 🔥
-cookies = CookieController()
-
 if "subjects" not in st.session_state:
     st.session_state.update({
         "subjects": [], 
@@ -398,72 +377,58 @@ if "subjects" not in st.session_state:
     })
     load_from_disk()
 
-# 🔥 --- COOKIE-Ի ՍՏՈՒԳՈՒՄ ՍԿԶԲՆԱՄԱՍՈՒՄ (Refresh-ի համար) --- 🔥
-if not st.session_state.logged_in:
-    saved_user = cookies.get("saved_username")
-    saved_role = cookies.get("saved_role")
-    
-    if saved_user and saved_role:
+
+# 🔥 --- ՍՊԱՍԱՐԿՈՒՄ ԵՆՔ STREAMLIT-AUTHENTICATOR-ԻՆ --- 🔥
+
+# Ֆորմատավորում ենք օգտատերերի բազան authenticator-ի համար
+credentials = {"usernames": {}}
+for u in st.session_state.users_list:
+    credentials["usernames"][u["username"]] = {
+        "name": u["username"],
+        "password": u["password"], # Authenticator-ը կհասկանա Plain տեքստը կամ Hash-ը
+        "role": u.get("role", "user")
+    }
+
+authenticator = stauth.Authenticate(
+    credentials,
+    "smart_timetable_cookie", # Cookie-ի անունը
+    "smart_timetable_key",     # Cookie-ի բանալին
+    cookie_expiry_days=30      # 🔥 ՀԻՇԵԼՈՒ Է 30 ՕՐ 🔥
+)
+
+# Ցուցադրում ենք մուտքի պատրաստի UI-ը
+name, authentication_status, username = authenticator.login("👤 Մուտք համակարգ", "main")
+
+
+if authentication_status == False:
+    st.error("❌ Օգտանունը կամ գաղտնաբառը սխալ է")
+elif authentication_status == None:
+    st.warning("⚠️ Խնդրում ենք մուտքագրել Ձեր տվյալները")
+elif authentication_status:
+    # Եթե մուտքը հաջող է, պահում ենք տվյալները Session State-ում
+    if not st.session_state.logged_in:
         st.session_state.logged_in = True
-        st.session_state.username = saved_user
-        st.session_state.user_role = saved_role
+        st.session_state.username = username
         
-        if saved_role in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
+        # Գտնում ենք օգտատիրոջ դերը մեր սեփական ցուցակից
+        user_role = "user"
+        for u in st.session_state.users_list:
+            if u["username"] == username:
+                user_role = u.get("role", "user")
+                break
+        st.session_state.user_role = user_role
+        
+        st.session_state.show_readme = True
+        
+        if user_role in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
             st.session_state.active_tab = "📊 Վահանակ"
         else:
             st.session_state.active_tab = "📂 Վերջին պահպանվածը"
-
-
-# --- 🚪 ԼՈԳԻՆԻ ԷՋ ---
-if not st.session_state.logged_in:
-    left_col, center_col, right_col = st.columns([1, 1.5, 1])
-
-    with center_col:
-        st.markdown("<br><br>", unsafe_allow_html=True)
         
-        with st.container(border=True):
-            st.markdown(
-                "<h2 style='text-align: center; color: #0d6efd; font-weight: 800; margin-bottom: 5px;'>Smart Time Table</h2>"
-                "<p style='text-align: center; color: #6c757d; font-size: 14px;'>Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար</p>", 
-                unsafe_allow_html=True
-            )
-            
-            with st.form("login_panel", clear_on_submit=False):
-                username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
-                password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="Ներմուծեք ձեր գաղտնաբառը")
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-                
-                submit_login = st.form_submit_button("Մուտք գործել", use_container_width=True, type="primary")
+        st.rerun()
 
-            if submit_login:
-                if not username_input or not password_input:
-                    st.error("⚠️ Խնդրում ենք լրացնել բոլոր դաշտերը:")
-                else:
-                    user = check_user(username_input, password_input)
-                    if user:
-                        st.session_state.logged_in = True
-                        st.session_state.username = user['username']
-                        st.session_state.user_role = user['role']
-                        
-                        # 🔥 ՊԱՀՈՒՄ ԵՆՔ ՏՎՅԱԼՆԵՐԸ COOKIE-ՈՒՄ 🔥
-                        cookies.set("saved_username", user['username'])
-                        cookies.set("saved_role", user['role'])
-                        
-                        st.session_state.show_readme = True 
-                        
-                        if user['role'] in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
-                            st.session_state.active_tab = "📊 Վահանակ"
-                        else:
-                            st.session_state.active_tab = "📂 Վերջին պահպանվածը"
 
-                        st.toast(f"🎉 Բարի վերադարձ, {username_input}!", icon="🚀")
-                        st.snow() 
-                        time.sleep(1)
-                        st.rerun()
-                    else:
-                        st.error("❌ Սխալ օգտանուն կամ գաղտնաբառ:")
-                
+if not st.session_state.logged_in:
     st.stop()
 
 
@@ -533,15 +498,15 @@ def generate_pdf(schedule_data):
 st.sidebar.title(f"👤 {st.session_state.username}")
 st.sidebar.caption(f"Պաշտոն՝ **{st.session_state.user_role}**")
 
-# 🔥 --- ՓՈՓՈԽՎԱԾ ԵԼՔԻ ԿՈՃԱԿԸ (ՋՆՋՈՒՄ Է COOKIE-ՆԵՐԸ) --- 🔥
-if st.sidebar.button("🚪 Ելք համակարգից", use_container_width=True):
+
+# 🔥 --- ՊԱՇՏՈՆԱԿԱՆ ԵԼՔԻ ԿՈՃԱԿԸ --- 🔥
+authenticator.logout("🚪 Ելք համակարգից", "sidebar")
+
+# Ձեռքով զրոյացնում ենք մեր session state-ը եթե authenticator-ը զրոյացրել է մուտքը
+if not authentication_status:
     st.session_state.logged_in = False
     st.session_state.username = ""
     st.session_state.user_role = ""
-    
-    cookies.remove("saved_username")
-    cookies.remove("saved_role")
-    
     st.rerun()
 
 
@@ -598,7 +563,6 @@ if st.session_state.user_role in ['owner', 'admin']:
         st.rerun()
 
 
-# 🆕 ԹՌՆՈՂ ՊԱՏՈՒՀԱՆ՝ ՕԳՏԱՏԵՐ ՋՆՋԵԼՈՒ ՀԱՄԱՐ
 @st.dialog("🗑️ Հաստատեք ջնջումը")
 def confirm_delete_user_modal(idx):
     target_user = st.session_state.users_list[idx]
@@ -616,7 +580,7 @@ def confirm_delete_user_modal(idx):
                 requests.delete(delete_url, headers=headers)
                 st.toast(f"✅ {target_user['username']}-ն ջնջվեց Cloud-ից:", icon="☁️")
             except Exception:
-                st.error("❌ Սխալ տեղի ունեցավ SQL-ից ջնջելիս:")
+                pass
 
         st.session_state.users_list.pop(idx)
         st.rerun()
@@ -650,7 +614,7 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
                         if headers:
                             try:
                                 url = f"{st.secrets['supabase_url']}/rest/v1/users"
-                                response = requests.post(url, headers=headers, data=json.dumps(new_user_data))
+                                requests.post(url, headers=headers, data=json.dumps(new_user_data))
                                 st.toast(f"✅ Օգտատեր {new_u}-ն ավելացվեց Cloud-ում:", icon="👤")
                             except Exception:
                                 pass
@@ -658,7 +622,6 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
 
     st.divider()
     
-    # 🆕 ԿՈՃԱԿ՝ ՄԻԱՅՆ ՕԳՏԱՏԵՐԵՐԻ ՑՈՒՑԱԿԸ SQL-ԻՑ ԹԱՐՄԱՑՆԵԼՈՒ ՀԱՄԱՐ
     if st.button("🔄 Թարմացնել Ցուցակը (Կարդալ SQL բազայից)", use_container_width=True):
         refresh_users_only()
 
@@ -678,7 +641,6 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
                 can_delete = False
                     
             if can_delete:
-                # 🆕 Կոճակը հիմա բացում է հաստատման Modal-ը
                 if c3.button("🗑️", key=f"del_user_{i}"):
                     confirm_delete_user_modal(i)
 
@@ -1080,16 +1042,13 @@ elif st.session_state.active_page == "normal":
         if current_user not in st.session_state.chat_histories:
             st.session_state.chat_histories[current_user] = []
 
-        # Ստեղծում ենք վիճակ փոփոխության հաստատման համար (Pending Proposal)
         if "pending_proposal" not in st.session_state:
             st.session_state.pending_proposal = None
 
-        # 💬 1. Ցուցադրում ենք չաթի հին պատմությունը
         for message in st.session_state.chat_histories[current_user]:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        # 🎛️ 2. Եթե կա սպասվող առաջարկ (Pending), ցույց ենք տալիս կոճակները
         if st.session_state.pending_proposal:
             with st.chat_message("assistant"):
                 st.warning("💡 AI-ն ունի առաջարկ։ Ցանկանու՞մ եք տեսնել փոփոխված տարբերակը ձեր մտքում։")
@@ -1098,11 +1057,10 @@ elif st.session_state.active_page == "normal":
                 
                 if col_yes.button("✅ Կիրառել (Տեսնել նոր աղյուսակը)", use_container_width=True, type="primary"):
                     proposal_text = st.session_state.pending_proposal
-                    st.session_state.pending_proposal = None # Մաքրում ենք սպասումը
+                    st.session_state.pending_proposal = None
                     
                     with st.spinner("🧠 Գեներացվում է նոր աղյուսակը..."):
                         try:
-                            # Այստեղ կոնտեքստը փոխվում է՝ AI-ին հրահանգելով ցույց տալ արդյունքը
                             context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
                             context += "Օգտատերը ՀԱՄԱՁԱՅՆԵՑ քո նախորդ առաջարկին։ Հիմա քո մտքում արա այդ փոփոխությունը և ցույց տուր ՆՈՐ ԴԱՍԱՑՈՒՑԱԿԸ տեքստային աղյուսակով չաթի մեջ։\n"
                             
@@ -1123,11 +1081,10 @@ elif st.session_state.active_page == "normal":
                             st.error(f"❌ Սխալ: {str(e)}")
 
                 if col_no.button("❌ Չեղարկել", use_container_width=True):
-                    st.session_state.pending_proposal = None # Մաքրում ենք սպասումը
+                    st.session_state.pending_proposal = None
                     st.toast("Առաջարկը չեղարկվեց", icon="🗑️")
                     st.rerun()
 
-        # ⌨️ 3. Նոր հարցերի մուտքագրում (Երբ օգտատերը գրում է չաթում)
         if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
             
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
@@ -1140,7 +1097,6 @@ elif st.session_state.active_page == "normal":
                         if "GEMINI_API_KEY" not in st.secrets:
                             response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
                         else:
-                            # Գլխավոր կոնտեքստը, որը միավորում է Տեղեկատուն և Խորհրդատուն
                             context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
                             context += f"Դու խոսում ես {current_user}-ի հետ։\n"
                             context += "⚠️ ՔՈ ԴԵՐԵՐԸ ԵՎ ԿԱՆՈՆՆԵՐԸ:\n"
@@ -1162,7 +1118,6 @@ elif st.session_state.active_page == "normal":
                             )
                             response_text = response.text
 
-                            # Եթե AI-ն առաջարկ է արել, մենք այն պահում ենք, որպեսզի էջը թարմանա ու կոճակները բացվեն
                             if "առաջարկ" in response_text.lower() or "փոխել" in response_text.lower() or "տեղափոխ" in response_text.lower() or "swap" in response_text.lower():
                                 st.session_state.pending_proposal = response_text
 
@@ -1172,6 +1127,5 @@ elif st.session_state.active_page == "normal":
                     st.markdown(response_text)
                     st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
                     
-                    # Եթե առաջարկ կա, թարմացնում ենք էջը, որպեսզի կոճակները անմիջապես հայտնվեն
                     if st.session_state.pending_proposal:
                         st.rerun()
