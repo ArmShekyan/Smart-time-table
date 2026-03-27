@@ -1156,16 +1156,16 @@ elif st.session_state.active_page == "normal":
                 
                 col_yes, col_no = st.columns(2)
                 
-                if col_yes.button("✅ Կիրառել (Տեսնել նոր աղյուսակը)", use_container_width=True, type="primary"):
+                if col_yes.button("✅ Կիրառել (Տեսնել նոր աղյուսակը)", use_container_width=True):
                     proposal_text = st.session_state.pending_proposal
                     st.session_state.pending_proposal = None
                     
                     with st.spinner("🧠 Գեներացվում է նոր աղյուսակը..."):
                         try:
-                            # 🎯 Խնդրում ենք Gemini-ին տվյալները վերադարձնել միայն JSON ֆորմատով
+                            # 🎯 Ստիպում ենք Gemini-ին տալ տեքստային հորիզոնական աղյուսակ
                             context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
-                            context += "Օգտատերը ՀԱՄԱՁԱՅՆԵՑ քո առաջարկին։ Հիմա արա այդ փոփոխությունը և արդյունքը տուր ՄԻԱՅՆ JSON ֆորմատով (առանց ավելորդ տեքստերի)։\n"
-                            context += "JSON-ի կառուցվածքը պետք է լինի այսպես՝ [{\"Դասարան\": \"10-Ա\", \"Օր\": \"Երկուշաբթի\", \"Ժամ\": 1, \"Առարկա\": \"Մաթեմ (Արթուր)\"}, ...]\n"
+                            context += "Օգտատերը ՀԱՄԱՁԱՅՆԵՑ քո առաջարկին։ Հիմա արա այդ փոփոխությունը և արդյունքը ցույց տուր ՏԵՔՍՏԱՅԻՆ ՀՈՐԻԶՈՆԱԿԱՆ ԱՂՅՈՒՍԱԿՈՎ (Markdown table)։\n"
+                            context += "Աղյուսակում տողերը պետք է լինեն ԺԱՄԵՐԸ (1, 2, 3...), իսկ սյունակները՝ ՕՐԵՐԸ (Երկուշաբթի, Երեքշաբթի...)։\n"
                             
                             if st.session_state.schedule:
                                 context += f"Նախնական դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
@@ -1177,46 +1177,13 @@ elif st.session_state.active_page == "normal":
                             )
                             response_text = response.text
 
-                            # --- ✨ ՆՈՐ։ Փոխարկում ենք հորիզոնական գեղեցիկ աղյուսակի ---
-                            try:
-                                # Մաքրում ենք markdown-ի կոդի սահմանները (եթե AI-ն ```json է դրել)
-                                clean_json = response_text.replace("```json", "").replace("```", "").strip()
-                                new_sched_list = json.loads(clean_json)
-                                
-                                # Սարքում ենք Pandas DataFrame
-                                df_new = pd.DataFrame(new_sched_list)
-                                
-                                # Ձևափոխում ենք հորիզոնականի (Pivot)
-                                df_new['Առարկա_Կարճ'] = df_new['Առարկա'].apply(lambda x: x.split(" (")[0])
-                                
-                                # Ցուցադրում ենք աղյուսակները ըստ դասարանների
-                                for c in df_new['Դասարան'].unique():
-                                    cls_df = df_new[df_new['Դասարան'] == c]
-                                    pivot_new = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա_Կարճ').fillna("-")
-                                    
-                                    # Պահպանում ենք օրերի հերթականությունը
-                                    ordered_days = [d for d in DAYS_AM if d in pivot_new.columns]
-                                    if ordered_days:
-                                        pivot_new = pivot_new[ordered_days]
-
-                                    # Պատրաստում ենք ցուցադրումը չաթի մեջ
-                                    st.markdown(f"##### 🏫 Նոր դասացուցակ դասարան {c}-ի համար․")
-                                    st.dataframe(pivot_new, use_container_width=True)
-
-                                st.session_state.chat_histories[current_user].append({
-                                    "role": "assistant", 
-                                    "content": "✅ Առաջարկը հաջողությամբ կիրառվեց և դասացուցակները թարմացվեցին։"
-                                })
-
-                            except Exception as json_err:
-                                # Եթե JSON չհաջողվի (սովորական տեքստ), կցուցադրի տեքստը
-                                st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
-
+                            # Ավելացնում ենք պատասխանը պատմության մեջ, որպեսզի չկորչի
+                            st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
                             st.rerun()
 
                         except Exception as e:
                             st.error(f"❌ Սխալ: {str(e)}")
-                            
+
 
                 if col_no.button("❌ Չեղարկել", use_container_width=True):
                     st.session_state.pending_proposal = None
