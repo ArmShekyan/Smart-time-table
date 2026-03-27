@@ -6,11 +6,12 @@ import json
 import os
 import requests
 import time
+import altair as alt  # ✨ Նոր գրադարան սիրուն գրաֆիկների համար
 from dataclasses import dataclass, asdict
 from typing import List
 from fpdf import FPDF
 from streamlit_cookies_controller import CookieController
-from google import genai  # ✨ Google-ի պաշտոնական AI գրադարանը
+from google import genai
 
 # --- ՄՈԴԵԼՆԵՐ ---
 @dataclass
@@ -271,7 +272,7 @@ def manual_refresh():
     st.rerun()
 
 
-# 🆕 ՍԱ ԱՅՆ ՖՈՒՆԿՑԻԱՆ Է, ՈՐ ՄԻԱՅՆ ՕԳՏԱՏԵՐԵՐԻՆ Է ԲԵՐՈՒՄ SQL-ԻՑ
+# 🆕 ՍԱ ԱՅՆ ՖՈՒՆԿՑԻԱՆ Է, ՈՐ ՄԻՅԱՆ ՕԳՏԱՏԵՐԵՐԻՆ Է ԲԵՐՈՒՄ SQL-ԻՑ
 def refresh_users_only():
     with st.spinner("🔄 Բեռնվում են օգտատերերը SQL բազայից..."):
         time.sleep(1)
@@ -658,6 +659,7 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
 
     st.divider()
     
+    # 🆕 ԿՈՃԱԿ՝ ՄԻԱՅՆ ՕԳՏԱՏԵՐԵՐԻ ՑՈՒՑԱԿԸ SQL-ԻՑ ԹԱՐՄԱՑՆԵԼՈՒ ՀԱՄԱՐ
     if st.button("🔄 Թարմացնել Ցուցակը (Կարդալ SQL բազայից)", use_container_width=True):
         refresh_users_only()
 
@@ -682,6 +684,7 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
 
 elif st.session_state.active_page == "normal":
 
+    # 🔥 --- ՓՈՓՈԽՎԱԾ ՎԱՀԱՆԱԿԻ ԷՋ (ՖԻԼՏՐՈՎ ԵՎ ALTAIR ԳՐԱՖԻԿՆԵՐՈՎ) --- 🔥
     if st.session_state.active_tab == "📊 Վահանակ":
         st.title("📊 Ընդհանուր Վիճակագրություն")
         
@@ -693,38 +696,65 @@ elif st.session_state.active_page == "normal":
 
         st.divider()
 
-        # 🔥 --- ՎԻԶՈՒԱԼ ԳՐԱՖԻԿՆԵՐ --- 🔥
         st.subheader("📈 Տվյալների Վերլուծություն")
+
+        # 🏫 Դասարանի ընտրության դաշտ (Ֆիլտր)
+        if st.session_state.classes:
+            class_options = ["🌐 Բոլոր դասարանները"] + [f"{c.grade}{c.section}" for c in st.session_state.classes]
+            selected_class = st.selectbox("🔍 Ընտրեք դասարանը՝ գրաֆիկները ֆիլտրելու համար", class_options)
+        else:
+            selected_class = "🌐 Բոլոր դասարանները"
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Ֆիլտրում ենք կապերը (assignments) ըստ ընտրված դասարանի
+        filtered_assignments = st.session_state.assignments
+        if selected_class != "🌐 Բոլոր դասարանները":
+            selected_class_obj = next((c for c in st.session_state.classes if f"{c.grade}{c.section}" == selected_class), None)
+            if selected_class_obj:
+                filtered_assignments = [a for a in st.session_state.assignments if a.class_id == selected_class_obj.id]
 
         col_chart1, col_chart2 = st.columns(2)
 
         with col_chart1:
             st.markdown("#### 👩‍🏫 Ուսուցիչների Շաբաթական Ժամերը")
-            if st.session_state.assignments and st.session_state.teachers:
+            if filtered_assignments and st.session_state.teachers:
                 teacher_hours = {}
-                for assign in st.session_state.assignments:
+                for assign in filtered_assignments:
                     t_name = next((t.name for t in st.session_state.teachers if t.id == assign.teacher_id), "Անհայտ")
                     teacher_hours[t_name] = teacher_hours.get(t_name, 0) + assign.lessons_per_week
 
                 df_t_hours = pd.DataFrame(list(teacher_hours.items()), columns=["Ուսուցիչ", "Ժամերի Քանակ"])
                 df_t_hours = df_t_hours.sort_values(by="Ժամերի Քանակ", ascending=False)
-                st.bar_chart(df_t_hours.set_index("Ուսուցիչ"))
+
+                # ✨ Հորիզոնական անուններով գրաֆիկ (Altair-ով)
+                chart_t = alt.Chart(df_t_hours).mark_bar(color='#1f77b4').encode(
+                    x=alt.X('Ուսուցիչ:N', sort=None, axis=alt.Axis(labelAngle=0)), # labelAngle=0 ստիպում է մնալ հորիզոնական
+                    y=alt.Y('Ժամերի Քանակ:Q')
+                ).properties(height=350)
+                st.altair_chart(chart_t, use_container_width=True)
             else:
-                st.info("ℹ️ Դեռևս կապեր ստեղծված չեն գրաֆիկը ցույց տալու համար։")
+                st.info("ℹ️ Այս դասարանի համար կապեր ստեղծված չեն։")
 
         with col_chart2:
             st.markdown("#### 📚 Առարկաների Բաշխվածությունը")
-            if st.session_state.assignments and st.session_state.subjects:
+            if filtered_assignments and st.session_state.subjects:
                 subj_hours = {}
-                for assign in st.session_state.assignments:
+                for assign in filtered_assignments:
                     s_name = next((s.name for s in st.session_state.subjects if s.id == assign.subject_id), "Անհայտ")
                     subj_hours[s_name] = subj_hours.get(s_name, 0) + assign.lessons_per_week
 
                 df_s_hours = pd.DataFrame(list(subj_hours.items()), columns=["Առարկա", "Ընդհանուր Ժամեր"])
-                df_s_hours = df_s_hours.sort_values(by="Ընդհանուր Ժամեր", ascending=False)
-                st.bar_chart(df_s_hours.set_index("Առարկա"))
+                df_s_hours = df_s_hours.sort_values(by="Ընդհանուր Ժեր", ascending=False)
+
+                # ✨ Հորիզոնական անուններով գրաֆիկ (Altair-ով)
+                chart_s = alt.Chart(df_s_hours).mark_bar(color='#ff7f0e').encode(
+                    x=alt.X('Առարկա:N', sort=None, axis=alt.Axis(labelAngle=0)), # labelAngle=0 ստիպում է մնալ հորիզոնական
+                    y=alt.Y('Ընդհանուր Ժամեր:Q')
+                ).properties(height=350)
+                st.altair_chart(chart_s, use_container_width=True)
             else:
-                st.info("ℹ️ Դեռևս առարկաներ կապված չեն։")
+                st.info("ℹ️ Այս դասարանի համար առարկաներ չկան։")
 
         st.divider()
 
