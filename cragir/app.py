@@ -443,19 +443,20 @@ if not st.session_state.logged_in:
                 else:
                     user = check_user(username_input, password_input)
                     if user:
-                        # 1. Սկզբում լոգին ենք անում session-ով
+                        # 1. Նախ պահում ենք session-ում
                         st.session_state.logged_in = True
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
                         
-                        # 2. 🔥 ԿԱՐԵՎՈՐ. Եթե "Հիշել ինձ" նշված ՉԷ, մաքրում ենք cookie-ները
+                        # 2. 🔥 ՃԻՇՏ ՏՐԱՄԱԲԱՆՈՒԹՅՈՒՆԸ ԱՅՍՏԵՂ Է 🔥
                         if remember_me:
                             cookies.set("saved_username", user['username'])
                             cookies.set("saved_role", user['role'])
                         else:
-                            # Սա կջնջի հին cookie-ները, որ հանկարծ refresh-ին չհիշի
+                            # Եթե նշված չէ, ջնջում ենք ու մի քիչ սպասում, որ բրաուզերը հասցնի մաքրել
                             cookies.remove("saved_username")
                             cookies.remove("saved_role")
+                            time.sleep(0.5) # ⏱️ Կարճ դադար cookie-ն մաքրելու համար
                         
                         st.session_state.show_readme = True 
                         
