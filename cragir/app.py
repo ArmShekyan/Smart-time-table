@@ -432,6 +432,7 @@ if not st.session_state.logged_in:
             with st.form("login_panel", clear_on_submit=False):
                 username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
                 password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="Ներմուծեք ձեր գաղտնաբառը")
+                remember_me = st.checkbox("Hishel indz", key="remember_me_checkbox")
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
@@ -447,9 +448,10 @@ if not st.session_state.logged_in:
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
                         
-                        # 🔥 ՊԱՀՈՒՄ ԵՆՔ ՏՎՅԱԼՆԵՐԸ COOKIE-ՈՒՄ 🔥
-                        cookies.set("saved_username", user['username'])
-                        cookies.set("saved_role", user['role'])
+                        # 🔥 ՊԱՀՈՒՄ ԵՆՔ ՏՎՅԱԼՆԵՐԸ COOKIE-ՈՒՄ ՄԻԱՅՆ ԵԹԵ ՆՇՎԱԾ Է 'HISHEL INDZ' 🔥
+                        if st.session_state.get("remember_me_checkbox"):
+                            cookies.set("saved_username", user['username'])
+                            cookies.set("saved_role", user['role'])
                         
                         st.session_state.show_readme = True 
                         
@@ -764,7 +766,7 @@ elif st.session_state.active_page == "normal":
             if st.session_state.classes:
                 df_cl = pd.DataFrame([{"Դասարան": f"{c.grade}{c.section}"} for c in st.session_state.classes])
                 st.dataframe(df_cl, use_container_width=True, hide_index=True)
-            else: st.caption("Դասարաններ գրանցված չեն:")
+            else: st.caption("Դասարաններ գրանված չեն:")
             
         with c2:
             st.subheader("👩‍🏫 Ուսուցիչներ")
