@@ -432,6 +432,7 @@ if not st.session_state.logged_in:
             with st.form("login_panel", clear_on_submit=False):
                 username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
                 password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="Ներմուծեք ձեր գաղտնաբառը")
+                # Checkbox-ը ստանում է "Հիշել ինձ" անունը
                 remember_me = st.checkbox("Հիշել ինձ", key="remember_me_checkbox")
                 
                 st.markdown("<br>", unsafe_allow_html=True)
@@ -448,13 +449,13 @@ if not st.session_state.logged_in:
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
                         
-                        # 🔥 ՓՈՓՈԽՈՒԹՅՈՒՆԸ ԱՅՍՏԵՂ Է 🔥
+                        # 🔥 Տրամաբանությունը այստեղ է.
                         if remember_me:
-                            # Միայն եթե նշված է checkbox-ը, նոր թարմացնում կամ դնում ենք cookie-ն
+                            # Եթե նշված է, պահում ենք cookie-ն
                             cookies.set("saved_username", user['username'])
                             cookies.set("saved_role", user['role'])
                         else:
-                            # Եթե նշված չէ, համոզվում ենք, որ հին cookie-ները մաքրված են
+                            # Եթե նշված չէ, մաքրում ենք, որ refresh-ից հետո չհիշի
                             cookies.remove("saved_username")
                             cookies.remove("saved_role")
                         
