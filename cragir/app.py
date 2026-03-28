@@ -432,7 +432,7 @@ if not st.session_state.logged_in:
             with st.form("login_panel", clear_on_submit=False):
                 username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
                 password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="Ներմուծեք ձեր գաղտնաբառը")
-                remember_me = st.checkbox("Hishel indz", key="remember_me_checkbox")
+                remember_me = st.checkbox("Հիշել ինձ", key="remember_me_checkbox")
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
