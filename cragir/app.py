@@ -1147,10 +1147,12 @@ elif st.session_state.active_page == "normal":
         if "pending_proposal" not in st.session_state:
             st.session_state.pending_proposal = None
 
+        # Ցուցադրել չատի պատմությունը
         for message in st.session_state.chat_histories[current_user]:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
+        # Եթե կա առկա առաջարկ
         if st.session_state.pending_proposal:
             with st.chat_message("assistant"):
                 st.warning("💡 AI-ն ունի առաջարկ։ Ցանկանու՞մ եք տեսնել փոփոխված տարբերակը։")
@@ -1163,7 +1165,9 @@ elif st.session_state.active_page == "normal":
                     
                     with st.spinner("🧠 Գեներացվում է նոր աղյուսակը..."):
                         try:
-                            # 🎯 Ստիպում ենք Gemini-ին տալ տեքստային հորիզոնական աղյուսակ
+                            # Փոքր դադար քվոտայի համար
+                            time.sleep(1)
+                            
                             context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
                             context += "Օգտատերը ՀԱՄԱՁԱՅՆԵՑ քո առաջարկին։ Հիմա արա այդ փոփոխությունը և արդյունքը ցույց տուր ՏԵՔՍՏԱՅԻՆ ՀՈՐԻԶՈՆԱԿԱՆ ԱՂՅՈՒՍԱԿՈՎ (Markdown table)։\n"
                             context += "Աղյուսակում տողերը պետք է լինեն ԺԱՄԵՐԸ (1, 2, 3...), իսկ սյունակները՝ ՕՐԵՐԸ (Երկուշաբթի, Երեքշաբթի...)։\n"
@@ -1176,23 +1180,24 @@ elif st.session_state.active_page == "normal":
                                 model='gemini-1.5-flash',
                                 contents=context + f"\nՔո նախորդ առաջարկը, որին համաձայնեցին՝ {proposal_text}",
                             )
+                            
                             response_text = response.text
-
-                            # Ավելացնում ենք պատասխանը պատմության մեջ, որպեսզի չկորչի
                             st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
                             st.rerun()
 
                         except Exception as e:
-                            st.error(f"❌ Սխալ: {str(e)}")
-
+                            if "429" in str(e):
+                                st.error("⚠️ Լիմիտը սպառվել է։ Սպասեք 1 րոպե։")
+                            else:
+                                st.error(f"❌ Սխալ: {str(e)}")
 
                 if col_no.button("❌ Չեղարկել", use_container_width=True):
                     st.session_state.pending_proposal = None
                     st.toast("Առաջարկը չեղարկվեց", icon="🗑️")
                     st.rerun()
 
+        # Օգտատիրոջ մուտքագրումը
         if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
-            
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
@@ -1203,34 +1208,35 @@ elif st.session_state.active_page == "normal":
                         if "GEMINI_API_KEY" not in st.secrets:
                             response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
                         else:
+                            # Փոքր դադար API-ին շունչ քաշելու համար
+                            time.sleep(1)
+                            
                             context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
                             context += f"Դու խոսում ես {current_user}-ի հետ։\n"
-                            context += "⚠️ ՔՈ ԴԵՐԵՐԸ ԵՎ ԿԱՆՈՆՆԵՐԸ:\n"
-                            context += "1. ℹ️ ՏԵՂԵԿԱՏՈՒ ԲՈՏ: Եթե աշակերտը կամ ծնողը հարցնում են դասացուցակի մասին (օր.՝ 'Քանի՞ դաս ունի 10-Ա-ն այսօր' կամ 'Ո՞վ է ֆիզիկայի ուսուցիչը'), արագ կարդա տրված բազան և տուր հստակ պատասխան:\n"
-                            context += "2. 💡 ԽՈՐՀՐԴԱՏՈՒ: Եթե հարցը վերաբերում է դասացուցակի լավացմանը, տեղափոխմանը կամ swap անելուն, առաջարկիր միտքը, բայց ՄԻԱՆԳԱՄԻՑ ԱՂՅՈՒՍԱԿ ՄԻ՛ ՑՈՒՅՑ ՏՈՒՐ: Բացատրիր գաղափարը և ասա, որ օգտատերը կարող է սեղմել 'Կիրառել' կոճակը:\n"
-                            context += "3. 🛑 Արգելվում է ինքնուրույն փոփոխել `st.session_state.schedule`-ը կամ բազան:\n"
+                            context += "⚠️ ԿԱՆՈՆՆԵՐ:\n"
+                            context += "1. ℹ️ Տեղեկացրու դասացուցակից:\n"
+                            context += "2. 💡 Խորհուրդ տուր փոփոխությունների համար, բայց միայն բացատրիր, աղյուսակ մի նկարիր միանգամից:\n"
 
                             if st.session_state.schedule:
-                                context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
-                            else:
-                                context += "Դեռևս գեներացված դասացուցակ չկա։\n"
-
-                            context += f"Օգտատիրոջ հարցը՝ {prompt}"
+                                context += f"Ներկայիս դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
 
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
-                                model='gemini-2.5-flash',
-                                contents=context,
+                                model='gemini-1.5-flash',
+                                contents=context + f"\nՀարց: {prompt}",
                             )
                             response_text = response.text
 
-                            if "առաջարկ" in response_text.lower() or "փոխել" in response_text.lower() or "տեղափոխ" in response_text.lower() or "swap" in response_text.lower():
+                            # Ստուգում ենք՝ արդյոք առաջարկ կա պատասխանի մեջ
+                            trigger_words = ["առաջարկ", "փոխել", "տեղափոխ", "swap", "փոխարինել"]
+                            if any(word in response_text.lower() for word in trigger_words):
                                 st.session_state.pending_proposal = response_text
 
                     except Exception as e:
-                        response_text = f"❌ Սխալ տեղի ունեցավ API կանչի ժամանակ: {str(e)}"
+                        if "429" in str(e):
+                            response_text = "⚠️ Gemini-ի անվճար լիմիտը սպառվել է։ Խնդրում եմ սպասել 1 րոպե և նորից փորձել։"
+                        else:
+                            response_text = f"❌ Սխալ տեղի ունեցավ: {str(e)}"
 
                     st.markdown(response_text)
                     st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
-                    
-                    # 🔥 Անվերջ rerun-ի տողերը հանվել են այստեղից, որպեսզի էջը կանգնի
