@@ -448,10 +448,15 @@ if not st.session_state.logged_in:
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
                         
-                        # 🔥 ՊԱՀՈՒՄ ԵՆՔ ՏՎՅԱԼՆԵՐԸ COOKIE-ՈՒՄ ՄԻԱՅՆ ԵԹԵ ՆՇՎԱԾ Է 'HISHEL INDZ' 🔥
-                        if st.session_state.get("remember_me_checkbox"):
+                        # 🔥 ՓՈՓՈԽՈՒԹՅՈՒՆԸ ԱՅՍՏԵՂ Է 🔥
+                        if remember_me:
+                            # Միայն եթե նշված է checkbox-ը, նոր թարմացնում կամ դնում ենք cookie-ն
                             cookies.set("saved_username", user['username'])
                             cookies.set("saved_role", user['role'])
+                        else:
+                            # Եթե նշված չէ, համոզվում ենք, որ հին cookie-ները մաքրված են
+                            cookies.remove("saved_username")
+                            cookies.remove("saved_role")
                         
                         st.session_state.show_readme = True 
                         
