@@ -1218,9 +1218,12 @@ elif st.session_state.active_page == "normal":
 
                             if st.session_state.schedule:
                                 context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
-                                # Ավելացնում ենք նաև ուսուցիչների տվյալները, եթե կան session_state-ում
+                                
+                                # 🎯 Ուղղում ենք այստեղ. ուսուցիչներին դարձնում ենք տեքստ, որ JSON-ը չբողոքի
                                 if "teachers" in st.session_state:
-                                    context += f"Ուսուցիչների բազան՝ {json.dumps(st.session_state.teachers, ensure_ascii=False)}\n"
+                                    # Սա կվերցնի միայն տվյալները, նույնիսկ եթե դրանք Class-ի մեջ են
+                                    teachers_data = str(st.session_state.teachers) 
+                                    context += f"Ուսուցիչների բազան՝ {teachers_data}\n"
                             else:
                                 context += "Դեռևս գեներացված դասացուցակ չկա։\n"
 
@@ -1228,7 +1231,7 @@ elif st.session_state.active_page == "normal":
 
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
-                                model='gemini-1.5-flash', 
+                                model='gemini-2.5-flash', 
                                 contents=context,
                             )
                             response_text = response.text
