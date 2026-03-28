@@ -522,7 +522,12 @@ def generate_pdf(schedule_data):
         cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: str(x).split(" (")[0])
 
         # 2. Ավելացնում ենք սենյակը՝ ստուգելով, որ այն դատարկ չլինի
-        cls_df['Առարկա'] = cls_df['Առարկա'] + " [" + cls_df['Սենյակ'].fillna("-") + "]"
+        # Ստուգում ենք՝ արդյոք 'Սենյակ' սյունակը գոյություն ունի DataFrame-ում
+        if 'Սենյակ' in cls_df.columns:
+            cls_df['Առարկա'] = cls_df['Առարկա'].astype(str) + " [" + cls_df['Սենյակ'].fillna("-").astype(str) + "]"
+        else:
+            # Եթե չկա (հին տվյալներ են), ուղղակի թողնում ենք առարկան
+            cls_df['Առարկա'] = cls_df['Առարկա'].astype(str)
         
         pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
         
