@@ -536,13 +536,16 @@ st.sidebar.caption(f"Պաշտոն՝ **{st.session_state.user_role}**")
 
 # 🔥 --- ՓՈՓՈԽՎԱԾ ԵԼՔԻ ԿՈՃԱԿԸ (ՋՆՋՈՒՄ Է COOKIE-ՆԵՐԸ) --- 🔥
 if st.sidebar.button("🚪 Ելք համակարգից", use_container_width=True):
+    st.sidebar.info("Դուրս եք գալիս համակարգից... ⏳")
+
+    cookies.remove("saved_username")
+    cookies.remove("saved_role")
+
     st.session_state.logged_in = False
     st.session_state.username = ""
     st.session_state.user_role = ""
     
-    cookies.remove("saved_username")
-    cookies.remove("saved_role")
-    
+    time.sleep(1.5)
     st.rerun()
 
 
