@@ -449,13 +449,13 @@ if not st.session_state.logged_in:
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
                         
-                        # 🔥 Տրամաբանությունը այստեղ է.
+                        # Այս հատվածը ապահովում է քո ուզած ճիշտ աշխատանքը
                         if remember_me:
-                            # Եթե նշված է, պահում ենք cookie-ն
+                            # Եթե նշված է "Հիշել ինձ", նոր միայն ստեղծում ենք cookie-ն
                             cookies.set("saved_username", user['username'])
                             cookies.set("saved_role", user['role'])
                         else:
-                            # Եթե նշված չէ, մաքրում ենք, որ refresh-ից հետո չհիշի
+                            # Եթե նշված չէ, ջնջում ենք cookie-ները (եթե կային), որ refresh-ին չաշխատեն
                             cookies.remove("saved_username")
                             cookies.remove("saved_role")
                         
