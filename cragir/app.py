@@ -37,6 +37,7 @@ class Room:
     id: str
     name: str  # Օրինակ՝ "201", "Ֆիզիկայի լաբորատորիա"
     type: str  # "Ընդհանուր", "Լաբորատոր", "Մարզադահլիճ", "Համակարգչային"
+    assigned_class_id: str = None  # Եթե կաբինետը հատուկ դասարանի համար է, այստեղ նշվում է այդ դասարանի ID-ն
 
 @dataclass
 class Assignment:
@@ -910,25 +911,32 @@ elif st.session_state.active_page == "normal":
     elif st.session_state.active_tab == "🏫 Դասարաններ":
         st.title("🏫 Դասարաններ և Ժամեր")
 
-        # --- 1. ԿԱԲԻՆԵՏՆԵՐԻ ԲԱԺԻՆ (POOL) ---
+        # --- 1. ԿԱԲԻՆԵՏՆԵՐԻ ԲԱԺԻՆ (Ամրակցում դասարանին) ---
         with st.expander("🏢 Կաբինետների Կառավարում"):
-            c_r1, c_r2 = st.columns(2)
-            r_name = c_r1.text_input("Կաբինետի անուն/համար")
-            r_type = c_r2.selectbox("Կաբինետի տիպ", ["Ընդհանուր", "Լաբորատոր", "Մարզադահլիճ", "Համակարգչային"])
-            
-            if st.button("➕ Ավելացնել Կաբինետ", use_container_width=True):
-                if r_name:
-                    new_room = Room(str(uuid.uuid4()), r_name, r_type)
-                    st.session_state.rooms.append(new_room)
-                    st.toast(f"✅ {r_name} կաբինետը ավելացվեց:", icon="🏢")
-                    save_to_disk()
-                    st.rerun()
+            if not st.session_state.classes:
+                st.warning("⚠️ Սենյակ ավելացնելու համար նախ ստեղծեք գոնե մեկ դասարան:")
+            else:
+                c_r1, c_r2, c_r3 = st.columns([2, 2, 2])
+                r_name = c_r1.text_input("Կաբինետի անուն/համար")
+                r_type = c_r2.selectbox("Կաբինետի տիպ", ["Ընդհանուր", "Լաբորատոր", "Մարզադահլիճ", "Համակարգչային"])
+                # 🆕 Ընտրում ենք դասարանը, որին պատկանում է սենյակը
+                r_class = c_r3.selectbox("Որ դասարանի համար է", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
+                
+                if st.button("➕ Ավելացնել Կաբինետ", use_container_width=True):
+                    if r_name:
+                        new_room = Room(str(uuid.uuid4()), r_name, r_type, assigned_class_id=r_class.id)
+                        st.session_state.rooms.append(new_room)
+                        st.toast(f"✅ {r_name} կաբինետը կցվեց {r_class.grade}{r_class.section}-ին:", icon="🏢")
+                        save_to_disk()
+                        st.rerun()
 
             if st.session_state.rooms:
                 st.write("---")
                 for i, r in enumerate(st.session_state.rooms):
+                    # Գտնում ենք դասարանի անունը ցուցադրելու համար
+                    c_name = next((f"{c.grade}{c.section}" for c in st.session_state.classes if c.id == r.assigned_class_id), "Անհայտ")
                     col_n, col_d = st.columns([4, 1])
-                    col_n.text(f"📍 {r.name} ({r.type})")
+                    col_n.text(f"📍 {r.name} ({r.type}) -> 🏫 {c_name}")
                     if col_d.button("🗑️", key=f"del_room_{i}"):
                         st.session_state.rooms.pop(i)
                         save_to_disk()
@@ -951,72 +959,49 @@ elif st.session_state.active_page == "normal":
                         save_to_disk()
                         st.rerun()
 
-        # --- 3. ԿԱՊԵԼ ԴԱՍԱՐԱՆԻՆ (ASSIGNMENTS) ---
+        # --- 3. ԿԱՊԵԼ ԴԱՍԱՐԱՆԻՆ (Զտված սենյակներով) ---
         with col2:
             if st.session_state.teachers and st.session_state.classes:
-                
-                sel_t = st.selectbox(
-                    "👩‍🏫 Ընտրեք Ուսուցչին", 
-                    st.session_state.teachers, 
-                    format_func=lambda x: x.name,
-                    key="selected_teacher_box_outside"
-                )
-
+                sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", st.session_state.teachers, format_func=lambda x: x.name, key="t_sel_box")
                 t_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
 
                 with st.form("as_form_fixed", clear_on_submit=True):
                     st.markdown("### 🔗 Կապել Դասարանին")
-                    
                     sel_c = st.selectbox("Դասարան", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
                     
                     if t_subjs:
                         sel_s = st.selectbox("Առարկա", t_subjs, format_func=lambda x: x.name)
                     else:
-                        st.warning(f"⚠️ {sel_t.name}-ն դեռ ոչ մի առարկայի հետ կապված չէ:")
+                        st.warning(f"⚠️ {sel_t.name}-ն առարկա չունի:")
                         sel_s = None
 
                     hrs = st.number_input("Շաբաթական ժամեր", 1, 10, 2)
 
-                    # ✨ Սենյակի տիպի ընտրություն Pool-ից
-                    available_types = list(set([r.type for r in st.session_state.rooms]))
+                    # ✨ 🆕 ԶՏՈՒՄ։ Ցույց տալ միայն այս դասարանին կցված սենյակների տիպերը
+                    class_rooms = [r for r in st.session_state.rooms if getattr(r, 'assigned_class_id', None) == sel_c.id]
+                    available_types = list(set([r.type for r in class_rooms]))
+                    
                     if not available_types:
-                        available_types = ["Ընդհանուր"]
-                    elif "Ընդհանուր" not in available_types:
-                        available_types.append("Ընդհանուր")
+                        available_types = ["Ընդհանուր"] # Default, եթե դասարանը սենյակ չունի
                     
                     sel_room_type = st.selectbox("📍 Պահանջվող սենյակի տիպը", sorted(available_types))
                     
                     if st.form_submit_button("Կապել", use_container_width=True):
-                        if not sel_s:
-                            st.error("❌ Առարկա ընտրված չէ:")
-                        else:
-                            current_hrs = sum(a.lessons_per_week for a in st.session_state.assignments if a.class_id == sel_c.id)
-                            
-                            subject_already_assigned = any(
-                                a.class_id == sel_c.id and a.subject_id == sel_s.id 
-                                for a in st.session_state.assignments
+                        if sel_s:
+                            new_ass = Assignment(
+                                id=str(uuid.uuid4()), 
+                                teacher_id=sel_t.id, 
+                                subject_id=sel_s.id, 
+                                class_id=sel_c.id, 
+                                lessons_per_week=hrs,
+                                room_type=sel_room_type
                             )
-
-                            if current_hrs + hrs > 35:
-                                st.error("❌ Դասարանը չի կարող 35 ժամից ավել ունենալ։")
-                            elif subject_already_assigned:
-                                st.error(f"⚠️ «{sel_s.name}» առարկան այս դասարանում արդեն ունի դասավանդող ուսուցիչ։")
-                            else:
-                                # ✨ Ստեղծում ենք նոր Assignment
-                                new_ass = Assignment(
-                                    id=str(uuid.uuid4()), 
-                                    teacher_id=sel_t.id, 
-                                    subject_id=sel_s.id, 
-                                    class_id=sel_c.id, 
-                                    lessons_per_week=hrs,
-                                    room_type=sel_room_type
-                                )
-                                st.session_state.assignments.append(new_ass)
-                                st.toast("✅ Կապը ստեղծվեց:", icon="🔗")
-                                save_to_disk()
-                                st.rerun()
+                            st.session_state.assignments.append(new_ass)
+                            st.toast("✅ Կապը ստեղծվեց:", icon="🔗")
+                            save_to_disk()
+                            st.rerun()
             else:
-                st.info("ℹ️ Դեռևս չկան ստեղծված ուսուցիչներ կամ դասարաններ:")
+                st.info("ℹ️ Նախ ավելացրեք ուսուցիչներ և դասարաններ:")
             
 
     elif st.session_state.active_tab == "🚀 Գեներացում":
