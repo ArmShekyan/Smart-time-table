@@ -33,12 +33,19 @@ class ClassGroup:
     section: str
 
 @dataclass
+class Room:
+    id: str
+    name: str  # Օրինակ՝ "201", "Ֆիզիկայի լաբորատորիա"
+    type: str  # "Ընդհանուր", "Լաբորատոր", "Մարզադահլիճ", "Համակարգչային"
+
+@dataclass
 class Assignment:
     id: str
     teacher_id: str
     subject_id: str
     class_id: str
     lessons_per_week: int
+    room_type: str = "Ընդհանուր"
 
 
 # --- 📌 Ինստրուկցիայի Թռնող Պատուհան (Modal) ---
@@ -148,6 +155,7 @@ def save_to_disk():
             "subjects": {s.id: asdict(s) for s in st.session_state.subjects},
             "teachers": {t.id: asdict(t) for t in st.session_state.teachers},
             "classes": {c.id: asdict(c) for c in st.session_state.classes},
+            "rooms": {r.id: asdict(r) for r in st.session_state.rooms},  # ✨ Ավելացրու սա
             "assignments": {a.id: asdict(a) for a in st.session_state.assignments},
             "schedule": st.session_state.schedule,
             "subj_pool": list(set(st.session_state.subj_pool)),
@@ -169,6 +177,7 @@ def save_to_disk():
         merged_subjects = {**{s["id"]: s for s in cloud_data.get("subjects", [])}, **local_data["subjects"]}
         merged_teachers = {**{t["id"]: t for t in cloud_data.get("teachers", [])}, **local_data["teachers"]}
         merged_classes = {**{c["id"]: c for c in cloud_data.get("classes", [])}, **local_data["classes"]}
+        merged_rooms = {**{r["id"]: r for r in cloud_data.get("rooms", [])}, **local_data["rooms"]} # ✨ Միացնում ենք կաբինետները
         merged_assignments = {**{a["id"]: a for a in cloud_data.get("assignments", [])}, **local_data["assignments"]}
         
         merged_subj_pool = list(set(cloud_data.get("subj_pool", []) + local_data["subj_pool"]))
@@ -178,6 +187,7 @@ def save_to_disk():
             "subjects": list(merged_subjects.values()),
             "teachers": list(merged_teachers.values()),
             "classes": list(merged_classes.values()),
+            "rooms": list(merged_rooms.values()), # ✨ Ավելացնում ենք վերջնական ցուցակի մեջ
             "assignments": list(merged_assignments.values()),
             "schedule": local_data["schedule"],
             "subj_pool": merged_subj_pool,
@@ -320,6 +330,7 @@ def parse_data(data):
     st.session_state.subjects = [Subject(**s) for s in data.get("subjects", [])]
     st.session_state.teachers = [Teacher(**t) for t in data.get("teachers", [])]
     st.session_state.classes = [ClassGroup(**c) for c in data.get("classes", [])]
+    st.session_state.rooms = [Room(**r) for r in data.get("rooms", [])] # ✨ ԱՎԵԼԱՑՐՈՒ ԱՅՍ ՏՈՂԸ ԿԱԲԻՆԵՏՆԵՐԻ ՀԱՄԱՐ
     st.session_state.assignments = [Assignment(**a) for a in data.get("assignments", [])]
     st.session_state.schedule = data.get("schedule", None)
     st.session_state.subj_pool = data.get("subj_pool", [])
@@ -384,6 +395,7 @@ if "subjects" not in st.session_state:
         "subjects": [], 
         "teachers": [], 
         "classes": [], 
+        "rooms": [],  # ✨ Ավելացրու այս տողը կաբինետների համար
         "assignments": [], 
         "schedule": None, 
         "subj_pool": [], 
@@ -506,7 +518,11 @@ def generate_pdf(schedule_data):
         
         cls_df = df[df['Դասարան'] == cls].copy()
         cls_df['Օր'] = cls_df['Օր'].map(day_mapping)
-        cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: x.split(" (")[0])
+        # 1. Հեռացնում ենք հին փակագծերը (ուսուցչի անունը)
+        cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: str(x).split(" (")[0])
+
+        # 2. Ավելացնում ենք սենյակը՝ ստուգելով, որ այն դատարկ չլինի
+        cls_df['Առարկա'] = cls_df['Առարկա'] + " [" + cls_df['Սենյակ'].fillna("-") + "]"
         
         pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
         
@@ -888,6 +904,31 @@ elif st.session_state.active_page == "normal":
 
     elif st.session_state.active_tab == "🏫 Դասարաններ":
         st.title("🏫 Դասարաններ և Ժամեր")
+
+        # --- 🆕 ԿԱԲԻՆԵՏՆԵՐԻ ԲԱԺԻՆ ---
+        with st.expander("🏢 Կաբինետների Կառավարում"):
+            c_r1, c_r2 = st.columns(2)
+            r_name = c_r1.text_input("Կաբինետի անուն/համար")
+            r_type = c_r2.selectbox("Կաբինետի տիպ", ["Ընդհանուր", "Լաբորատոր", "Մարզադահլիճ", "Համակարգչային"])
+            
+            if st.button("➕ Ավելացնել Կաբինետ", use_container_width=True):
+                if r_name:
+                    # Ստեղծում ենք նոր Room օբյեկտ (չմոռանաս @dataclass-ը ֆայլի սկզբում ավելացնել)
+                    new_room = Room(str(uuid.uuid4()), r_name, r_type)
+                    st.session_state.rooms.append(new_room)
+                    st.toast(f"✅ {r_name} կաբինետը ավելացվեց:", icon="🏢")
+                    st.rerun()
+
+            if st.session_state.rooms:
+                st.write("---")
+                for i, r in enumerate(st.session_state.rooms):
+                    col_n, col_d = st.columns([4, 1])
+                    col_n.text(f"📍 {r.name} ({r.type})")
+                    if col_d.button("🗑️", key=f"del_room_{i}"):
+                        st.session_state.rooms.pop(i)
+                        st.rerun()
+        
+        st.divider() # Բաժանարար գիծ կաբինետների և դասարանների արանքում
         
         col1, col2 = st.columns(2)
         with col1:
@@ -993,7 +1034,26 @@ elif st.session_state.active_page == "normal":
 
     elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
-        
+
+        def find_free_room(required_type, day, hour, current_schedule):
+            # Գտնում ենք տվյալ տիպի բոլոր սենյակները (օր.՝ բոլոր լաբորատորիաները)
+            suitable_rooms = [r for r in st.session_state.rooms if r.type == required_type]
+            
+            # Եթե այդ տիպի սենյակ չկա ստեղծված, վերցնում ենք առաջին պատահական սենյակը կամ "-"
+            if not suitable_rooms:
+                return "-"
+
+            for room in suitable_rooms:
+                # Ստուգում ենք՝ արդյոք այս սենյակը զբաղված չէ այդ ժամին այլ դասարանի կողմից
+                is_busy = any(
+                    item for item in current_schedule 
+                    if item['Օր'] == day and item['Ժամ'] == hour and item.get('Սենյակ') == room.name
+                )
+                if not is_busy:
+                    return room.name
+            return None # Եթե բոլոր սենյակները զբաղված են
+
+
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", use_container_width=True, type="primary"):
             if not st.session_state.classes or not st.session_state.assignments:
                 st.error("❌ Բացակայում են դասարանները կամ ժամերը գեներացման համար:")
@@ -1041,7 +1101,19 @@ elif st.session_state.active_page == "normal":
                             if chosen_candidate_idx == -1:
                                 continue
 
-                            target = class_fund.pop(chosen_candidate_idx)
+                            # 1. Վերցնում ենք թեկնածուին, բայց դեռ չենք հանում ցուցակից (pop չենք անում)
+                            target = class_fund[chosen_candidate_idx]
+                            
+                            # 2. ✨ Գտնում ենք ազատ սենյակ
+                            room_to_assign = find_free_room(target.room_type, best_day, next_hour, final_schedule)
+
+                            # 3. Եթե սենյակ չգտնվեց, այս անգամ բաց ենք թողնում (կփորձի այլ ժամ/օր)
+                            if room_to_assign is None:
+                                continue
+
+                            # 4. Եթե ամեն ինչ OK է, նոր միայն հանում ենք ցուցակից ու գրանցում
+                            class_fund.pop(chosen_candidate_idx)
+                            
                             t_name = next((t.name for t in st.session_state.teachers if t.id == target.teacher_id), "Անհայտ")
                             subj_name = get_subj_name(target.subject_id)
                             
@@ -1049,7 +1121,8 @@ elif st.session_state.active_page == "normal":
                                 "Դասարան": f"{cls.grade}{cls.section}",
                                 "Օր": best_day, 
                                 "Ժամ": next_hour, 
-                                "Առարկա": f"{subj_name} ({t_name})" 
+                                "Առարկա": f"{subj_name} ({t_name})",
+                                "Սենյակ": room_to_assign  # ✨ Սենյակը գրանցվեց
                             })
                             
                             teacher_occupancy[best_day][next_hour].add(target.teacher_id)
