@@ -148,7 +148,7 @@ def check_user(username, password):
     return None
 
 
-def save_to_disk():
+def save_to_disk(force_overwrite=False):  # ✨ Ավելացրինք այս պարամետրը
     with st.spinner("⏳ Պահպանվում է..."):
         time.sleep(1)
         
@@ -156,7 +156,7 @@ def save_to_disk():
             "subjects": {s.id: asdict(s) for s in st.session_state.subjects},
             "teachers": {t.id: asdict(t) for t in st.session_state.teachers},
             "classes": {c.id: asdict(c) for c in st.session_state.classes},
-            "rooms": {r.id: asdict(r) for r in st.session_state.rooms},  # ✨ Ավելացրու սա
+            "rooms": {r.id: asdict(r) for r in st.session_state.rooms},
             "assignments": {a.id: asdict(a) for a in st.session_state.assignments},
             "schedule": st.session_state.schedule,
             "subj_pool": list(set(st.session_state.subj_pool)),
@@ -166,7 +166,9 @@ def save_to_disk():
 
         headers = get_supabase_headers()
         cloud_data = {}
-        if headers:
+        
+        # 1. Կարդում ենք Cloud-ից ՄԻԱՅՆ եթե force_overwrite-ը False է
+        if headers and not force_overwrite:
             try:
                 url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
                 response = requests.get(url, headers=headers)
@@ -175,42 +177,56 @@ def save_to_disk():
             except Exception:
                 pass
 
-        merged_subjects = {**{s["id"]: s for s in cloud_data.get("subjects", [])}, **local_data["subjects"]}
-        merged_teachers = {**{t["id"]: t for t in cloud_data.get("teachers", [])}, **local_data["teachers"]}
-        merged_classes = {**{c["id"]: c for c in cloud_data.get("classes", [])}, **local_data["classes"]}
-        merged_rooms = {**{r["id"]: r for r in cloud_data.get("rooms", [])}, **local_data["rooms"]} # ✨ Միացնում ենք կաբինետները
-        merged_assignments = {**{a["id"]: a for a in cloud_data.get("assignments", [])}, **local_data["assignments"]}
-        
-        merged_subj_pool = list(set(cloud_data.get("subj_pool", []) + local_data["subj_pool"]))
-        merged_teacher_pool = list(set(cloud_data.get("teacher_pool", []) + local_data["teacher_pool"]))
+        # 2. Միացման (Merge) տրամաբանությունը
+        if force_overwrite or not cloud_data:
+            # Եթե ջնջում ենք, Cloud-ի հին տվյալները անտեսում ենք
+            final_data = {
+                "subjects": list(local_data["subjects"].values()),
+                "teachers": list(local_data["teachers"].values()),
+                "classes": list(local_data["classes"].values()),
+                "rooms": list(local_data["rooms"].values()),
+                "assignments": list(local_data["assignments"].values()),
+                "schedule": local_data["schedule"],
+                "subj_pool": local_data["subj_pool"],
+                "teacher_pool": local_data["teacher_pool"],
+                "users_list": local_data["users_list"]
+            }
+        else:
+            # Սովորական Merge (ավելացնելու համար)
+            merged_subjects = {**{s["id"]: s for s in cloud_data.get("subjects", [])}, **local_data["subjects"]}
+            merged_teachers = {**{t["id"]: t for t in cloud_data.get("teachers", [])}, **local_data["teachers"]}
+            merged_classes = {**{c["id"]: c for c in cloud_data.get("classes", [])}, **local_data["classes"]}
+            merged_rooms = {**{r["id"]: r for r in cloud_data.get("rooms", [])}, **local_data["rooms"]}
+            merged_assignments = {**{a["id"]: a for a in cloud_data.get("assignments", [])}, **local_data["assignments"]}
+            
+            final_data = {
+                "subjects": list(merged_subjects.values()),
+                "teachers": list(merged_teachers.values()),
+                "classes": list(merged_classes.values()),
+                "rooms": list(merged_rooms.values()),
+                "assignments": list(merged_assignments.values()),
+                "schedule": local_data["schedule"],
+                "subj_pool": list(set(cloud_data.get("subj_pool", []) + local_data["subj_pool"])),
+                "teacher_pool": list(set(cloud_data.get("teacher_pool", []) + local_data["teacher_pool"])),
+                "users_list": local_data["users_list"]
+            }
 
-        final_data = {
-            "subjects": list(merged_subjects.values()),
-            "teachers": list(merged_teachers.values()),
-            "classes": list(merged_classes.values()),
-            "rooms": list(merged_rooms.values()), # ✨ Ավելացնում ենք վերջնական ցուցակի մեջ
-            "assignments": list(merged_assignments.values()),
-            "schedule": local_data["schedule"],
-            "subj_pool": merged_subj_pool,
-            "teacher_pool": merged_teacher_pool,
-            "users_list": local_data["users_list"]
-        }
-
+        # 3. Պահպանում Supabase-ում
         if headers:
             try:
-                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
+                url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1"
                 payload = {"id": 1, "data": final_data}
                 headers["Prefer"] = "resolution=merge-duplicates"
                 requests.post(url, headers=headers, data=json.dumps(payload))
-                st.toast("✅ Տվյալները միացվեցին և պահպանվեցին Cloud-ում!", icon="🌐")
-                parse_data(final_data)
-                return
+                st.toast("🌐 Տվյալները թարմացվեցին Cloud-ում!", icon="✅")
             except Exception:
                 pass
 
+        # 4. Պահպանում Local ֆայլում
         with open(DB_FILE, "w", encoding="utf-8") as f:
             json.dump(final_data, f, ensure_ascii=False, indent=4)
-        st.toast("⚠️ Պահպանվեց տեղական ֆայլում (Local):", icon="💾")
+        
+        st.toast("💾 Պահպանվեց տեղական ֆայլում:", icon="✅")
         parse_data(final_data)
 
 
@@ -911,64 +927,70 @@ elif st.session_state.active_page == "normal":
     elif st.session_state.active_tab == "🏫 Դասարաններ":
         st.title("🏫 Դասարաններ և Ժամեր")
 
-        # --- 1. ԿԱԲԻՆԵՏՆԵՐԻ ԲԱԺԻՆ (ՄԱՔՐՎՈՂ ՏԵՔՍՏՈՎ ԵՎ ՃԻՇՏ ՋՆՋՄԱՄԲ) ---
+        # --- 1. ԿԱԲԻՆԵՏՆԵՐԻ ԲԱԺԻՆ ---
         with st.expander("🏢 Կաբինետների Կառավարում"):
             if not st.session_state.classes:
                 st.warning("⚠️ Սենյակ ավելացնելու համար նախ ստեղծեք գոնե մեկ դասարան:")
             else:
-                # clear_on_submit=True-ն մաքրում է տեքստը ավելացնելուց հետո
-                with st.form("room_form", clear_on_submit=True):
+                # clear_on_submit=True-ն մաքրում է տեքստային դաշտերը ավելացնելուց հետո
+                with st.form("room_add_form", clear_on_submit=True):
+                    st.markdown("### 🆕 Նոր Կաբինետ")
                     c_r1, c_r2, c_r3 = st.columns([2, 2, 2])
                     r_name = c_r1.text_input("Կաբինետի անուն/համար")
                     r_type = c_r2.selectbox("Կաբինետի տիպ", ["Ընդհանուր", "Լաբորատոր", "Մարզադահլիճ", "Համակարգչային"])
-                    r_class = c_r3.selectbox("Որ դասարանի համար է", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
+                    r_class = c_r3.selectbox(
+                        "Որ դասարանի համար է", 
+                        st.session_state.classes, 
+                        format_func=lambda x: f"{x.grade}{x.section}"
+                    )
                     
                     if st.form_submit_button("➕ Ավելացնել Կաբինետ", use_container_width=True):
                         if r_name:
-                            # Տալիս ենք եզակի ID ճիշտ ջնջման համար
-                            new_id = str(uuid.uuid4())
-                            new_room = Room(id=new_id, name=r_name, type=r_type, assigned_class_id=r_class.id)
+                            import uuid
+                            new_room = Room(id=str(uuid.uuid4()), name=r_name, type=r_type, assigned_class_id=r_class.id)
                             st.session_state.rooms.append(new_room)
-                            st.toast(f"✅ {r_name} կաբինետը ավելացվեց:", icon="🏢")
-                            save_to_disk()
+                            save_to_disk() # Ավելացման ժամանակ կարող ենք սովորական save անել
                             st.rerun()
 
             # Սենյակների ցուցակը և ջնջումը
             if st.session_state.rooms:
                 st.write("---")
                 for r in st.session_state.rooms:
-                    c_name = next((f"{c.grade}{c.section}" for c in st.session_state.classes if c.id == r.assigned_class_id), "Անհայտ")
-                    col_n, col_d = st.columns([4, 1])
-                    col_n.text(f"📍 {r.name} ({r.type}) -> 🏫 {c_name}")
-                    # Ջնջում ենք ըստ ID-ի, որ սխալ չտա
-                    if col_d.button("🗑️", key=f"del_rm_{r.id}"):
+                    c_obj = next((c for c in st.session_state.classes if c.id == r.assigned_class_id), None)
+                    c_name = f"{c_obj.grade}{c_obj.section}" if c_obj else "Անհայտ"
+                    
+                    col_info, col_del = st.columns([5, 1])
+                    col_info.markdown(f"📍 **{r.name}** ({r.type}) — 🏫 {c_name}")
+                    
+                    # 🗑️ Ջնջում ենք force_overwrite=True-ով, որ Cloud-ից հետ չգա
+                    if col_del.button("🗑️", key=f"del_room_btn_{r.id}"):
                         st.session_state.rooms = [room for room in st.session_state.rooms if room.id != r.id]
-                        save_to_disk()
+                        save_to_disk(force_overwrite=True) 
                         st.rerun()
-        
+
         st.divider() 
         
+        # --- 2. ԴԱՍԱՐԱՆՆԵՐ ԵՎ ԿԱՊԵՐ ---
         col1, col2 = st.columns(2)
         
-        # --- 2. ՆՈՐ ԴԱՍԱՐԱՆ (ՁԱԽ ՍՅՈՒՆԱԿ) ---
         with col1:
-            with st.form("cl_form", clear_on_submit=True):
+            with st.form("class_form", clear_on_submit=True):
                 st.markdown("### 🆕 Նոր Դասարան")
                 g = st.text_input("Հոսք (օր. ԱԲ)")
                 s = st.text_input("Թիվ/Տառ (օր. 1 կամ Ա)")
                 if st.form_submit_button("Ավելացնել", use_container_width=True):
                     if g and s:
+                        import uuid
                         st.session_state.classes.append(ClassGroup(str(uuid.uuid4()), g, s))
                         save_to_disk()
                         st.rerun()
 
-        # --- 3. ԿԱՊԵԼ ԴԱՍԱՐԱՆԻՆ (ԱՋ ՍՅՈՒՆԱԿ) ---
         with col2:
             if st.session_state.teachers and st.session_state.classes:
                 sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", st.session_state.teachers, format_func=lambda x: x.name, key="t_sel_main")
                 t_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
 
-                with st.form("as_form", clear_on_submit=True):
+                with st.form("assign_form", clear_on_submit=True):
                     st.markdown("### 🔗 Կապել Դասարանին")
                     sel_c = st.selectbox("Դասարան", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
                     
@@ -980,39 +1002,42 @@ elif st.session_state.active_page == "normal":
 
                     hrs = st.number_input("Շաբաթական ժամեր", 1, 10, 2)
 
-                    # Սենյակների զտում
+                    # Սենյակների զտում ըստ ընտրված դասարանի
                     class_rooms = [r for r in st.session_state.rooms if r.assigned_class_id == sel_c.id]
                     available_types = list(set([r.type for r in class_rooms])) if class_rooms else ["Ընդհանուր"]
                     sel_room_type = st.selectbox("📍 Սենյակի տիպը", sorted(available_types))
                     
                     if st.form_submit_button("Կապել", use_container_width=True):
                         if sel_s:
+                            import uuid
                             new_ass = Assignment(str(uuid.uuid4()), sel_t.id, sel_s.id, sel_c.id, hrs, sel_room_type)
                             st.session_state.assignments.append(new_ass)
                             save_to_disk()
                             st.rerun()
 
-        # --- 4. ԴԻՏԵԼ ԿԱՊԵՐԸ (ԱՐԱՆՁԻՆ ՆԵՐՔԵՎՈՒՄ) ---
+        # --- 3. ԴԻՏԵԼ ԿԱՊԵՐԸ (ՆԵՐՔԵՎՈՒՄ) ---
         st.divider() 
-        st.markdown("### 📋 Դիտել Կապերն ըստ Դասարանների")
+        st.markdown("### 📋 Դիտել Կապերը")
         
         if st.session_state.classes:
-            view_c = st.selectbox("Ընտրեք դասարանը", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}", key="v_bot")
+            view_c = st.selectbox("🔍 Ընտրեք դասարանը", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}", key="v_bot_view")
             filtered = [a for a in st.session_state.assignments if a.class_id == view_c.id]
             
             if filtered:
                 for a in filtered:
-                    t_n = next((t.name for t in st.session_state.teachers if t.id == a.teacher_id), "Ուսուցիչ")
-                    s_n = next((s.name for s in st.session_state.subjects if s.id == a.subject_id), "Առարկա")
+                    t_obj = next((t for t in st.session_state.teachers if t.id == a.teacher_id), None)
+                    s_obj = next((s for s in st.session_state.subjects if s.id == a.subject_id), None)
                     
                     c1, c2 = st.columns([5, 1])
-                    c1.markdown(f"🔹 **{s_n}** ({t_n}) — {a.lessons_per_week}ժ — *{a.room_type}*")
-                    if c2.button("🗑️", key=f"del_as_{a.id}"):
+                    c1.info(f"🔹 **{s_obj.name if s_obj else 'Անհայտ'}** ({t_obj.name if t_obj else 'Ուսուցիչ'}) — {a.lessons_per_week}ժ — *{a.room_type}*")
+                    
+                    if c2.button("🗑️", key=f"del_as_btn_{a.id}"):
                         st.session_state.assignments = [x for x in st.session_state.assignments if x.id != a.id]
-                        save_to_disk()
+                        save_to_disk(force_overwrite=True) 
                         st.rerun()
             else:
-                st.info("ℹ️Դեռևս կապեր չկան:")
+                # ✨ Ահա քո ուզած լրացուցիչ հաղորդագրությունը
+                st.info(f"ℹ️ **{view_c.grade}{view_c.section}** դասարանի համար դեռևս կապեր չկան:")
             
 
     elif st.session_state.active_tab == "🚀 Գեներացում":
