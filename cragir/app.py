@@ -432,9 +432,9 @@ if not st.session_state.logged_in:
             with st.form("login_panel", clear_on_submit=False):
                 username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
                 password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="Ներմուծեք ձեր գաղտնաբառը")
-                remember_me = st.checkbox("Հիշել ինձ", key="remember_me_checkbox")
                 
                 st.markdown("<br>", unsafe_allow_html=True)
+                
                 submit_login = st.form_submit_button("Մուտք գործել", use_container_width=True, type="primary")
 
             if submit_login:
@@ -443,20 +443,13 @@ if not st.session_state.logged_in:
                 else:
                     user = check_user(username_input, password_input)
                     if user:
-                        # 1. Նախ պահում ենք session-ում
                         st.session_state.logged_in = True
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
                         
-                        # 2. 🔥 ՃԻՇՏ ՏՐԱՄԱԲԱՆՈՒԹՅՈՒՆԸ ԱՅՍՏԵՂ Է 🔥
-                        if remember_me:
-                            cookies.set("saved_username", user['username'])
-                            cookies.set("saved_role", user['role'])
-                        else:
-                            # Եթե նշված չէ, ջնջում ենք ու մի քիչ սպասում, որ բրաուզերը հասցնի մաքրել
-                            cookies.remove("saved_username")
-                            cookies.remove("saved_role")
-                            time.sleep(0.5) # ⏱️ Կարճ դադար cookie-ն մաքրելու համար
+                        # 🔥 ՊԱՀՈՒՄ ԵՆՔ ՏՎՅԱԼՆԵՐԸ COOKIE-ՈՒՄ 🔥
+                        cookies.set("saved_username", user['username'])
+                        cookies.set("saved_role", user['role'])
                         
                         st.session_state.show_readme = True 
                         
@@ -771,7 +764,7 @@ elif st.session_state.active_page == "normal":
             if st.session_state.classes:
                 df_cl = pd.DataFrame([{"Դասարան": f"{c.grade}{c.section}"} for c in st.session_state.classes])
                 st.dataframe(df_cl, use_container_width=True, hide_index=True)
-            else: st.caption("Դասարաններ գրանված չեն:")
+            else: st.caption("Դասարաններ գրանցված չեն:")
             
         with c2:
             st.subheader("👩‍🏫 Ուսուցիչներ")
@@ -1170,6 +1163,7 @@ elif st.session_state.active_page == "normal":
                     
                     with st.spinner("🧠 Գեներացվում է նոր աղյուսակը..."):
                         try:
+                            # 🎯 Ստիպում ենք Gemini-ին տալ տեքստային հորիզոնական աղյուսակ
                             context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
                             context += "Օգտատերը ՀԱՄԱՁԱՅՆԵՑ քո առաջարկին։ Հիմա արա այդ փոփոխությունը և արդյունքը ցույց տուր ՏԵՔՍՏԱՅԻՆ ՀՈՐԻԶՈՆԱԿԱՆ ԱՂՅՈՒՍԱԿՈՎ (Markdown table)։\n"
                             context += "Աղյուսակում տողերը պետք է լինեն ԺԱՄԵՐԸ (1, 2, 3...), իսկ սյունակները՝ ՕՐԵՐԸ (Երկուշաբթի, Երեքշաբթի...)։\n"
@@ -1184,11 +1178,13 @@ elif st.session_state.active_page == "normal":
                             )
                             response_text = response.text
 
+                            # Ավելացնում ենք պատասխանը պատմության մեջ, որպեսզի չկորչի
                             st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
                             st.rerun()
 
                         except Exception as e:
                             st.error(f"❌ Սխալ: {str(e)}")
+
 
                 if col_no.button("❌ Չեղարկել", use_container_width=True):
                     st.session_state.pending_proposal = None
@@ -1196,8 +1192,6 @@ elif st.session_state.active_page == "normal":
                     st.rerun()
 
         if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
-            # Նոր հարց տալիս հին առաջարկը մաքրում ենք
-            st.session_state.pending_proposal = None
             
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
             with st.chat_message("user"):
@@ -1212,8 +1206,9 @@ elif st.session_state.active_page == "normal":
                             context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
                             context += f"Դու խոսում ես {current_user}-ի հետ։\n"
                             context += "⚠️ ՔՈ ԴԵՐԵՐԸ ԵՎ ԿԱՆՈՆՆԵՐԸ:\n"
-                            context += "1. ℹ️ ՏԵՂԵԿԱՏՈՒ ԲՈՏ: Հստակ պատասխանիր դասացուցակի մասին հարցերին:\n"
-                            context += "2. 💡 ԽՈՐՀՐԴԱՏՈՒ: Եթե առաջարկում ես փոփոխություն, ասա որ օգտատերը կարող է սեղմել 'Կիրառել' կոճակը:\n"
+                            context += "1. ℹ️ ՏԵՂԵԿԱՏՈՒ ԲՈՏ: Եթե աշակերտը կամ ծնողը հարցնում են դասացուցակի մասին (օր.՝ 'Քանի՞ դաս ունի 10-Ա-ն այսօր' կամ 'Ո՞վ է ֆիզիկայի ուսուցիչը'), արագ կարդա տրված բազան և տուր հստակ պատասխան:\n"
+                            context += "2. 💡 ԽՈՐՀՐԴԱՏՈՒ: Եթե հարցը վերաբերում է դասացուցակի լավացմանը, տեղափոխմանը կամ swap անելուն, առաջարկիր միտքը, բայց ՄԻԱՆԳԱՄԻՑ ԱՂՅՈՒՍԱԿ ՄԻ՛ ՑՈՒՅՑ ՏՈՒՐ: Բացատրիր գաղափարը և ասա, որ օգտատերը կարող է սեղմել 'Կիրառել' կոճակը:\n"
+                            context += "3. 🛑 Արգելվում է ինքնուրույն փոփոխել `st.session_state.schedule`-ը կամ բազան:\n"
 
                             if st.session_state.schedule:
                                 context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
@@ -1229,20 +1224,13 @@ elif st.session_state.active_page == "normal":
                             )
                             response_text = response.text
 
-                            # Ստուգում ենք առաջարկի առկայությունը
-                            trigger_words = ["առաջարկ", "փոխել", "տեղափոխ", "swap", "լավացնել"]
-                            is_proposal = any(word in response_text.lower() for word in trigger_words)
-
-                            # Պահում ենք պատմության մեջ
-                            st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
-                            
-                            if is_proposal:
+                            if "առաջարկ" in response_text.lower() or "փոխել" in response_text.lower() or "տեղափոխ" in response_text.lower() or "swap" in response_text.lower():
                                 st.session_state.pending_proposal = response_text
-                                # 🔥 Այստեղ rerun ենք անում, որ կոճակը հայտնվի
-                                st.rerun()
-                            else:
-                                # Եթե սովորական պատասխան է, ուղղակի ցույց ենք տալիս
-                                st.markdown(response_text)
 
                     except Exception as e:
-                        st.error(f"❌ Սխալ տեղի ունեցավ API կանչի ժամանակ: {str(e)}")
+                        response_text = f"❌ Սխալ տեղի ունեցավ API կանչի ժամանակ: {str(e)}"
+
+                    st.markdown(response_text)
+                    st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
+                    
+                    # 🔥 Անվերջ rerun-ի տողերը հանվել են այստեղից, որպեսզի էջը կանգնի
