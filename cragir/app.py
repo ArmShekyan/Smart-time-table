@@ -1,4 +1,3 @@
-
 import streamlit as st
 import uuid
 import random
@@ -1174,7 +1173,7 @@ elif st.session_state.active_page == "normal":
 
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
-                                model='gemini-2.5-flash',
+                                model='gemini-2.0-flash',
                                 contents=context + f"\nՔո նախորդ առաջարկը, որին համաձայնեցին՝ {proposal_text}",
                             )
                             response_text = response.text
@@ -1220,7 +1219,7 @@ elif st.session_state.active_page == "normal":
 
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
-                                model='gemini-2.5-flash',
+                                model='gemini-2.0-flash',
                                 contents=context,
                             )
                             response_text = response.text
