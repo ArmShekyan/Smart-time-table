@@ -1192,47 +1192,41 @@ elif st.session_state.active_page == "normal":
         # 3. Չատի մուտքագրում
         if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
+            st.session_state.pending_proposal = None 
+            
             with st.chat_message("user"):
                 st.markdown(prompt)
 
             with st.chat_message("assistant"):
                 with st.spinner("🧠 Մտածում եմ..."):
                     try:
-                        if "GEMINI_API_KEY" not in st.secrets:
-                            response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
-                        else:
-                            context = "Դու 'Smart Time Table' պրոյեկտի փորձագետ AI օգնականն ես։\n"
-                            context += f"Դու խոսում ես {current_user}-ի հետ։\n"
-                            context += "⚠️ ՔՈ ԳԼԽԱՎՈՐ ԿԱՆՈՆՆԵՐԸ (Expert Rules):\n"
-                            context += "1. ℹ️ ՏԵՂԵԿԱՏՈՒ: Հստակ պատասխանիր դասացուցակի մասին հարցերին:\n"
-                            context += "2. 🧠 SMART TWEAKS: Ծանր առարկաները 1-3 ժամերին, ուսուցչին օրական մաքս 5 դաս:\n"
-                            context += "3. 💡 ԱՌԱՋԱՐԿ: Բացատրիր տրամաբանությունը և ասա, որ կարող է սեղմել 'Կիրառել':\n"
+                        # 1. Կոնտեքստի ձևավորում
+                        context = "Դու 'Smart Time Table' պրոյեկտի փորձագետ AI օգնականն ես։\n"
+                        if st.session_state.schedule:
+                            context += f"Դասացուցակ: {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
+                            if "teachers" in st.session_state:
+                                context += f"Ուսուցիչներ: {str(st.session_state.teachers)}\n"
 
-                            if st.session_state.schedule:
-                                context += f"Ներկայիս դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
-                                if "teachers" in st.session_state:
-                                    context += f"Ուսուցիչների բազան՝ {str(st.session_state.teachers)}\n"
-                            else:
-                                context += "Դեռևս գեներացված դասացուցակ չկա։\n"
+                        # 2. Հարցում Gemini-ին
+                        client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+                        response = client.models.generate_content(
+                            model='gemini-2.5-flash', 
+                            contents=f"{context}\nՀարց: {prompt}",
+                        )
+                        response_text = response.text
 
-                            context += f"Օգտատիրոջ հարցը՝ {prompt}"
-
-                            client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-                            response = client.models.generate_content(
-                                model='gemini-2.5-flash', 
-                                contents=context,
-                            )
-                            response_text = response.text
-
-                        # Գրում ենք պատասխանը և պահում պատմության մեջ
+                        # 3. Ցուցադրում ենք պատասխանը էկրանին
                         st.markdown(response_text)
+                        
+                        # 4. Պահում ենք պատմության մեջ
                         st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
 
-                        # ✨ ԱՅՍ ՄԱՍՆ Է ԼՈՒԾՈՒՄ ՔՈ ԱՍԱԾ ԽՆԴԻՐԸ
+                        # 5. Ստուգում ենք՝ արդյո՞ք կա առաջարկ
                         trigger_words = ["առաջարկ", "փոխել", "տեղափոխ", "swap", "լավացնել"]
                         if any(word in response_text.lower() for word in trigger_words):
                             st.session_state.pending_proposal = response_text
-                            st.rerun()  # Հենց հիմա թարմացնում է, որ կոճակը հայտնվի
+                            # ՄԻԱՅՆ ԱՅՍ ԴԵՊՔՈՒՄ ԵՆՔ ԱՆՈՒՄ RERUN
+                            st.rerun()
 
                     except Exception as e:
-                        st.error(f"❌ Սխալ API կանչի ժամանակ: {str(e)}")
+                        st.error(f"❌ Սխալ տեղի ունեցավ API կանչի ժամանակ: {str(e)}")
