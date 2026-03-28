@@ -1147,14 +1147,36 @@ elif st.session_state.active_page == "normal":
         if "pending_proposal" not in st.session_state:
             st.session_state.pending_proposal = None
 
+        # 1. Սեղմում ենք դասացուցակը տոկեններ խնայելու համար (Slim Data)
+        slim_schedule = []
+        if st.session_state.get('schedule'):
+            slim_schedule = [
+                {"d": s['day'], "t": s['time_slot'], "s": s['subject_name'], "tc": s['teacher_name']} 
+                for s in st.session_state.schedule
+            ]
+        
+        schedule_context = json.dumps(slim_schedule, ensure_ascii=False) if slim_schedule else "Դեռևս գեներացված դասացուցակ չկա։"
+
+        # 2. Հիմնական հրահանգները տեղափոխում ենք System Instruction (Ավելի էժան է)
+        sys_instruct = (
+            f"Դու 'Smart Time Table' պրոյեկտի AI օգնականն ես։ Խոսում ես {current_user}-ի հետ։\n"
+            "ԿԱՆՈՆՆԵՐ:\n"
+            "1. Տեղեկատու: Պատասխանիր դասացուցակի հարցերին օգտվելով տրված տվյալներից:\n"
+            "2. Խորհրդատու: Եթե առաջարկում ես փոփոխություն (swap), ՄԻԱՅՆ բացատրիր գաղափարը տեքստով: "
+            "Ասա, որ օգտատերը կարող է սեղմել 'Կիրառել' կոճակը:\n"
+            "3. Արգելվում է ինքնուրույն փոփոխել բազան:\n"
+            f"ՆԵՐԿԱ ԴԱՍԱՑՈՒՑԱԿ: {schedule_context}"
+        )
+
+        # Ցուցադրում ենք չաթի պատմությունը
         for message in st.session_state.chat_histories[current_user]:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
+        # Եթե կա կախված առաջարկ
         if st.session_state.pending_proposal:
             with st.chat_message("assistant"):
                 st.warning("💡 AI-ն ունի առաջարկ։ Ցանկանու՞մ եք տեսնել փոփոխված տարբերակը։")
-                
                 col_yes, col_no = st.columns(2)
                 
                 if col_yes.button("✅ Կիրառել (Տեսնել նոր աղյուսակը)", use_container_width=True):
@@ -1163,36 +1185,25 @@ elif st.session_state.active_page == "normal":
                     
                     with st.spinner("🧠 Գեներացվում է նոր աղյուսակը..."):
                         try:
-                            # 🎯 Ստիպում ենք Gemini-ին տալ տեքստային հորիզոնական աղյուսակ
-                            context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
-                            context += "Օգտատերը ՀԱՄԱՁԱՅՆԵՑ քո առաջարկին։ Հիմա արա այդ փոփոխությունը և արդյունքը ցույց տուր ՏԵՔՍՏԱՅԻՆ ՀՈՐԻԶՈՆԱԿԱՆ ԱՂՅՈՒՍԱԿՈՎ (Markdown table)։\n"
-                            context += "Աղյուսակում տողերը պետք է լինեն ԺԱՄԵՐԸ (1, 2, 3...), իսկ սյունակները՝ ՕՐԵՐԸ (Երկուշաբթի, Երեքշաբթի...)։\n"
-                            
-                            if st.session_state.schedule:
-                                context += f"Նախնական դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
-
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+                            confirm_prompt = f"Օգտատերը ՀԱՄԱՁԱՅՆԵՑ քո այս առաջարկին՝ '{proposal_text}': Արտապատկերիր նոր դասացուցակը Markdown աղյուսակով (տողերը՝ ժամեր, սյունակները՝ օրեր):"
+                            
                             response = client.models.generate_content(
                                 model='gemini-2.0-flash',
-                                contents=context + f"\nՔո նախորդ առաջարկը, որին համաձայնեցին՝ {proposal_text}",
+                                config={'system_instruction': sys_instruct},
+                                contents=confirm_prompt,
                             )
-                            response_text = response.text
-
-                            # Ավելացնում ենք պատասխանը պատմության մեջ, որպեսզի չկորչի
-                            st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
+                            st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response.text})
                             st.rerun()
-
                         except Exception as e:
                             st.error(f"❌ Սխալ: {str(e)}")
 
-
                 if col_no.button("❌ Չեղարկել", use_container_width=True):
                     st.session_state.pending_proposal = None
-                    st.toast("Առաջարկը չեղարկվեց", icon="🗑️")
                     st.rerun()
 
-        if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
-            
+        # Չաթի մուտքագրում
+        if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել..."):
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
@@ -1201,36 +1212,25 @@ elif st.session_state.active_page == "normal":
                 with st.spinner("🧠 Մտածում եմ..."):
                     try:
                         if "GEMINI_API_KEY" not in st.secrets:
-                            response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
+                            response_text = "⚠️ API բանալին բացակայում է:"
                         else:
-                            context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
-                            context += f"Դու խոսում ես {current_user}-ի հետ։\n"
-                            context += "⚠️ ՔՈ ԴԵՐԵՐԸ ԵՎ ԿԱՆՈՆՆԵՐԸ:\n"
-                            context += "1. ℹ️ ՏԵՂԵԿԱՏՈՒ ԲՈՏ: Եթե աշակերտը կամ ծնողը հարցնում են դասացուցակի մասին (օր.՝ 'Քանի՞ դաս ունի 10-Ա-ն այսօր' կամ 'Ո՞վ է ֆիզիկայի ուսուցիչը'), արագ կարդա տրված բազան և տուր հստակ պատասխան:\n"
-                            context += "2. 💡 ԽՈՐՀՐԴԱՏՈՒ: Եթե հարցը վերաբերում է դասացուցակի լավացմանը, տեղափոխմանը կամ swap անելուն, առաջարկիր միտքը, բայց ՄԻԱՆԳԱՄԻՑ ԱՂՅՈՒՍԱԿ ՄԻ՛ ՑՈՒՅՑ ՏՈՒՐ: Բացատրիր գաղափարը և ասա, որ օգտատերը կարող է սեղմել 'Կիրառել' կոճակը:\n"
-                            context += "3. 🛑 Արգելվում է ինքնուրույն փոփոխել `st.session_state.schedule`-ը կամ բազան:\n"
-
-                            if st.session_state.schedule:
-                                context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
-                            else:
-                                context += "Դեռևս գեներացված դասացուցակ չկա։\n"
-
-                            context += f"Օգտատիրոջ հարցը՝ {prompt}"
-
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+                            
+                            # Ուղարկում ենք միայն վերջին 5 հաղորդագրությունը՝ տոկեններ խնայելու համար
+                            history_to_send = st.session_state.chat_histories[current_user][-5:]
+                            
                             response = client.models.generate_content(
                                 model='gemini-2.0-flash',
-                                contents=context,
+                                config={'system_instruction': sys_instruct},
+                                contents=prompt # Կամ կարող ես ուղարկել history_to_send
                             )
                             response_text = response.text
 
-                            if "առաջարկ" in response_text.lower() or "փոխել" in response_text.lower() or "տեղափոխ" in response_text.lower() or "swap" in response_text.lower():
+                            if any(x in response_text.lower() for x in ["առաջարկ", "փոխել", "տեղափոխ", "swap"]):
                                 st.session_state.pending_proposal = response_text
 
-                    except Exception as e:
-                        response_text = f"❌ Սխալ տեղի ունեցավ API կանչի ժամանակ: {str(e)}"
-
-                    st.markdown(response_text)
-                    st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
+                        st.markdown(response_text)
+                        st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
                     
-                    # 🔥 Անվերջ rerun-ի տողերը հանվել են այստեղից, որպեսզի էջը կանգնի
+                    except Exception as e:
+                        st.error(f"❌ API Սխալ: {str(e)}")
