@@ -960,14 +960,27 @@ elif st.session_state.active_page == "normal":
                         st.rerun()
 
         # --- 3. ԿԱՊԵԼ ԴԱՍԱՐԱՆԻՆ (Զտված սենյակներով) ---
+        # --- 3. ԿԱՊԵԼ ԴԱՍԱՐԱՆԻՆ ԵՎ ԴԻՏԵԼ ԿԱՊԵՐԸ ---
         with col2:
             if st.session_state.teachers and st.session_state.classes:
-                sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", st.session_state.teachers, format_func=lambda x: x.name, key="t_sel_box")
+                # Ուսուցչի ընտրություն կապ ստեղծելու համար
+                sel_t = st.selectbox(
+                    "👩‍🏫 Ընտրեք Ուսուցչին", 
+                    st.session_state.teachers, 
+                    format_func=lambda x: x.name, 
+                    key="t_sel_main"
+                )
+                
                 t_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
 
                 with st.form("as_form_fixed", clear_on_submit=True):
                     st.markdown("### 🔗 Կապել Դասարանին")
-                    sel_c = st.selectbox("Դասարան", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
+                    sel_c = st.selectbox(
+                        "Դասարան", 
+                        st.session_state.classes, 
+                        format_func=lambda x: f"{x.grade}{x.section}",
+                        key="c_sel_assign"
+                    )
                     
                     if t_subjs:
                         sel_s = st.selectbox("Առարկա", t_subjs, format_func=lambda x: x.name)
@@ -977,12 +990,11 @@ elif st.session_state.active_page == "normal":
 
                     hrs = st.number_input("Շաբաթական ժամեր", 1, 10, 2)
 
-                    # ✨ 🆕 ԶՏՈՒՄ։ Ցույց տալ միայն այս դասարանին կցված սենյակների տիպերը
+                    # Սենյակների զտում ըստ ընտրված դասարանի
                     class_rooms = [r for r in st.session_state.rooms if getattr(r, 'assigned_class_id', None) == sel_c.id]
                     available_types = list(set([r.type for r in class_rooms]))
-                    
                     if not available_types:
-                        available_types = ["Ընդհանուր"] # Default, եթե դասարանը սենյակ չունի
+                        available_types = ["Ընդհանուր"]
                     
                     sel_room_type = st.selectbox("📍 Պահանջվող սենյակի տիպը", sorted(available_types))
                     
@@ -1000,6 +1012,36 @@ elif st.session_state.active_page == "normal":
                             st.toast("✅ Կապը ստեղծվեց:", icon="🔗")
                             save_to_disk()
                             st.rerun()
+
+                # --- 📋 ԴԻՏԵԼ ԿԱՊԵՐԸ (ԸՍՏ ԴԱՍԱՐԱՆԻ) ---
+                st.write("---")
+                st.markdown("### 📋 Դիտել Կապերը")
+                
+                # Ընտրում ենք դասարանը՝ ֆիլտրելու համար
+                view_c = st.selectbox(
+                    "Ընտրեք դասարանը՝ կապերը տեսնելու համար", 
+                    st.session_state.classes, 
+                    format_func=lambda x: f"{x.grade}{x.section}",
+                    key="view_filter_class"
+                )
+                
+                # Ցույց ենք տալիս միայն ընտրված դասարանի կապերը
+                filtered_assignments = [a for a in st.session_state.assignments if a.class_id == view_c.id]
+                
+                if filtered_assignments:
+                    for a in filtered_assignments:
+                        t_n = next((t.name for t in st.session_state.teachers if t.id == a.teacher_id), "Ուսուցիչ")
+                        s_n = next((s.name for s in st.session_state.subjects if s.id == a.subject_id), "Առարկա")
+                        
+                        c1, c2 = st.columns([4, 1])
+                        c1.caption(f"🔹 {s_n} ({t_n}) - {a.lessons_per_week}ժ - {a.room_type}")
+                        # Ջնջելու կոճակ
+                        if c2.button("🗑️", key=f"del_{a.id}"):
+                            st.session_state.assignments = [x for x in st.session_state.assignments if x.id != a.id]
+                            save_to_disk()
+                            st.rerun()
+                else:
+                    st.info(f"ℹ️ {view_c.grade}{view_c.section} դասարանի համար դեռ կապեր չկան:")
             else:
                 st.info("ℹ️ Նախ ավելացրեք ուսուցիչներ և դասարաններ:")
             
