@@ -1191,8 +1191,6 @@ elif st.session_state.active_page == "normal":
                     st.toast("Առաջարկը չեղարկվեց", icon="🗑️")
                     st.rerun()
 
-        # ... (նախորդ տողերը թողնում ես նույնը մինչև context-ի սահմանումը)
-
         if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
             
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
@@ -1205,22 +1203,15 @@ elif st.session_state.active_page == "normal":
                         if "GEMINI_API_KEY" not in st.secrets:
                             response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
                         else:
-                            # ✨ ԹԱՐՄԱՑՎԱԾ ԿՈՆՏԵՔՍՏ՝ ԽԵԼԱՑԻ ԿԱՆՈՆՆԵՐՈՎ
-                            context = "Դու 'Smart Time Table' պրոյեկտի փորձագետ AI օգնականն ես։\n"
+                            context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
                             context += f"Դու խոսում ես {current_user}-ի հետ։\n"
-                            context += "⚠️ ՔՈ ԳԼԽԱՎՈՐ ԿԱՆՈՆՆԵՐԸ (Expert Rules):\n"
-                            context += "1. ℹ️ ՏԵՂԵԿԱՏՈՒ: Հստակ պատասխանիր դասացուցակի մասին հարցերին:\n"
-                            context += "2. 🧠 SMART TWEAKS (ԽՈՐՀՐԴԱՏՈՒ): Եթե առաջարկում ես փոփոխություն, առաջնորդվիր այս սկզբունքներով.\n"
-                            context += "   - Complexity Index: Ծանր առարկաները (Մաթեմատիկա, Ֆիզիկա) պետք է լինեն օրվա սկզբում (1-3 ժամեր):\n"
-                            context += "   - Ծանրաբեռնվածություն: Ուսուցիչը չպետք է ունենա օրական 5-ից ավել դաս, եթե կա ավելի թեթև օր:\n"
-                            context += "   - Պատուհաններ: Խուսափիր ուսուցիչների համար դատարկ ժամեր (windows) ստեղծելուց:\n"
-                            context += "3. 💡 ԱՌԱՋԱՐԿԻ ՁԵՎԱԿԵՐՊՈՒՄ: Միանգամից աղյուսակ մի՛ ցույց տուր: Բացատրիր ՏՐԱՄԱԲԱՆՈՒԹՅՈՒՆԸ (թե ինչու ես տեղափոխում) և ասա, որ կարող է սեղմել 'Կիրառել':\n"
+                            context += "⚠️ ՔՈ ԴԵՐԵՐԸ ԵՎ ԿԱՆՈՆՆԵՐԸ:\n"
+                            context += "1. ℹ️ ՏԵՂԵԿԱՏՈՒ ԲՈՏ: Եթե աշակերտը կամ ծնողը հարցնում են դասացուցակի մասին (օր.՝ 'Քանի՞ դաս ունի 10-Ա-ն այսօր' կամ 'Ո՞վ է ֆիզիկայի ուսուցիչը'), արագ կարդա տրված բազան և տուր հստակ պատասխան:\n"
+                            context += "2. 💡 ԽՈՐՀՐԴԱՏՈՒ: Եթե հարցը վերաբերում է դասացուցակի լավացմանը, տեղափոխմանը կամ swap անելուն, առաջարկիր միտքը, բայց ՄԻԱՆԳԱՄԻՑ ԱՂՅՈՒՍԱԿ ՄԻ՛ ՑՈՒՅՑ ՏՈՒՐ: Բացատրիր գաղափարը և ասա, որ օգտատերը կարող է սեղմել 'Կիրառել' կոճակը:\n"
+                            context += "3. 🛑 Արգելվում է ինքնուրույն փոփոխել `st.session_state.schedule`-ը կամ բազան:\n"
 
                             if st.session_state.schedule:
                                 context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
-                                # Ավելացնում ենք նաև ուսուցիչների տվյալները, եթե կան session_state-ում
-                                if "teachers" in st.session_state:
-                                    context += f"Ուսուցիչների բազան՝ {json.dumps(st.session_state.teachers, ensure_ascii=False)}\n"
                             else:
                                 context += "Դեռևս գեներացված դասացուցակ չկա։\n"
 
@@ -1228,12 +1219,12 @@ elif st.session_state.active_page == "normal":
 
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
-                                model='gemini-2.5-flash', 
+                                model='gemini-2.5-flash',
                                 contents=context,
                             )
                             response_text = response.text
 
-                            if any(word in response_text.lower() for word in ["առաջարկ", "փոխել", "տեղափոխ", "swap", "լավացնել"]):
+                            if "առաջարկ" in response_text.lower() or "փոխել" in response_text.lower() or "տեղափոխ" in response_text.lower() or "swap" in response_text.lower():
                                 st.session_state.pending_proposal = response_text
 
                     except Exception as e:
@@ -1241,3 +1232,5 @@ elif st.session_state.active_page == "normal":
 
                     st.markdown(response_text)
                     st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
+                    
+                    # 🔥 Անվերջ rerun-ի տողերը հանվել են այստեղից, որպեսզի էջը կանգնի
