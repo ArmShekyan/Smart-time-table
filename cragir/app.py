@@ -432,11 +432,9 @@ if not st.session_state.logged_in:
             with st.form("login_panel", clear_on_submit=False):
                 username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
                 password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="Ներմուծեք ձեր գաղտնաբառը")
-                # Checkbox-ը ստանում է "Հիշել ինձ" անունը
                 remember_me = st.checkbox("Հիշել ինձ", key="remember_me_checkbox")
                 
                 st.markdown("<br>", unsafe_allow_html=True)
-                
                 submit_login = st.form_submit_button("Մուտք գործել", use_container_width=True, type="primary")
 
             if submit_login:
@@ -445,17 +443,17 @@ if not st.session_state.logged_in:
                 else:
                     user = check_user(username_input, password_input)
                     if user:
+                        # 1. Սկզբում լոգին ենք անում session-ով
                         st.session_state.logged_in = True
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
                         
-                        # Այս հատվածը ապահովում է քո ուզած ճիշտ աշխատանքը
+                        # 2. 🔥 ԿԱՐԵՎՈՐ. Եթե "Հիշել ինձ" նշված ՉԷ, մաքրում ենք cookie-ները
                         if remember_me:
-                            # Եթե նշված է "Հիշել ինձ", նոր միայն ստեղծում ենք cookie-ն
                             cookies.set("saved_username", user['username'])
                             cookies.set("saved_role", user['role'])
                         else:
-                            # Եթե նշված չէ, ջնջում ենք cookie-ները (եթե կային), որ refresh-ին չաշխատեն
+                            # Սա կջնջի հին cookie-ները, որ հանկարծ refresh-ին չհիշի
                             cookies.remove("saved_username")
                             cookies.remove("saved_role")
                         
