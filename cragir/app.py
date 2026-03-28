@@ -1147,14 +1147,15 @@ elif st.session_state.active_page == "normal":
         if "pending_proposal" not in st.session_state:
             st.session_state.pending_proposal = None
 
+        # 1. Ցուցադրում ենք պատմությունը
         for message in st.session_state.chat_histories[current_user]:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
+        # 2. Առաջարկի կոճակների բաժին
         if st.session_state.pending_proposal:
             with st.chat_message("assistant"):
                 st.warning("💡 AI-ն ունի առաջարկ։ Ցանկանու՞մ եք տեսնել փոփոխված տարբերակը։")
-                
                 col_yes, col_no = st.columns(2)
                 
                 if col_yes.button("✅ Կիրառել (Տեսնել նոր աղյուսակը)", use_container_width=True):
@@ -1163,7 +1164,6 @@ elif st.session_state.active_page == "normal":
                     
                     with st.spinner("🧠 Գեներացվում է նոր աղյուսակը..."):
                         try:
-                            # 🎯 Ստիպում ենք Gemini-ին տալ տեքստային հորիզոնական աղյուսակ
                             context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
                             context += "Օգտատերը ՀԱՄԱՁԱՅՆԵՑ քո առաջարկին։ Հիմա արա այդ փոփոխությունը և արդյունքը ցույց տուր ՏԵՔՍՏԱՅԻՆ ՀՈՐԻԶՈՆԱԿԱՆ ԱՂՅՈՒՍԱԿՈՎ (Markdown table)։\n"
                             context += "Աղյուսակում տողերը պետք է լինեն ԺԱՄԵՐԸ (1, 2, 3...), իսկ սյունակները՝ ՕՐԵՐԸ (Երկուշաբթի, Երեքշաբթի...)։\n"
@@ -1178,23 +1178,19 @@ elif st.session_state.active_page == "normal":
                             )
                             response_text = response.text
 
-                            # Ավելացնում ենք պատասխանը պատմության մեջ, որպեսզի չկորչի
                             st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
                             st.rerun()
 
                         except Exception as e:
                             st.error(f"❌ Սխալ: {str(e)}")
 
-
                 if col_no.button("❌ Չեղարկել", use_container_width=True):
                     st.session_state.pending_proposal = None
                     st.toast("Առաջարկը չեղարկվեց", icon="🗑️")
                     st.rerun()
 
-        # ... (նախորդ տողերը թողնում ես նույնը մինչև context-ի սահմանումը)
-
+        # 3. Չատի մուտքագրում
         if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
-            
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
@@ -1205,25 +1201,17 @@ elif st.session_state.active_page == "normal":
                         if "GEMINI_API_KEY" not in st.secrets:
                             response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
                         else:
-                            # ✨ ԹԱՐՄԱՑՎԱԾ ԿՈՆՏԵՔՍՏ՝ ԽԵԼԱՑԻ ԿԱՆՈՆՆԵՐՈՎ
                             context = "Դու 'Smart Time Table' պրոյեկտի փորձագետ AI օգնականն ես։\n"
                             context += f"Դու խոսում ես {current_user}-ի հետ։\n"
                             context += "⚠️ ՔՈ ԳԼԽԱՎՈՐ ԿԱՆՈՆՆԵՐԸ (Expert Rules):\n"
                             context += "1. ℹ️ ՏԵՂԵԿԱՏՈՒ: Հստակ պատասխանիր դասացուցակի մասին հարցերին:\n"
-                            context += "2. 🧠 SMART TWEAKS (ԽՈՐՀՐԴԱՏՈՒ): Եթե առաջարկում ես փոփոխություն, առաջնորդվիր այս սկզբունքներով.\n"
-                            context += "   - Complexity Index: Ծանր առարկաները (Մաթեմատիկա, Ֆիզիկա) պետք է լինեն օրվա սկզբում (1-3 ժամեր):\n"
-                            context += "   - Ծանրաբեռնվածություն: Ուսուցիչը չպետք է ունենա օրական 5-ից ավել դաս, եթե կա ավելի թեթև օր:\n"
-                            context += "   - Պատուհաններ: Խուսափիր ուսուցիչների համար դատարկ ժամեր (windows) ստեղծելուց:\n"
-                            context += "3. 💡 ԱՌԱՋԱՐԿԻ ՁԵՎԱԿԵՐՊՈՒՄ: Միանգամից աղյուսակ մի՛ ցույց տուր: Բացատրիր ՏՐԱՄԱԲԱՆՈՒԹՅՈՒՆԸ (թե ինչու ես տեղափոխում) և ասա, որ կարող է սեղմել 'Կիրառել':\n"
+                            context += "2. 🧠 SMART TWEAKS: Ծանր առարկաները 1-3 ժամերին, ուսուցչին օրական մաքս 5 դաս:\n"
+                            context += "3. 💡 ԱՌԱՋԱՐԿ: Բացատրիր տրամաբանությունը և ասա, որ կարող է սեղմել 'Կիրառել':\n"
 
                             if st.session_state.schedule:
-                                context += f"Ներկայիս գեներացված դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
-                                
-                                # 🎯 Ուղղում ենք այստեղ. ուսուցիչներին դարձնում ենք տեքստ, որ JSON-ը չբողոքի
+                                context += f"Ներկայիս դասացուցակը՝ {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
                                 if "teachers" in st.session_state:
-                                    # Սա կվերցնի միայն տվյալները, նույնիսկ եթե դրանք Class-ի մեջ են
-                                    teachers_data = str(st.session_state.teachers) 
-                                    context += f"Ուսուցիչների բազան՝ {teachers_data}\n"
+                                    context += f"Ուսուցիչների բազան՝ {str(st.session_state.teachers)}\n"
                             else:
                                 context += "Դեռևս գեներացված դասացուցակ չկա։\n"
 
@@ -1236,11 +1224,15 @@ elif st.session_state.active_page == "normal":
                             )
                             response_text = response.text
 
-                            if any(word in response_text.lower() for word in ["առաջարկ", "փոխել", "տեղափոխ", "swap", "լավացնել"]):
-                                st.session_state.pending_proposal = response_text
+                        # Գրում ենք պատասխանը և պահում պատմության մեջ
+                        st.markdown(response_text)
+                        st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
+
+                        # ✨ ԱՅՍ ՄԱՍՆ Է ԼՈՒԾՈՒՄ ՔՈ ԱՍԱԾ ԽՆԴԻՐԸ
+                        trigger_words = ["առաջարկ", "փոխել", "տեղափոխ", "swap", "լավացնել"]
+                        if any(word in response_text.lower() for word in trigger_words):
+                            st.session_state.pending_proposal = response_text
+                            st.rerun()  # Հենց հիմա թարմացնում է, որ կոճակը հայտնվի
 
                     except Exception as e:
-                        response_text = f"❌ Սխալ տեղի ունեցավ API կանչի ժամանակ: {str(e)}"
-
-                    st.markdown(response_text)
-                    st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
+                        st.error(f"❌ Սխալ API կանչի ժամանակ: {str(e)}")
