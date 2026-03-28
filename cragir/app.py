@@ -1192,7 +1192,7 @@ elif st.session_state.active_page == "normal":
         # 3. Չատի մուտքագրում
         if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
-            st.session_state.pending_proposal = None 
+            st.session_state.pending_proposal = None # Սա զրոյացնում ենք նոր հարցի համար
             
             with st.chat_message("user"):
                 st.markdown(prompt)
@@ -1200,14 +1200,13 @@ elif st.session_state.active_page == "normal":
             with st.chat_message("assistant"):
                 with st.spinner("🧠 Մտածում եմ..."):
                     try:
-                        # 1. Կոնտեքստի ձևավորում
+                        # --- ՔՈ ՀԻՆ ԿՈՆՏԵՔՍՏԸ ---
                         context = "Դու 'Smart Time Table' պրոյեկտի փորձագետ AI օգնականն ես։\n"
                         if st.session_state.schedule:
                             context += f"Դասացուցակ: {json.dumps(st.session_state.schedule, ensure_ascii=False)}\n"
                             if "teachers" in st.session_state:
                                 context += f"Ուսուցիչներ: {str(st.session_state.teachers)}\n"
-
-                        # 2. Հարցում Gemini-ին
+                        
                         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                         response = client.models.generate_content(
                             model='gemini-2.5-flash', 
@@ -1215,18 +1214,17 @@ elif st.session_state.active_page == "normal":
                         )
                         response_text = response.text
 
-                        # 3. Ցուցադրում ենք պատասխանը էկրանին
+                        # 1. Տպում ենք պատասխանը
                         st.markdown(response_text)
                         
-                        # 4. Պահում ենք պատմության մեջ
+                        # 2. Պահում ենք պատասխանը պատմության մեջ
                         st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
 
-                        # 5. Ստուգում ենք՝ արդյո՞ք կա առաջարկ
+                        # 3. ՍՏՈՒԳՈՒՄ ԵՎ RERUN (ՄԻԱՅՆ ԵԹԵ ԱՌԱՋԱՐԿ ԿԱ)
                         trigger_words = ["առաջարկ", "փոխել", "տեղափոխ", "swap", "լավացնել"]
                         if any(word in response_text.lower() for word in trigger_words):
                             st.session_state.pending_proposal = response_text
-                            # ՄԻԱՅՆ ԱՅՍ ԴԵՊՔՈՒՄ ԵՆՔ ԱՆՈՒՄ RERUN
-                            st.rerun()
+                            st.rerun() # Հիմա սա կաշխատի ՄԻԱՅՆ եթե առաջարկ կա
 
                     except Exception as e:
                         st.error(f"❌ Սխալ տեղի ունեցավ API կանչի ժամանակ: {str(e)}")
