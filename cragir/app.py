@@ -1006,6 +1006,7 @@ elif st.session_state.active_page == "normal":
                 with st.form("room_add_form", clear_on_submit=True):
                     st.markdown("### 🆕 Նոր Կաբինետ")
                     c_r1, c_r2, c_r3 = st.columns([2, 2, 2])
+                    
                     r_name = c_r1.text_input("Կաբինետի անուն/համար").strip()
                     r_type = c_r2.selectbox("Կաբինետի տիպ", ["Ընդհանուր", "Լաբորատոր", "Մարզադահլիճ", "Համակարգչային"])
                     r_class = c_r3.selectbox(
@@ -1016,7 +1017,7 @@ elif st.session_state.active_page == "normal":
                     
                     if st.form_submit_button("➕ Ավելացնել Կաբինետ", use_container_width=True):
                         if r_name:
-                            # ✨ Ստուգում ենք կաբինետի կրկնությունը
+                            # Ստուգում ենք կաբինետի կրկնությունը
                             if r_name.lower() in [room.name.lower() for room in st.session_state.rooms]:
                                 st.error(f"❌ '{r_name}' կաբինետն արդեն գոյություն ունի:")
                             else:
@@ -1026,10 +1027,13 @@ elif st.session_state.active_page == "normal":
                                 save_to_disk()
                                 st.toast(f"📍 {r_name} կաբինետն ավելացվեց", icon="✅")
                                 st.rerun()
+                        else:
+                            st.warning("⚠️ Խնդրում ենք մուտքագրել կաբինետի անունը:")
 
-            # Սենյակների ցուցակը
+            # Գոյություն ունեցող կաբինետների ցուցակը
             if st.session_state.rooms:
                 st.write("---")
+                st.markdown("#### 📋 Գոյություն ունեցող կաբինետներ")
                 for r in st.session_state.rooms:
                     c_obj = next((c for c in st.session_state.classes if c.id == r.assigned_class_id), None)
                     c_name = f"{c_obj.grade}{c_obj.section}" if c_obj else "Անհայտ"
@@ -1040,6 +1044,7 @@ elif st.session_state.active_page == "normal":
                     if col_del.button("🗑️", key=f"del_room_btn_{r.id}"):
                         st.session_state.rooms = [room for room in st.session_state.rooms if room.id != r.id]
                         save_to_disk(force_overwrite=True) 
+                        st.toast(f"🗑️ {r.name} կաբինետը հեռացվեց", icon="🏢")
                         st.rerun()
 
         st.divider() 
@@ -1055,7 +1060,6 @@ elif st.session_state.active_page == "normal":
                 
                 if st.form_submit_button("Ավելացնել", use_container_width=True):
                     if g and s:
-                        # ✨ Ստուգում ենք դասարանի կրկնությունը
                         new_class_full_name = f"{g}{s}".lower()
                         existing_classes = [f"{c.grade}{c.section}".lower() for c in st.session_state.classes]
                         
@@ -1073,7 +1077,6 @@ elif st.session_state.active_page == "normal":
         with col2:
             if st.session_state.teachers and st.session_state.classes:
                 sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", st.session_state.teachers, format_func=lambda x: x.name, key="t_sel_main")
-                
                 all_teacher_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
 
                 with st.form("as_form", clear_on_submit=True):
@@ -1086,11 +1089,10 @@ elif st.session_state.active_page == "normal":
                     if available_subjs:
                         sel_s = st.selectbox("Առարկա", available_subjs, format_func=lambda x: x.name)
                     else:
-                        st.warning(f"⚠️ Այս ուսուցչի բոլոր առարկաներն արդեն նշանակված են {sel_c.grade}{sel_c.section} դասարանում:")
+                        st.warning(f"⚠️ Այս ուսուցչի բոլոր առարկաներն արդեն նշանակված են {sel_c.grade}{sel_c.section} դասարանում")
                         sel_s = None
 
                     hrs = st.number_input("Շաբաթական ժամեր", 1, 15, 2)
-
                     class_rooms = [room for room in st.session_state.rooms if room.assigned_class_id == sel_c.id]
                     available_types = list(set([room.type for room in class_rooms])) if class_rooms else ["Ընդհանուր"]
                     sel_room_type = st.selectbox("📍 Սենյակի տիպը", sorted(available_types))
