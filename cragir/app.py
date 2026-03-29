@@ -591,7 +591,7 @@ def generate_pdf(schedule_data):
         pdf.ln(10)
 
     # ❗ ԿԱՐԵՎՈՐ: Վերադարձնում ենք բայթերը Streamlit-ի համար
-    return pdf.output(dest='S').encode('latin-1', errors='ignore')
+    return pdf.output(dest='S') if isinstance(pdf.output(dest='S'), bytes) else pdf.output(dest='S').encode('latin-1', errors='ignore')
 
 
 st.sidebar.title(f"👤 {st.session_state.username}")
