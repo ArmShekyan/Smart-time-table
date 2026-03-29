@@ -1278,16 +1278,22 @@ elif st.session_state.active_page == "normal":
                     with st.popover(f"🔍 {c_name} դասարանի մանրամասներ"):
                         st.markdown(f"#### ℹ️ {c_name} - Ուսուցիչներ և Կաբինետներ")
                         
-                        # Վերցնում ենք միայն անհրաժեշտ սյուները և հեռացնում կրկնությունները
+                        # Ստուգում ենք սյուների առկայությունը
                         if all(col in cls_df.columns for col in ['Առարկա', 'Ուսուցիչ', 'Սենյակ']):
                             details = cls_df[['Առարկա', 'Ուսուցիչ', 'Սենյակ']].drop_duplicates()
                             
                             for _, row in details.iterrows():
                                 st.markdown(f"📖 **{row['Առարկա']}**")
-                                st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {row['Սենյակ']}")
+                                
+                                # Ճկուն ստուգում սենյակի համար
+                                r_val = row['Սենյակ']
+                                if not r_val or r_val == "-" or r_val == "None":
+                                    # Եթե կոնկրետ սենյակ չի գտել, փորձում ենք գտնել այդ դասարանի ցանկացած սենյակ
+                                    alt_room = next((r.name for r in st.session_state.rooms if f"{view_c.grade}{view_c.section}" in r.name), "Ընդհանուր")
+                                    r_val = alt_room
+                                
+                                st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {r_val}")
                                 st.write("---")
-                        else:
-                            st.warning("⚠️ Մանրամասները ժամանակավոր հասանելի չեն:")
 
             st.divider()
             # PDF-ի հատվածը մնում է նույնը, քանի որ այն արդեն աշխատում է `st.session_state.schedule`-ի հետ
