@@ -1184,21 +1184,28 @@ elif st.session_state.active_page == "normal":
     elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
 
-        # 1. Ֆունկցիա, որը ստուգում է սենյակի զբաղվածությունը
         def find_free_room(assigned_room_name, day, hour, current_schedule):
-            # Եթե սենյակը նշված չէ կամ դատարկ է
-            if not assigned_room_name or assigned_room_name == "-":
+            # 1. Եթե սենյակը հենց սկզբից դատարկ է, վերադարձնում ենք "-"
+            if not assigned_room_name or assigned_room_name in ["-", "nan", "None"]:
                 return "-"
             
-            # Ստուգում ենք՝ արդյոք այս սենյակը զբաղված չէ այդ ժամին այլ դասարանի կողմից
+            # 2. Ստուգում ենք՝ արդյոք այս սենյակը զբաղված է այլ դասարանի կողմից
+            # Կարևոր է օգտագործել .get(), որպեսզի KeyError չլինի
             is_busy = any(
                 item for item in current_schedule 
-                if item['Օր'] == day and item['Ժամ'] == hour and item.get('Սենյակ') == assigned_room_name
+                if item.get('Օր') == day and 
+                item.get('Ժամ') == hour and 
+                item.get('Սենյակ') == assigned_room_name
             )
             
+            # 3. Եթե զբաղված չէ, վերադարձնում ենք քո նշած սենյակը
             if not is_busy:
                 return assigned_room_name
-            return None # Սենյակը զբաղված է
+            
+            # 4. Փոխիր նախորդ 'None'-ը սրանով.
+            # Եթե նույնիսկ զբաղված է, մենք ուզում ենք տեսնել սենյակի անունը,
+            # ուղղակի կողքը նշան կդնենք, որ հասկանաս՝ կոնֆլիկտ կա:
+            return f"{assigned_room_name} ⚠️"
 
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", use_container_width=True, type="primary"):
             if not st.session_state.classes or not st.session_state.assignments:
