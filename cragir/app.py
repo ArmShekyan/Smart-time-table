@@ -988,16 +988,22 @@ elif st.session_state.active_page == "normal":
         with col2:
             if st.session_state.teachers and st.session_state.classes:
                 sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", st.session_state.teachers, format_func=lambda x: x.name, key="t_sel_main")
-                t_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
+                
+                # 1. Վերցնում ենք ուսուցչի բոլոր առարկաները
+                all_teacher_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
 
-                with st.form("assign_form", clear_on_submit=True):
+                with st.form("as_form", clear_on_submit=True):
                     st.markdown("### 🔗 Կապել Դասարանին")
                     sel_c = st.selectbox("Դասարան", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
                     
-                    if t_subjs:
-                        sel_s = st.selectbox("Առարկա", t_subjs, format_func=lambda x: x.name)
+                    # 2. ✨ ՖԻԼՏՐՈՒՄ. Ցույց տալ միայն այն առարկաները, որոնք ԱՅՍ դասարանում դեռ ուսուցիչ չունեն
+                    assigned_subject_ids = [a.subject_id for a in st.session_state.assignments if a.class_id == sel_c.id]
+                    available_subjs = [s for s in all_teacher_subjs if s.id not in assigned_subject_ids]
+
+                    if available_subjs:
+                        sel_s = st.selectbox("Առարկա", available_subjs, format_func=lambda x: x.name)
                     else:
-                        st.warning("⚠️ Առարկա չկա:")
+                        st.warning(f"⚠️ Այս ուսուցչի բոլոր առարկաներն արդեն նշանակված են {sel_c.grade}{sel_c.section} դասարանում:")
                         sel_s = None
 
                     hrs = st.number_input("Շաբաթական ժամեր", 1, 10, 2)
