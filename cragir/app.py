@@ -1293,23 +1293,44 @@ elif st.session_state.active_page == "normal":
 
     elif st.session_state.active_tab == "👤 Ուսուցչի Անձնական":
         st.title("👤 Ուսուցչի Շաբաթվա Գրաֆիկ")
-        if st.session_state.schedule and st.session_state.teachers:
+        
+        # Ստուգում ենք՝ արդյոք ունենք դասացուցակ և ուսուցիչներ
+        if st.session_state.get('schedule') and st.session_state.get('teachers'):
             df = pd.DataFrame(st.session_state.schedule)
-            sel_t = st.selectbox("Ընտրեք ուսուցչին", st.session_state.teachers, format_func=lambda x: x.name)
-            t_data = df[df['Առարկա'].str.contains(sel_t.name)]
+            
+            # Ուսուցչի ընտրություն
+            sel_t = st.selectbox("Ընտրեք ուսուցչին", 
+                                st.session_state.teachers, 
+                                format_func=lambda x: x.name)
+            
+            # ✨ ՃԻՇՏ ՖԻԼՏՐՈՒՄ: Փնտրում ենք հենց 'Ուսուցիչ' սյունակի մեջ
+            t_data = df[df['Ուսուցիչ'] == sel_t.name]
+            
             if not t_data.empty:
                 t_data_clean = t_data.copy()
-                t_data_clean['Ցուցադրում'] = t_data_clean['Դասարան'] + " - " + t_data_clean['Առարկա'].apply(lambda x: x.split(" (")[0])
                 
+                # Ձևավորում ենք ցուցադրվող տեքստը (Դասարան + Առարկա)
+                # Օգտագործում ենք միայն առարկայի անունը (առանց փակագծերի)
+                t_data_clean['Ցուցադրում'] = t_data_clean['Դասարան'] + " - " + \
+                                            t_data_clean['Առարկա'].apply(lambda x: str(x).split(" (")[0])
+                
+                # Սարքում ենք Pivot աղյուսակը
                 pivot = t_data_clean.pivot(index='Ժամ', columns='Օր', values='Ցուցադրում').fillna("-")
                 
+                # Ապահովում ենք օրերի ճիշտ հերթականությունը
                 existing_days = [day for day in DAYS_AM if day in pivot.columns]
                 if existing_days:
                     pivot = pivot[existing_days]
-
+                
+                # Ցուցադրում ենք աղյուսակը
                 st.dataframe(pivot, use_container_width=True)
-            else: st.warning("Այս ուսուցչի համար դեռևս դասեր չկան բաշխված։")
-        else: st.info("Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
+                
+                # Լրացուցիչ ինֆո
+                st.info(f"💡 Ցուցադրված է {sel_t.name}-ի դասացուցակը:")
+            else:
+                st.warning(f"⚠️ {sel_t.name}-ի համար դեռևս դասեր չկան բաշխված։")
+        else:
+            st.info("ℹ️ Դեռևս չկա գեներացված դասացուցակ կամ գրանցված ուսուցիչ։")
 
 
     elif st.session_state.active_tab == "🤖 AI Օգնական":
