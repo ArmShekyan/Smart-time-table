@@ -1277,31 +1277,27 @@ elif st.session_state.active_page == "normal":
 
                     st.dataframe(pivot, use_container_width=True)
 
-                    # ✨ ՈՒՂՂՎԱԾ ՊՈՊՈՎԵՐ (Առանց NameError-ի)
+                    # ✨ ՄԱՆՐԱՄԱՍՆԵՐԻ ԲԱԺԻՆ (Ամբողջությամբ նոր)
                     with st.popover(f"🔍 {c_name} դասարանի մանրամասներ"):
                         st.markdown(f"#### ℹ️ {c_name} - Ուսուցիչներ և Կաբինետներ")
                         
-                        # Ստուգում ենք սյուների առկայությունը DataFrame-ում
-                        cols_to_check = ['Առարկա', 'Ուսուցիչ', 'Սենյակ']
-                        if all(col in cls_df.columns for col in cols_to_check):
-                            # Հեռացնում ենք կրկնությունները մանրամասն ցուցակի համար
-                            details = cls_df[cols_to_check].drop_duplicates()
+                        # Վերցնում ենք տվյալները հենց գեներացված դասացուցակից
+                        if all(col in cls_df.columns for col in ['Առարկա', 'Ուսուցիչ', 'Սենյակ']):
+                            # Հեռացնում ենք կրկնությունները, որպեսզի ամեն առարկա մեկ անգամ երևա
+                            details = cls_df[['Առարկա', 'Ուսուցիչ', 'Սենյակ']].drop_duplicates()
                             
                             for _, row in details.iterrows():
                                 st.markdown(f"📖 **{row['Առարկա']}**")
                                 
-                                # Սենյակի արժեքի ստուգում
-                                r_val = row['Սենյակ']
-                                if not r_val or r_val in ["-", "None", ""]:
-                                    # Փորձում ենք գտնել դասարանի անունով սենյակ, եթե կոնկրետ տիպը չի գտնվել
-                                    alt_room = next((r.name for r in st.session_state.rooms if c_name in r.name), "Ընդհանուր")
-                                    r_val = alt_room
+                                # Ցուցադրում ենք այն սենյակը, որը կցվել է գեներացման ժամանակ
+                                room_name = row['Սենյակ'] if row['Սենյակ'] and row['Սենյակ'] != "-" else "Նշված չէ"
                                 
-                                st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {r_val}")
+                                st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {room_name}")
                                 st.write("---")
                         else:
-                            st.info("ℹ️ Մանրամասները պատրաստվում են...")
+                            st.warning("⚠️ Տվյալները բացակայում են: Խնդրում ենք նորից գեներացնել:")
 
+                            
             st.divider()
             # PDF-ի գեներացման հատվածը
             pdf_bytes = generate_pdf(st.session_state.schedule)
