@@ -150,11 +150,11 @@ def check_user(username, password):
 
 def save_to_disk(force_overwrite=False):
     """
-    Առաջնային պահպանում Cloud-ում: Local-ը օգտագործվում է միայն որպես Backup:
+    Առաջնային պահպանում Supabase-ում, այնուհետև Local backup:
     """
-    with st.spinner("⏳ Պահպանվում է Cloud-ում..."):
-        # 1. Տվյալների հավաքագրում
-        local_data = {
+    with st.spinner("⏳ Գործընթացը սկսված է..."):
+        # 1. Նախապատրաստում ենք տվյալները Local վիճակից
+        local_state = {
             "subjects": {s.id: asdict(s) for s in st.session_state.subjects},
             "teachers": {t.id: asdict(t) for t in st.session_state.teachers},
             "classes": {c.id: asdict(c) for c in st.session_state.classes},
@@ -168,50 +168,63 @@ def save_to_disk(force_overwrite=False):
 
         headers = get_supabase_headers()
         final_data = None
+        cloud_success = False
 
-        # 2. Փորձում ենք աշխատել միայն Cloud-ի հետ
+        # 2. ԱՌԱՋՆԱՅԻՆ: Փորձում ենք պահպանել Supabase-ում
         if headers:
             try:
-                # Եթե սովորական պահպանում է (Merge), նախ կարդում ենք Cloud-ից
                 if not force_overwrite:
+                    # Merge տրամաբանություն. կարդում ենք հինը, միացնում նորին
                     url_get = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
                     res = requests.get(url_get, headers=headers)
                     cloud_data = res.json()[0]["data"] if res.status_code == 200 and res.json() else {}
                     
-                    # Միացնում ենք Cloud-ի և հենց նոր ստեղծված տվյալները
                     final_data = {
-                        "subjects": list({**{s["id"]: s for s in cloud_data.get("subjects", [])}, **local_data["subjects"]}.values()),
-                        "teachers": list({**{t["id"]: t for t in cloud_data.get("teachers", [])}, **local_data["teachers"]}.values()),
-                        "classes": list({**{c["id"]: c for c in cloud_data.get("classes", [])}, **local_data["classes"]}.values()),
-                        "rooms": list({**{r["id"]: r for r in cloud_data.get("rooms", [])}, **local_data["rooms"]}.values()),
-                        "assignments": list({**{a["id"]: a for a in cloud_data.get("assignments", [])}, **local_data["assignments"]}.values()),
-                        "schedule": local_data["schedule"],
-                        "subj_pool": list(set(cloud_data.get("subj_pool", []) + local_data["subj_pool"])),
-                        "teacher_pool": list(set(cloud_data.get("teacher_pool", []) + local_data["teacher_pool"])),
-                        "users_list": local_data["users_list"]
+                        "subjects": list({**{s["id"]: s for s in cloud_data.get("subjects", [])}, **local_state["subjects"]}.values()),
+                        "teachers": list({**{t["id"]: t for t in cloud_data.get("teachers", [])}, **local_state["teachers"]}.values()),
+                        "classes": list({**{c["id"]: c for c in cloud_data.get("classes", [])}, **local_state["classes"]}.values()),
+                        "rooms": list({**{r["id"]: r for r in cloud_data.get("rooms", [])}, **local_state["rooms"]}.values()),
+                        "assignments": list({**{a["id"]: a for a in cloud_data.get("assignments", [])}, **local_state["assignments"]}.values()),
+                        "schedule": local_state["schedule"],
+                        "subj_pool": list(set(cloud_data.get("subj_pool", []) + local_state["subj_pool"])),
+                        "teacher_pool": list(set(cloud_data.get("teacher_pool", []) + local_state["teacher_pool"])),
+                        "users_list": local_state["users_list"]
                     }
                 else:
-                    # Ջնջելու դեպքում (Force Overwrite)՝ միայն Local-ի տվյալները
-                    final_data = {k: (list(v.values()) if isinstance(v, dict) else v) for k, v in local_data.items()}
+                    # Overwrite տրամաբանություն (ջնջելու ժամանակ)
+                    final_data = {k: (list(v.values()) if isinstance(v, dict) else v) for k, v in local_state.items()}
 
-                # Պահպանում ենք Cloud-ում
+                # Բուն պահպանումը Cloud-ում
                 url_post = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1"
                 payload = {"id": 1, "data": final_data}
                 headers["Prefer"] = "resolution=merge-duplicates"
-                requests.post(url_post, headers=headers, data=json.dumps(payload))
+                resp = requests.post(url_post, headers=headers, data=json.dumps(payload))
                 
-                st.toast("🌐 Տվյալները սինքրոնացվեցին Cloud-ում!", icon="✅")
+                if resp.status_code in [200, 201, 204]:
+                    cloud_success = True
             except Exception as e:
-                st.error(f"Cloud-ի հետ կապի սխալ: {e}")
-                final_data = {k: (list(v.values()) if isinstance(v, dict) else v) for k, v in local_data.items()}
+                st.warning(f"⚠️ Supabase-ի հետ կապի խնդիր, կօգտագործվի Local backup: {e}")
 
-        # 3. Local-ը միշտ թարմացնում ենք որպես Backup
-        if not final_data:
-            final_data = {k: (list(v.values()) if isinstance(v, dict) else v) for k, v in local_data.items()}
-            
-        with open(DB_FILE, "w", encoding="utf-8") as f:
-            json.dump(final_data, f, ensure_ascii=False, indent=4)
+        # 3. Եթե Cloud-ը ձախողվեց կամ անհասանելի է, ձևավորում ենք տվյալները Local-ի հիման վրա
+        if final_data is None:
+            final_data = {k: (list(v.values()) if isinstance(v, dict) else v) for k, v in local_state.items()}
+
+        # 4. ՊԱՀՊԱՆՈՒՄ LOCAL ՖԱՅԼՈՒՄ (Միշտ կատարվում է որպես backup)
+        try:
+            with open(DB_FILE, "w", encoding="utf-8") as f:
+                json.dump(final_data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            st.error(f"❌ Ֆայլի պահպանման սխալ: {e}")
+
+        # 5. Վերջնական դադար և ծանուցում
+        time.sleep(1) # Քո ուզած 1 վայրկյան հանգիստը
         
+        if cloud_success:
+            st.toast("✅ Տվյալները հաջողությամբ սինքրոնացվեցին Cloud-ում և Local-ում", icon="🌐")
+        else:
+            st.toast("💾 Տվյալները պահպանվեցին տեղական backup ֆայլում", icon="📁")
+
+        # Թարմացնում ենք ծրագրի վիճակը
         parse_data(final_data)
 
 
