@@ -1185,12 +1185,10 @@ elif st.session_state.active_page == "normal":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
 
         def find_free_room(assigned_room_name, day, hour, current_schedule):
-            # 1. Եթե սենյակը հենց սկզբից դատարկ է, վերադարձնում ենք "-"
-            if not assigned_room_name or assigned_room_name in ["-", "nan", "None"]:
+            if not assigned_room_name or assigned_room_name in ["-", "nan", "None", "Նշված չէ"]:
                 return "-"
             
-            # 2. Ստուգում ենք՝ արդյոք այս սենյակը զբաղված է այլ դասարանի կողմից
-            # Կարևոր է օգտագործել .get(), որպեսզի KeyError չլինի
+            # Ստուգում ենք զբաղվածությունը
             is_busy = any(
                 item for item in current_schedule 
                 if item.get('Օր') == day and 
@@ -1198,13 +1196,8 @@ elif st.session_state.active_page == "normal":
                 item.get('Սենյակ') == assigned_room_name
             )
             
-            # 3. Եթե զբաղված չէ, վերադարձնում ենք քո նշած սենյակը
             if not is_busy:
                 return assigned_room_name
-            
-            # 4. Փոխիր նախորդ 'None'-ը սրանով.
-            # Եթե նույնիսկ զբաղված է, մենք ուզում ենք տեսնել սենյակի անունը,
-            # ուղղակի կողքը նշան կդնենք, որ հասկանաս՝ կոնֆլիկտ կա:
             return f"{assigned_room_name} ⚠️"
 
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", use_container_width=True, type="primary"):
@@ -1256,13 +1249,20 @@ elif st.session_state.active_page == "normal":
 
                             target = class_fund[chosen_candidate_idx]
                             
-                            # ✨ ՍՏՈՒԳՈՒՄ: Վերցնում ենք կոնկրետ սենյակը, որը դու կցել ես Assignment-ին
-                            # Եթե քո Assignment-ի մեջ դաշտի անունը այլ է (օր. selected_room), փոխիր 'room' անունը
-                            assigned_room = getattr(target, 'room', "-")
-                            room_to_assign = find_free_room(assigned_room, best_day, next_hour, final_schedule)
+                            # ✨ ՈՒՂՂՈՒՄ: Փնտրում ենք սենյակը, որը դու կապել ես այս դասարանին և առարկային
+                            assigned_room = "-"
+                            if hasattr(st.session_state, 'connections'):
+                                for conn in st.session_state.connections:
+                                    # Ստուգում ենք դասարանի ID-ն և առարկայի ID-ն
+                                    if conn.get('class_id') == cls.id and conn.get('subject_id') == target.subject_id:
+                                        assigned_room = conn.get('room_name', "-")
+                                        break
+                            
+                            # Եթե կապերում չկա, փորձում ենք Assignment-ի միջից
+                            if assigned_room == "-":
+                                assigned_room = getattr(target, 'room', "-")
 
-                            if room_to_assign is None:
-                                continue # Եթե սենյակը զբաղված է, փորձում ենք այլ օր կամ ժամ
+                            room_to_assign = find_free_room(assigned_room, best_day, next_hour, final_schedule)
 
                             class_fund.pop(chosen_candidate_idx)
                             
@@ -1301,8 +1301,6 @@ elif st.session_state.active_page == "normal":
             for c_name in df['Դասարան'].unique():
                 with st.expander(f"🏫 Դասարան՝ {c_name}", expanded=True):
                     cls_df = df[df['Դասարան'] == c_name].copy()
-                    
-                    # Սարքում ենք աղյուսակը (Pivot Table)
                     pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
                     
                     existing_days = [day for day in DAYS_AM if day in pivot.columns]
@@ -1311,7 +1309,6 @@ elif st.session_state.active_page == "normal":
 
                     st.dataframe(pivot, use_container_width=True)
 
-                    # 🔍 Popover Մանրամասների համար
                     with st.popover(f"🔍 {c_name} դասարանի մանրամասներ"):
                         st.markdown(f"#### ℹ️ {c_name} - Ուսուցիչներ և Կաբինետներ")
                         
@@ -1320,15 +1317,15 @@ elif st.session_state.active_page == "normal":
                             
                             for _, row in details.iterrows():
                                 st.markdown(f"📖 **{row['Առարկա']}**")
-                                r_val = row['Սենյակ'] if row['Սենյակ'] and row['Սենյակ'] != "-" else "Նշված չէ"
+                                # Այստեղ արդեն ճիշտ կցուցադրվի քո նշած սենյակը
+                                r_val = row['Սենյակ'] if row['Սենյակ'] and str(row['Սենյակ']) != "-" else "Նշված չէ"
                                 st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {r_val}")
                                 st.write("---")
 
             st.divider()
-            # PDF-ի գեներացման կոճակը
             pdf_bytes = generate_pdf(st.session_state.schedule)
             st.download_button(
-                label="📥 Նեռբեռնել PDF (Timetable)",
+                label="📥 Ներբեռնել PDF (Timetable)",
                 data=bytes(pdf_bytes),
                 file_name="School_Timetable.pdf",
                 mime="application/pdf",
