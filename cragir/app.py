@@ -1274,17 +1274,24 @@ elif st.session_state.active_page == "normal":
 
                     st.dataframe(pivot, use_container_width=True)
 
-                    # ✨ ՆՈՐ. Մանրամասների Popover կոճակը
+                    # ✨ ՈՒՂՂՎԱԾ ՊՈՊՈՎԵՐ. Ավելի զգույշ ենք վերցնում սյուները
                     with st.popover(f"🔍 {c_name} դասարանի մանրամասներ"):
                         st.markdown(f"#### ℹ️ {c_name} - Ուսուցիչներ և Կաբինետներ")
-                        # Վերցնում ենք կոնկրետ այս դասարանի տվյալները և խմբավորում ըստ առարկայի
-                        details = cls_df[['Առարկա', 'Ուսուցիչ', 'Սենյակ']].drop_duplicates()
-                        for _, row in details.iterrows():
-                            st.write(f"📖 **{row['Առարկա']}**")
-                            st.caption(f"👨‍🏫 {row['Ուսուցչ']} | 📍 Սենյակ՝ {row['Սենյակ']}")
-                            st.write("---")
+                        
+                        # Վերցնում ենք միայն անհրաժեշտ սյուները և հեռացնում կրկնությունները
+                        if all(col in cls_df.columns for col in ['Առարկա', 'Ուսուցիչ', 'Սենյակ']):
+                            details = cls_df[['Առարկա', 'Ուսուցիչ', 'Սենյակ']].drop_duplicates()
+                            
+                            for _, row in details.iterrows():
+                                st.markdown(f"📖 **{row['Առարկա']}**")
+                                st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {row['Սենյակ']}")
+                                st.write("---")
+                        else:
+                            st.warning("⚠️ Մանրամասները ժամանակավոր հասանելի չեն:")
 
             st.divider()
+            # PDF-ի հատվածը մնում է նույնը, քանի որ այն արդեն աշխատում է `st.session_state.schedule`-ի հետ
+
             pdf_bytes = generate_pdf(st.session_state.schedule)
             st.download_button(
                 label="📥 Ներբեռնել PDF (English Only)",
