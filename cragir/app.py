@@ -1024,67 +1024,16 @@ elif st.session_state.active_page == "normal":
     elif st.session_state.active_tab == "🏫 Դասարաններ":
         st.title("🏫 Դասարաններ և Ժամեր")
 
-        # --- 1. ԿԱԲԻՆԵՏՆԵՐԻ ԲԱԺԻՆ ---
-        with st.expander("🏢 Կաբինետների Կառավարում"):
-            if not st.session_state.classes:
-                st.warning("⚠️ Սենյակ ավելացնելու համար նախ ստեղծեք գոնե մեկ դասարան:")
-            else:
-                with st.form("room_add_form", clear_on_submit=True):
-                    st.markdown("### 🆕 Նոր Կաբինետ")
-                    c_r1, c_r2, c_r3 = st.columns([2, 2, 2])
-                    
-                    r_name = c_r1.text_input("Կաբինետի անուն/համար").strip()
-                    r_type = c_r2.selectbox("Կաբինետի տիպ", ["Ընդհանուր", "Լաբորատոր", "Մարզադահլիճ", "Համակարգչային"])
-                    r_class = c_r3.selectbox(
-                        "Որ դասարանի համար է", 
-                        st.session_state.classes, 
-                        format_func=lambda x: f"{x.grade}{x.section}"
-                    )
-                    
-                    if st.form_submit_button("➕ Ավելացնել Կաբինետ", use_container_width=True):
-                        if r_name:
-                            # Ստուգում ենք կաբինետի կրկնությունը
-                            if r_name.lower() in [room.name.lower() for room in st.session_state.rooms]:
-                                st.error(f"❌ '{r_name}' կաբինետն արդեն գոյություն ունի:")
-                            else:
-                                import uuid
-                                new_room = Room(id=str(uuid.uuid4()), name=r_name, type=r_type, assigned_class_id=r_class.id)
-                                st.session_state.rooms.append(new_room)
-                                save_to_disk()
-                                st.toast(f"📍 {r_name} կաբինետն ավելացվեց", icon="✅")
-                                st.rerun()
-                        else:
-                            st.warning("⚠️ Խնդրում ենք մուտքագրել կաբինետի անունը:")
-
-            # Գոյություն ունեցող կաբինետների ցուցակը
-            if st.session_state.rooms:
-                st.write("---")
-                st.markdown("#### 📋 Գոյություն ունեցող կաբինետներ")
-                for r in st.session_state.rooms:
-                    c_obj = next((c for c in st.session_state.classes if c.id == r.assigned_class_id), None)
-                    c_name = f"{c_obj.grade}{c_obj.section}" if c_obj else "Անհայտ"
-                    
-                    col_info, col_del = st.columns([5, 1])
-                    col_info.markdown(f"📍 **{r.name}** ({r.type}) — 🏫 {c_name}")
-                    
-                    if col_del.button("🗑️", key=f"del_room_btn_{r.id}"):
-                        st.session_state.rooms = [room for room in st.session_state.rooms if room.id != r.id]
-                        save_to_disk(force_overwrite=True) 
-                        st.toast(f"🗑️ {r.name} կաբինետը հեռացվեց", icon="🏢")
-                        st.rerun()
-
-        st.divider() 
-        
-        # --- 2. ԴԱՍԱՐԱՆՆԵՐԻ ՍՏԵՂԾՈՒՄ ԵՎ ԿԱՊԵՐ ---
+        # --- 1. ԴԱՍԱՐԱՆՆԵՐԻ ՍՏԵՂԾՈՒՄ ԵՎ ԿԱՊԵՐ ---
         col1, col2 = st.columns(2)
         
         with col1:
             with st.form("class_form", clear_on_submit=True):
                 st.markdown("### 🆕 Նոր Դասարան")
-                g = st.text_input("Հոսք (օր. ԱԲ)").strip()
-                s = st.text_input("Թիվ/Տառ (օր. 1 կամ Ա)").strip()
+                g = st.text_input("Հոսք (օր. 10)").strip()
+                s = st.text_input("Թիվ/Տառ (օր. Ա)").strip()
                 
-                if st.form_submit_button("Ավելացնել", use_container_width=True):
+                if st.form_submit_button("Ավելացնել Դասարան", use_container_width=True):
                     if g and s:
                         new_class_full_name = f"{g}{s}".lower()
                         existing_classes = [f"{c.grade}{c.section}".lower() for c in st.session_state.classes]
@@ -1123,45 +1072,46 @@ elif st.session_state.active_page == "normal":
 
                     hrs = st.number_input("Շաբաթական ժամեր", 1, 15, 2)
 
-                    # ✨ ԿԱԲԻՆԵՏՆԵՐԻ ՖԻԼՏՐՈՒՄ. Ցույց տալ միայն այս դասարանին կցված սենյակները
-                    # Եթե կոնկրետ սենյակ չկա, թույլ ենք տալիս ընտրել "Ընդհանուր"
-                    class_rooms = [r for r in st.session_state.rooms if r.assigned_class_id == sel_c.id]
-                    
-                    if class_rooms:
-                        sel_room_obj = st.selectbox(
-                            "📍 Ընտրեք Կաբինետը", 
-                            class_rooms, 
-                            format_func=lambda x: f"{x.name} ({x.type})"
-                        )
-                        final_room_name = sel_room_obj.name
-                    else:
-                        st.info("ℹ️ Այս դասարանը սեփական կաբինետ չունի:")
-                        final_room_name = "Ընդհանուր"
-                        st.caption("Կօգտագործվի ընդհանուր դասասենյակ:")
-
-                    if st.form_submit_button("Կապել", use_container_width=True):
+                    if st.form_submit_button("Հաստատել Կապը", use_container_width=True):
                         if sel_s:
                             import uuid
-                            # Ստեղծում ենք նոր Assignment
                             new_ass = Assignment(
                                 id=str(uuid.uuid4()), 
                                 teacher_id=sel_t.id, 
                                 subject_id=sel_s.id, 
                                 class_id=sel_c.id, 
-                                lessons_per_week=hrs, 
-                                room_type=final_room_name  # Այստեղ արդեն պահվում է կոնկրետ սենյակի անունը
+                                lessons_per_week=hrs,
+                                room_type="Ավտոմատ" # Սենյակը կորոշվի գեներացման ժամանակ
                             )
                             st.session_state.assignments.append(new_ass)
                             save_to_disk()
                             st.toast(f"🔗 {sel_s.name}-ը կապվեց {sel_c.grade}{sel_c.section}-ին", icon="✅")
                             st.rerun()
+            else:
+                st.info("💡 Կապեր ստեղծելու համար նախ ավելացրեք ուսուցիչներ և դասարաններ:")
 
-        # --- 3. ԴԻՏԵԼ ԿԱՊԵՐԸ ---
+        # --- 2. ԴԱՍԱՐԱՆՆԵՐԻ ՑՈՒՑԱԿ ԵՎ ՀԵՌԱՑՈՒՄ ---
+        st.divider()
+        st.markdown("### 📋 Գոյություն ունեցող դասարաններ")
+        if st.session_state.classes:
+            for c in st.session_state.classes:
+                col_c1, col_c2 = st.columns([5, 1])
+                col_c1.markdown(f"🏫 **{c.grade}{c.section}** դասարան")
+                if col_c2.button("🗑️", key=f"del_cls_{c.id}"):
+                    # Հեռացնում ենք դասարանը և նրան կցված բոլոր ժամերը
+                    st.session_state.classes = [x for x in st.session_state.classes if x.id != c.id]
+                    st.session_state.assignments = [a for a in st.session_state.assignments if a.class_id != c.id]
+                    save_to_disk(force_overwrite=True)
+                    st.rerun()
+        else:
+            st.write("Դեռևս դասարաններ չկան:")
+
+        # --- 3. ԴԻՏԵԼ ԿԱՊԵՐԸ (ԺԱՄԵՐԸ) ---
         st.divider() 
-        st.markdown("### 📋 Դիտել Կապերը")
+        st.markdown("### 🔗 Դիտել Ժամերի Բաշխումը")
         
         if st.session_state.classes:
-            view_c = st.selectbox("🔍 Ընտրեք դասարանը", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}", key="v_bot_view")
+            view_c = st.selectbox("🔍 Ընտրեք դասարանը՝ կապերը տեսնելու համար", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}", key="v_bot_view")
             filtered = [a for a in st.session_state.assignments if a.class_id == view_c.id]
             
             if filtered:
@@ -1171,42 +1121,43 @@ elif st.session_state.active_page == "normal":
                     
                     with st.container(border=True):
                         c1, c2 = st.columns([5, 1])
-                        c1.markdown(f"🔹 **{s_obj.name if s_obj else 'Անհայտ'}** — {t_obj.name if t_obj else 'Ուսուցիչ'} — `{a.lessons_per_week}ժ` — *{a.room_type}*")
+                        subj_n = s_obj.name if s_obj else 'Անհայտ'
+                        teach_n = t_obj.name if t_obj else 'Ուսուցիչ'
+                        c1.markdown(f"🔹 **{subj_n}** — {teach_n} — `{a.lessons_per_week} ժամ`")
                         
                         if c2.button("🗑️", key=f"del_as_btn_{a.id}"):
                             st.session_state.assignments = [x for x in st.session_state.assignments if x.id != a.id]
                             save_to_disk(force_overwrite=True) 
                             st.rerun()
             else:
-                st.info(f"ℹ️ **{view_c.grade}{view_c.section}** դասարանի համար դեռևս կապեր չկան:")
+                st.info(f"ℹ️ **{view_c.grade}{view_c.section}** դասարանի համար դեռևս ժամեր նշանակված չեն:")
             
 
     elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
 
-        def find_free_room(assigned_room_name, day, hour, current_schedule):
-            # Ստուգում ենք բոլոր հնարավոր դատարկ արժեքները
-            if not assigned_room_name or str(assigned_room_name).strip() in ["-", "nan", "None", "Նշված չէ", ""]:
-                return "-"
+        # ✨ ԱՎՏՈՄԱՏ ՍԵՆՅԱԿԻ ՈՐՈՇՈՒՄ (Քո նոր կանոններով)
+        def get_auto_room(subj_name, class_label):
+            s_name = str(subj_name).lower()
             
-            # Ստուգում ենք զբաղվածությունը այլ դասարանների կողմից
-            is_busy = any(
-                item for item in current_schedule 
-                if item.get('Օր') == day and 
-                item.get('Ժամ') == hour and 
-                item.get('Սենյակ') == assigned_room_name
-            )
+            # 1. Python և AI առարկաների համար -> Fast
+            if "python" in s_name or "ai" in s_name:
+                return "Fast"
             
-            if not is_busy:
-                return assigned_room_name
-            return f"{assigned_room_name} ⚠️"
+            # 2. ՏՀՏ (tghg) առարկայի համար -> Ինֆորմատիկայի սենյակ
+            elif "տհտ" in s_name or "tghg" in s_name:
+                return "Ինֆորմատիկայի սենյակ"
+            
+            # 3. Մնացած բոլորի համար -> Դասարանի անուն + class (օր. 10Ա class)
+            else:
+                return f"{class_label} class"
 
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", use_container_width=True, type="primary"):
             if not st.session_state.classes or not st.session_state.assignments:
                 st.error("❌ Բացակայում են դասարանները կամ ժամերը գեներացման համար:")
             else:
-                with st.spinner("🧠 Ալգորիթմը մտածում է... Խնդրում ենք սպասել..."):
-                    time.sleep(1.5) 
+                with st.spinner("🧠 Ալգորիթմը մտածում է..."):
+                    time.sleep(1.0) 
                     
                     final_schedule = []
                     teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
@@ -1218,6 +1169,7 @@ elif st.session_state.active_page == "normal":
                     success = True
 
                     for cls in shuffled_classes:
+                        class_label = f"{cls.grade}{cls.section}"
                         class_fund = []
                         assignments_for_cls = [a for a in st.session_state.assignments if a.class_id == cls.id]
                         for ass in assignments_for_cls:
@@ -1241,62 +1193,32 @@ elif st.session_state.active_page == "normal":
                             
                             for idx, candidate in enumerate(class_fund):
                                 if (candidate.teacher_id not in teacher_occupancy[best_day][next_hour] and 
-                                    f"{cls.grade}{cls.section}" not in class_occupancy[best_day][next_hour]):
+                                    class_label not in class_occupancy[best_day][next_hour]):
                                     chosen_candidate_idx = idx
                                     break 
 
                             if chosen_candidate_idx == -1:
                                 continue
 
-                            target = class_fund[chosen_candidate_idx]
+                            target = class_fund.pop(chosen_candidate_idx)
                             
-                            # ✨ ՍԵՆՅԱԿԻ ՈՐՈՆՄԱՆ ԱՄԵՆԱՈՒԺԵՂ ՏՐԱՄԱԲԱՆՈՒԹՅՈՒՆԸ
-                            assigned_room = "-"
-                            if hasattr(st.session_state, 'connections'):
-                                for conn in st.session_state.connections:
-                                    try:
-                                        # Քանդում ենք օբյեկտը, որպեսզի կարդանք տվյալները
-                                        c_data = conn if isinstance(conn, dict) else (getattr(conn, '__dict__', vars(conn)) if hasattr(conn, '__dict__') or hasattr(conn, 'vars') else {})
-                                        
-                                        # Ստուգում ենք կապը ID-ներով
-                                        c_id = c_data.get('class_id')
-                                        s_id = c_data.get('subject_id')
-
-                                        if str(c_id) == str(cls.id) and str(s_id) == str(target.subject_id):
-                                            # Փնտրում ենք սենյակի անունը բոլոր հնարավոր սյունակներում
-                                            assigned_room = (
-                                                c_data.get('room_name') or 
-                                                c_data.get('room') or 
-                                                c_data.get('cabinet') or 
-                                                c_data.get('dasaran') or # Քո բազայի հնարավոր անունը
-                                                "-"
-                                            )
-                                            break
-                                    except:
-                                        continue
-                            
-                            # Եթե կապերում չկա, փորձում ենք բուն Assignment-ից
-                            if str(assigned_room).strip() in ["-", "None", "nan", ""]:
-                                assigned_room = getattr(target, 'room', getattr(target, 'cabinet', "-"))
-
-                            room_to_assign = find_free_room(assigned_room, best_day, next_hour, final_schedule)
-
-                            class_fund.pop(chosen_candidate_idx)
+                            # ✨ ԿԱՆՈՆՆԵՐԻ ԿԻՐԱՌՈՒՄ
+                            subj_full_name = get_subj_name(target.subject_id)
+                            room_to_assign = get_auto_room(subj_full_name, class_label)
                             
                             t_name = next((t.name for t in st.session_state.teachers if t.id == target.teacher_id), "Անհայտ")
-                            subj_name = get_subj_name(target.subject_id)
                             
                             final_schedule.append({
-                                "Դասարան": f"{cls.grade}{cls.section}",
+                                "Դասարան": class_label,
                                 "Օր": best_day, 
                                 "Ժամ": next_hour, 
-                                "Առարկա": subj_name,
+                                "Առարկա": subj_full_name,
                                 "Ուսուցիչ": t_name,
                                 "Սենյակ": room_to_assign
                             })
                             
                             teacher_occupancy[best_day][next_hour].add(target.teacher_id)
-                            class_occupancy[best_day][next_hour].add(f"{cls.grade}{cls.section}")
+                            class_occupancy[best_day][next_hour].add(class_label)
                             class_day_counts[best_day] += 1
 
                         if timeout >= 3000:
@@ -1310,7 +1232,7 @@ elif st.session_state.active_page == "normal":
                 else:
                     st.error("⚠️ Ալգորիթմը չկարողացավ լուծել բախումները: Փորձեք նորից:")
 
-        # 📊 Արդյունքների ցուցադրում
+        # 📊 ԱՐԴՅՈՒՆՔՆԵՐԻ ՑՈՒՑԱԴՐՈՒՄ
         if st.session_state.get('schedule'):
             df = pd.DataFrame(st.session_state.schedule)
             st.subheader("📋 Արդյունքներն ըստ Դասարանների")
@@ -1318,7 +1240,10 @@ elif st.session_state.active_page == "normal":
             for c_name in df['Դասարան'].unique():
                 with st.expander(f"🏫 Դասարան՝ {c_name}", expanded=True):
                     cls_df = df[df['Դասարան'] == c_name].copy()
-                    pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
+                    
+                    # Աղյուսակի մեջ ցույց տանք Առարկան + Սենյակը
+                    cls_df['Cell'] = cls_df['Առարկա'] + "\n(" + cls_df['Սենյակ'] + ")"
+                    pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Cell').fillna("-")
                     
                     existing_days = [day for day in DAYS_AM if day in pivot.columns]
                     if existing_days:
@@ -1327,21 +1252,13 @@ elif st.session_state.active_page == "normal":
                     st.dataframe(pivot, use_container_width=True)
 
                     with st.popover(f"🔍 {c_name} դասարանի մանրամասներ"):
-                        st.markdown(f"#### ℹ️ {c_name} - Ուսուցիչներ և Կաբինետներ")
-                        
-                        if all(col in cls_df.columns for col in ['Առարկա', 'Ուսուցիչ', 'Սենյակ']):
-                            details = cls_df[['Առարկա', 'Ուսուցիչ', 'Սենյակ']].drop_duplicates()
-                            
-                            for _, row in details.iterrows():
-                                st.markdown(f"📖 **{row['Առարկա']}**")
-                                # Ճիշտ ստուգում "Նշված չէ" տեքստի համար
-                                val = str(row['Սենյակ']).strip()
-                                r_val = val if val not in ["None", "-", "nan", "", "Նշված չէ"] else "Նշված չէ"
-                                st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {r_val}")
-                                st.write("---")
+                        details = cls_df[['Առարկա', 'Ուսուցիչ', 'Սենյակ']].drop_duplicates()
+                        for _, row in details.iterrows():
+                            st.markdown(f"📖 **{row['Առարկա']}**")
+                            st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {row['Սենյակ']}")
+                            st.write("---")
 
             st.divider()
-            # PDF-ի անվտանգ գեներացում
             try:
                 pdf_data = generate_pdf(st.session_state.schedule)
                 final_bytes = pdf_data if isinstance(pdf_data, bytes) else str(pdf_data).encode('latin-1', errors='ignore')
