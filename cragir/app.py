@@ -1185,7 +1185,8 @@ elif st.session_state.active_page == "normal":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
 
         def find_free_room(assigned_room_name, day, hour, current_schedule):
-            if not assigned_room_name or str(assigned_room_name) in ["-", "nan", "None", "Նշված չէ"]:
+            # Ստուգում ենք բոլոր հնարավոր դատարկ արժեքները
+            if not assigned_room_name or str(assigned_room_name).strip() in ["-", "nan", "None", "Նշված չէ", ""]:
                 return "-"
             
             # Ստուգում ենք զբաղվածությունը այլ դասարանների կողմից
@@ -1249,24 +1250,34 @@ elif st.session_state.active_page == "normal":
 
                             target = class_fund[chosen_candidate_idx]
                             
-                            # ✨ ՈՒՂՂՈՒՄ: Ճկուն որոնում connections-ի մեջ
+                            # ✨ ՍԵՆՅԱԿԻ ՈՐՈՆՄԱՆ ԱՄԵՆԱՈՒԺԵՂ ՏՐԱՄԱԲԱՆՈՒԹՅՈՒՆԸ
                             assigned_room = "-"
                             if hasattr(st.session_state, 'connections'):
                                 for conn in st.session_state.connections:
-                                    # Ստուգում ենք կապը (աշխատում է թե՛ բառարանի, թե՛ օբյեկտի դեպքում)
-                                    c_id = conn.get('class_id') if isinstance(conn, dict) else getattr(conn, 'class_id', None)
-                                    s_id = conn.get('subject_id') if isinstance(conn, dict) else getattr(conn, 'subject_id', None)
-                                    
-                                    if c_id == cls.id and s_id == target.subject_id:
-                                        # Վերցնում ենք սենյակի անունը՝ ստուգելով բոլոր հնարավոր դաշտերը
-                                        if isinstance(conn, dict):
-                                            assigned_room = conn.get('room_name') or conn.get('room') or conn.get('cabinet') or "-"
-                                        else:
-                                            assigned_room = getattr(conn, 'room_name', getattr(conn, 'room', "-"))
-                                        break
+                                    try:
+                                        # Քանդում ենք օբյեկտը, որպեսզի կարդանք տվյալները
+                                        c_data = conn if isinstance(conn, dict) else (getattr(conn, '__dict__', vars(conn)) if hasattr(conn, '__dict__') or hasattr(conn, 'vars') else {})
+                                        
+                                        # Ստուգում ենք կապը ID-ներով
+                                        c_id = c_data.get('class_id')
+                                        s_id = c_data.get('subject_id')
+
+                                        if str(c_id) == str(cls.id) and str(s_id) == str(target.subject_id):
+                                            # Փնտրում ենք սենյակի անունը բոլոր հնարավոր սյունակներում
+                                            assigned_room = (
+                                                c_data.get('room_name') or 
+                                                c_data.get('room') or 
+                                                c_data.get('cabinet') or 
+                                                c_data.get('dasaran') or # Քո բազայի հնարավոր անունը
+                                                "-"
+                                            )
+                                            break
+                                    except:
+                                        continue
                             
-                            if str(assigned_room) == "-":
-                                assigned_room = getattr(target, 'room', "-")
+                            # Եթե կապերում չկա, փորձում ենք բուն Assignment-ից
+                            if str(assigned_room).strip() in ["-", "None", "nan", ""]:
+                                assigned_room = getattr(target, 'room', getattr(target, 'cabinet', "-"))
 
                             room_to_assign = find_free_room(assigned_room, best_day, next_hour, final_schedule)
 
@@ -1323,22 +1334,20 @@ elif st.session_state.active_page == "normal":
                             
                             for _, row in details.iterrows():
                                 st.markdown(f"📖 **{row['Առարկա']}**")
-                                # Ստուգում ենք, որ "None" կամ դատարկ տեքստ չլինի
-                                val = str(row['Սենյակ'])
-                                r_val = val if val not in ["None", "-", "nan", ""] else "Նշված չէ"
+                                # Ճիշտ ստուգում "Նշված չէ" տեքստի համար
+                                val = str(row['Սենյակ']).strip()
+                                r_val = val if val not in ["None", "-", "nan", "", "Նշված չէ"] else "Նշված չէ"
                                 st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {r_val}")
                                 st.write("---")
 
             st.divider()
-            # PDF-ի սխալի ուղղում (AttributeError)
+            # PDF-ի անվտանգ գեներացում
             try:
-                pdf_output = generate_pdf(st.session_state.schedule)
-                # Եթե fpdf-ը տալիս է bytes, օգտագործում ենք, եթե ոչ՝ encode ենք անում
-                final_pdf_bytes = pdf_output if isinstance(pdf_output, bytes) else str(pdf_output).encode('latin-1', errors='ignore')
-                
+                pdf_data = generate_pdf(st.session_state.schedule)
+                final_bytes = pdf_data if isinstance(pdf_data, bytes) else str(pdf_data).encode('latin-1', errors='ignore')
                 st.download_button(
                     label="📥 Ներբեռնել PDF (Timetable)",
-                    data=final_pdf_bytes,
+                    data=final_bytes,
                     file_name="School_Timetable.pdf",
                     mime="application/pdf",
                     use_container_width=True,
