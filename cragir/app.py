@@ -1185,10 +1185,10 @@ elif st.session_state.active_page == "normal":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
 
         def find_free_room(assigned_room_name, day, hour, current_schedule):
-            if not assigned_room_name or assigned_room_name in ["-", "nan", "None", "Նշված չէ"]:
+            if not assigned_room_name or str(assigned_room_name) in ["-", "nan", "None", "Նշված չէ"]:
                 return "-"
             
-            # Ստուգում ենք զբաղվածությունը
+            # Ստուգում ենք զբաղվածությունը այլ դասարանների կողմից
             is_busy = any(
                 item for item in current_schedule 
                 if item.get('Օր') == day and 
@@ -1249,17 +1249,23 @@ elif st.session_state.active_page == "normal":
 
                             target = class_fund[chosen_candidate_idx]
                             
-                            # ✨ ՈՒՂՂՈՒՄ: Փնտրում ենք սենյակը, որը դու կապել ես այս դասարանին և առարկային
+                            # ✨ ՈՒՂՂՈՒՄ: Ճկուն որոնում connections-ի մեջ
                             assigned_room = "-"
                             if hasattr(st.session_state, 'connections'):
                                 for conn in st.session_state.connections:
-                                    # Ստուգում ենք դասարանի ID-ն և առարկայի ID-ն
-                                    if conn.get('class_id') == cls.id and conn.get('subject_id') == target.subject_id:
-                                        assigned_room = conn.get('room_name', "-")
+                                    # Ստուգում ենք կապը (աշխատում է թե՛ բառարանի, թե՛ օբյեկտի դեպքում)
+                                    c_id = conn.get('class_id') if isinstance(conn, dict) else getattr(conn, 'class_id', None)
+                                    s_id = conn.get('subject_id') if isinstance(conn, dict) else getattr(conn, 'subject_id', None)
+                                    
+                                    if c_id == cls.id and s_id == target.subject_id:
+                                        # Վերցնում ենք սենյակի անունը՝ ստուգելով բոլոր հնարավոր դաշտերը
+                                        if isinstance(conn, dict):
+                                            assigned_room = conn.get('room_name') or conn.get('room') or conn.get('cabinet') or "-"
+                                        else:
+                                            assigned_room = getattr(conn, 'room_name', getattr(conn, 'room', "-"))
                                         break
                             
-                            # Եթե կապերում չկա, փորձում ենք Assignment-ի միջից
-                            if assigned_room == "-":
+                            if str(assigned_room) == "-":
                                 assigned_room = getattr(target, 'room', "-")
 
                             room_to_assign = find_free_room(assigned_room, best_day, next_hour, final_schedule)
@@ -1317,21 +1323,30 @@ elif st.session_state.active_page == "normal":
                             
                             for _, row in details.iterrows():
                                 st.markdown(f"📖 **{row['Առարկա']}**")
-                                # Այստեղ արդեն ճիշտ կցուցադրվի քո նշած սենյակը
-                                r_val = row['Սենյակ'] if row['Սենյակ'] and str(row['Սենյակ']) != "-" else "Նշված չէ"
+                                # Ստուգում ենք, որ "None" կամ դատարկ տեքստ չլինի
+                                val = str(row['Սենյակ'])
+                                r_val = val if val not in ["None", "-", "nan", ""] else "Նշված չէ"
                                 st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {r_val}")
                                 st.write("---")
 
             st.divider()
-            pdf_bytes = generate_pdf(st.session_state.schedule)
-            st.download_button(
-                label="📥 Ներբեռնել PDF (Timetable)",
-                data=bytes(pdf_bytes),
-                file_name="School_Timetable.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-                type="primary"
-            )
+            # PDF-ի սխալի ուղղում (AttributeError)
+            try:
+                pdf_output = generate_pdf(st.session_state.schedule)
+                # Եթե fpdf-ը տալիս է bytes, օգտագործում ենք, եթե ոչ՝ encode ենք անում
+                final_pdf_bytes = pdf_output if isinstance(pdf_output, bytes) else str(pdf_output).encode('latin-1', errors='ignore')
+                
+                st.download_button(
+                    label="📥 Ներբեռնել PDF (Timetable)",
+                    data=final_pdf_bytes,
+                    file_name="School_Timetable.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                    type="primary"
+                )
+            except Exception as e:
+                st.error(f"PDF-ի սխալ: {e}")
+
 
     elif st.session_state.active_tab == "📂 Վերջին պահպանվածը":
         st.title("📂 Պահպանված Դասացուցակ")
