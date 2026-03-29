@@ -1136,19 +1136,13 @@ elif st.session_state.active_page == "normal":
     elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
 
-        # ✨ ԱՎՏՈՄԱՏ ՍԵՆՅԱԿԻ ՈՐՈՇՈՒՄ (Քո նոր կանոններով)
+        # ✨ ԱՎՏՈՄԱՏ ՍԵՆՅԱԿԻ ՈՐՈՇՈՒՄ
         def get_auto_room(subj_name, class_label):
             s_name = str(subj_name).lower()
-            
-            # 1. Python և AI առարկաների համար -> Fast
             if "python" in s_name or "ai" in s_name:
                 return "Fast"
-            
-            # 2. ՏՀՏ (tghg) առարկայի համար -> Ինֆորմատիկայի սենյակ
             elif "տհտ" in s_name or "tghg" in s_name:
                 return "Ինֆորմատիկայի սենյակ"
-            
-            # 3. Մնացած բոլորի համար -> Դասարանի անուն + class (օր. 10Ա class)
             else:
                 return f"{class_label} class"
 
@@ -1201,11 +1195,8 @@ elif st.session_state.active_page == "normal":
                                 continue
 
                             target = class_fund.pop(chosen_candidate_idx)
-                            
-                            # ✨ ԿԱՆՈՆՆԵՐԻ ԿԻՐԱՌՈՒՄ
                             subj_full_name = get_subj_name(target.subject_id)
                             room_to_assign = get_auto_room(subj_full_name, class_label)
-                            
                             t_name = next((t.name for t in st.session_state.teachers if t.id == target.teacher_id), "Անհայտ")
                             
                             final_schedule.append({
@@ -1241,8 +1232,9 @@ elif st.session_state.active_page == "normal":
                 with st.expander(f"🏫 Դասարան՝ {c_name}", expanded=True):
                     cls_df = df[df['Դասարան'] == c_name].copy()
                     
-                    # Աղյուսակի մեջ ցույց տանք Առարկան + Սենյակը
-                    cls_df['Cell'] = cls_df['Առարկա'] + "\n(" + cls_df['Սենյակ'] + ")"
+                    # ✨ ՓՈՓՈԽՈՒԹՅՈՒՆ: Այստեղ Cell-ի մեջ դնում ենք ՄԻԱՅՆ առարկան
+                    cls_df['Cell'] = cls_df['Առարկա'] 
+                    
                     pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Cell').fillna("-")
                     
                     existing_days = [day for day in DAYS_AM if day in pivot.columns]
@@ -1251,6 +1243,7 @@ elif st.session_state.active_page == "normal":
 
                     st.dataframe(pivot, use_container_width=True)
 
+                    # Մանրամասների մեջ թողնում ենք սենյակը, որ պետք եղած դեպքում տեսնես
                     with st.popover(f"🔍 {c_name} դասարանի մանրամասներ"):
                         details = cls_df[['Առարկա', 'Ուսուցիչ', 'Սենյակ']].drop_duplicates()
                         for _, row in details.iterrows():
@@ -1260,11 +1253,12 @@ elif st.session_state.active_page == "normal":
 
             st.divider()
             try:
+                # ✨ PDF-ի համար նույնպես ուղարկում ենք միայն անհրաժեշտ տվյալները
+                # Եթե generate_pdf ֆունկցիան սենյակը վերցնում է 'Առարկա' սյունակից, ապա այն կլինի մաքուր
                 pdf_data = generate_pdf(st.session_state.schedule)
-                final_bytes = pdf_data if isinstance(pdf_data, bytes) else str(pdf_data).encode('latin-1', errors='ignore')
                 st.download_button(
                     label="📥 Ներբեռնել PDF (Timetable)",
-                    data=final_bytes,
+                    data=pdf_data if isinstance(pdf_data, bytes) else str(pdf_data).encode('utf-8', errors='ignore'),
                     file_name="School_Timetable.pdf",
                     mime="application/pdf",
                     use_container_width=True,
