@@ -1262,42 +1262,48 @@ elif st.session_state.active_page == "normal":
             df = pd.DataFrame(st.session_state.schedule)
             st.subheader("📋 Արդյունքներն ըստ Դասարանների")
             
+            # Ցիկլով անցնում ենք յուրաքանչյուր դասարանի վրայով
             for c_name in df['Դասարան'].unique():
                 with st.expander(f"🏫 Դասարան՝ {c_name}", expanded=True):
                     cls_df = df[df['Դասարան'] == c_name].copy()
                     
-                    # Սարքում ենք աղյուսակը դիտելու համար
+                    # Սարքում ենք աղյուսակը դիտելու համար (Pivot Table)
                     pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
+                    
+                    # Օրերի ճիշտ հերթականությունը
                     existing_days = [day for day in DAYS_AM if day in pivot.columns]
                     if existing_days:
                         pivot = pivot[[d for d in DAYS_AM if d in existing_days]]
 
                     st.dataframe(pivot, use_container_width=True)
 
-                    # ✨ ՈՒՂՂՎԱԾ ՊՈՊՈՎԵՐ. Ավելի զգույշ ենք վերցնում սյուները
+                    # ✨ ՈՒՂՂՎԱԾ ՊՈՊՈՎԵՐ (Առանց NameError-ի)
                     with st.popover(f"🔍 {c_name} դասարանի մանրամասներ"):
                         st.markdown(f"#### ℹ️ {c_name} - Ուսուցիչներ և Կաբինետներ")
                         
-                        # Ստուգում ենք սյուների առկայությունը
-                        if all(col in cls_df.columns for col in ['Առարկա', 'Ուսուցիչ', 'Սենյակ']):
-                            details = cls_df[['Առարկա', 'Ուսուցիչ', 'Սենյակ']].drop_duplicates()
+                        # Ստուգում ենք սյուների առկայությունը DataFrame-ում
+                        cols_to_check = ['Առարկա', 'Ուսուցիչ', 'Սենյակ']
+                        if all(col in cls_df.columns for col in cols_to_check):
+                            # Հեռացնում ենք կրկնությունները մանրամասն ցուցակի համար
+                            details = cls_df[cols_to_check].drop_duplicates()
                             
                             for _, row in details.iterrows():
                                 st.markdown(f"📖 **{row['Առարկա']}**")
                                 
-                                # Ճկուն ստուգում սենյակի համար
+                                # Սենյակի արժեքի ստուգում
                                 r_val = row['Սենյակ']
-                                if not r_val or r_val == "-" or r_val == "None":
-                                    # Եթե կոնկրետ սենյակ չի գտել, փորձում ենք գտնել այդ դասարանի ցանկացած սենյակ
-                                    alt_room = next((r.name for r in st.session_state.rooms if f"{view_c.grade}{view_c.section}" in r.name), "Ընդհանուր")
+                                if not r_val or r_val in ["-", "None", ""]:
+                                    # Փորձում ենք գտնել դասարանի անունով սենյակ, եթե կոնկրետ տիպը չի գտնվել
+                                    alt_room = next((r.name for r in st.session_state.rooms if c_name in r.name), "Ընդհանուր")
                                     r_val = alt_room
                                 
                                 st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {r_val}")
                                 st.write("---")
+                        else:
+                            st.info("ℹ️ Մանրամասները պատրաստվում են...")
 
             st.divider()
-            # PDF-ի հատվածը մնում է նույնը, քանի որ այն արդեն աշխատում է `st.session_state.schedule`-ի հետ
-
+            # PDF-ի գեներացման հատվածը
             pdf_bytes = generate_pdf(st.session_state.schedule)
             st.download_button(
                 label="📥 Ներբեռնել PDF (English Only)",
