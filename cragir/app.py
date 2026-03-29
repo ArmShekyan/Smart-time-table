@@ -519,14 +519,21 @@ def get_subj_complexity(sid):
 
 
 def generate_pdf(schedule_data):
+    from fpdf import FPDF
+    import pandas as pd
+    
     pdf = FPDF()
     pdf.add_page()
     
+    # Վերնագիր
     pdf.set_font("Helvetica", style='B', size=14)
     pdf.cell(200, 10, txt="Smart Time Table - School Schedule", ln=True, align='C')
     pdf.ln(10)
 
     df = pd.DataFrame(schedule_data)
+    if df.empty:
+        return b""
+
     days_eng = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
     
     day_mapping = {
@@ -540,42 +547,51 @@ def generate_pdf(schedule_data):
     for cls in df['Դասարան'].unique():
         pdf.set_font("Helvetica", style='B', size=12)
         pdf.cell(0, 10, txt=f"Class: {cls}", ln=True)
-        pdf.set_font("Helvetica", size=10)
         
         cls_df = df[df['Դասարան'] == cls].copy()
         cls_df['Օր'] = cls_df['Օր'].map(day_mapping)
-        # 1. Հեռացնում ենք հին փակագծերը (ուսուցչի անունը)
-        cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: str(x).split(" (")[0])
+        
+        # 1. Մաքրում ենք առարկայի անունը և ավելացնում սենյակը
+        def format_subject(row):
+            base_subj = str(row['Առարկա']).split(" (")[0]
+            room = str(row['Սենյակ']) if 'Սենյակ' in row and row['Սենյակ'] and row['Սենյակ'] != "-" else ""
+            return f"{base_subj} [{room}]" if room else base_subj
 
-        # 2. Ավելացնում ենք սենյակը՝ ստուգելով, որ այն դատարկ չլինի
-        # Ստուգում ենք՝ արդյոք 'Սենյակ' սյունակը գոյություն ունի DataFrame-ում
-        if 'Սենյակ' in cls_df.columns:
-            cls_df['Առարկա'] = cls_df['Առարկա'].astype(str) + " [" + cls_df['Սենյակ'].fillna("-").astype(str) + "]"
-        else:
-            # Եթե չկա (հին տվյալներ են), ուղղակի թողնում ենք առարկան
-            cls_df['Առարկա'] = cls_df['Առարկա'].astype(str)
+        cls_df['Առարկա'] = cls_df.apply(format_subject, axis=1)
         
-        pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
-        
+        # Pivot table սարքելը
+        try:
+            pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
+        except:
+            continue
+
+        # Աղյուսակի գլխամաս
         pdf.set_font("Helvetica", style='B', size=10)
-        pdf.cell(15, 8, "Day", border=1, align='C')
+        pdf.cell(15, 8, "Hr", border=1, align='C')
         for day in days_eng:
             pdf.cell(35, 8, day, border=1, align='C')
         pdf.ln()
 
-        pdf.set_font("Helvetica", size=10)
-        for hour in pivot.index:
+        # Աղյուսակի տվյալներ
+        pdf.set_font("Helvetica", size=9)
+        for hour in sorted(pivot.index):
             pdf.cell(15, 8, str(hour), border=1, align='C')
             for day in days_eng:
-                val = pivot.loc[hour, day] if day in pivot.columns else "-"
+                val = pivot.get(day, {}).get(hour, "-")
                 cell_text = str(val)
+                
+                # ASCII ստուգում (քանի որ Helvetica-ն հայերեն չի տպում)
                 if any(ord(c) > 127 for c in cell_text):
-                    cell_text = "Lesson" 
-                pdf.cell(35, 8, cell_text[:15], border=1, align='C')
+                    # Եթե սենյակը լատինատառ է (օր. Fast), փորձենք պահել դա
+                    room_part = cell_text.split('[')[-1].replace(']', '') if '[' in cell_text else ""
+                    cell_text = f"Lesson [{room_part}]" if room_part and not any(ord(c) > 127 for c in room_part) else "Lesson"
+                
+                pdf.cell(35, 8, cell_text[:18], border=1, align='C')
             pdf.ln()
         pdf.ln(10)
 
-    return pdf.output()
+    # ❗ ԿԱՐԵՎՈՐ: Վերադարձնում ենք բայթերը Streamlit-ի համար
+    return pdf.output(dest='S').encode('latin-1', errors='ignore')
 
 
 st.sidebar.title(f"👤 {st.session_state.username}")
@@ -1158,30 +1174,28 @@ elif st.session_state.active_page == "normal":
     elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
 
-        def find_free_room(required_type, day, hour, current_schedule):
-            # Գտնում ենք տվյալ տիպի բոլոր սենյակները (օր.՝ բոլոր լաբորատորիաները)
-            suitable_rooms = [r for r in st.session_state.rooms if r.type == required_type]
-            
-            # Եթե այդ տիպի սենյակ չկա ստեղծված, վերցնում ենք առաջին պատահական սենյակը կամ "-"
-            if not suitable_rooms:
+        # 1. Ֆունկցիա, որը ստուգում է սենյակի զբաղվածությունը
+        def find_free_room(assigned_room_name, day, hour, current_schedule):
+            # Եթե սենյակը նշված չէ կամ դատարկ է
+            if not assigned_room_name or assigned_room_name == "-":
                 return "-"
-
-            for room in suitable_rooms:
-                # Ստուգում ենք՝ արդյոք այս սենյակը զբաղված չէ այդ ժամին այլ դասարանի կողմից
-                is_busy = any(
-                    item for item in current_schedule 
-                    if item['Օր'] == day and item['Ժամ'] == hour and item.get('Սենյակ') == room.name
-                )
-                if not is_busy:
-                    return room.name
-            return None # Եթե բոլոր սենյակները զբաղված են
+            
+            # Ստուգում ենք՝ արդյոք այս սենյակը զբաղված չէ այդ ժամին այլ դասարանի կողմից
+            is_busy = any(
+                item for item in current_schedule 
+                if item['Օր'] == day and item['Ժամ'] == hour and item.get('Սենյակ') == assigned_room_name
+            )
+            
+            if not is_busy:
+                return assigned_room_name
+            return None # Սենյակը զբաղված է
 
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", use_container_width=True, type="primary"):
             if not st.session_state.classes or not st.session_state.assignments:
                 st.error("❌ Բացակայում են դասարանները կամ ժամերը գեներացման համար:")
             else:
                 with st.spinner("🧠 Ալգորիթմը մտածում է... Խնդրում ենք սպասել..."):
-                    time.sleep(2.5) 
+                    time.sleep(1.5) 
                     
                     final_schedule = []
                     teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
@@ -1224,10 +1238,14 @@ elif st.session_state.active_page == "normal":
                                 continue
 
                             target = class_fund[chosen_candidate_idx]
-                            room_to_assign = find_free_room(target.room_type, best_day, next_hour, final_schedule)
+                            
+                            # ✨ ՍՏՈՒԳՈՒՄ: Վերցնում ենք կոնկրետ սենյակը, որը դու կցել ես Assignment-ին
+                            # Եթե քո Assignment-ի մեջ դաշտի անունը այլ է (օր. selected_room), փոխիր 'room' անունը
+                            assigned_room = getattr(target, 'room', "-")
+                            room_to_assign = find_free_room(assigned_room, best_day, next_hour, final_schedule)
 
                             if room_to_assign is None:
-                                continue
+                                continue # Եթե սենյակը զբաղված է, փորձում ենք այլ օր կամ ժամ
 
                             class_fund.pop(chosen_candidate_idx)
                             
@@ -1256,53 +1274,44 @@ elif st.session_state.active_page == "normal":
                     st.success("🎉 Դասացուցակը հաջողությամբ գեներացվեց:")
                     st.balloons() 
                 else:
-                    st.error("⚠️ Ալգորիթմը խճճվեց բախումների մեջ։ Փորձեք նորից սեղմել կոճակը։")
+                    st.error("⚠️ Ալգորիթմը չկարողացավ լուծել բախումները: Փորձեք նորից:")
 
+        # 📊 Արդյունքների ցուցադրում
         if st.session_state.get('schedule'):
             df = pd.DataFrame(st.session_state.schedule)
             st.subheader("📋 Արդյունքներն ըստ Դասարանների")
             
-            # Ցիկլով անցնում ենք յուրաքանչյուր դասարանի վրայով
             for c_name in df['Դասարան'].unique():
                 with st.expander(f"🏫 Դասարան՝ {c_name}", expanded=True):
                     cls_df = df[df['Դասարան'] == c_name].copy()
                     
-                    # Սարքում ենք աղյուսակը դիտելու համար (Pivot Table)
+                    # Սարքում ենք աղյուսակը (Pivot Table)
                     pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
                     
-                    # Օրերի ճիշտ հերթականությունը
                     existing_days = [day for day in DAYS_AM if day in pivot.columns]
                     if existing_days:
                         pivot = pivot[[d for d in DAYS_AM if d in existing_days]]
 
                     st.dataframe(pivot, use_container_width=True)
 
-                    # ✨ ՄԱՆՐԱՄԱՍՆԵՐԻ ԲԱԺԻՆ (Ամբողջությամբ նոր)
+                    # 🔍 Popover Մանրամասների համար
                     with st.popover(f"🔍 {c_name} դասարանի մանրամասներ"):
                         st.markdown(f"#### ℹ️ {c_name} - Ուսուցիչներ և Կաբինետներ")
                         
-                        # Վերցնում ենք տվյալները հենց գեներացված դասացուցակից
                         if all(col in cls_df.columns for col in ['Առարկա', 'Ուսուցիչ', 'Սենյակ']):
-                            # Հեռացնում ենք կրկնությունները, որպեսզի ամեն առարկա մեկ անգամ երևա
                             details = cls_df[['Առարկա', 'Ուսուցիչ', 'Սենյակ']].drop_duplicates()
                             
                             for _, row in details.iterrows():
                                 st.markdown(f"📖 **{row['Առարկա']}**")
-                                
-                                # Ցուցադրում ենք այն սենյակը, որը կցվել է գեներացման ժամանակ
-                                room_name = row['Սենյակ'] if row['Սենյակ'] and row['Սենյակ'] != "-" else "Նշված չէ"
-                                
-                                st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {room_name}")
+                                r_val = row['Սենյակ'] if row['Սենյակ'] and row['Սենյակ'] != "-" else "Նշված չէ"
+                                st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {r_val}")
                                 st.write("---")
-                        else:
-                            st.warning("⚠️ Տվյալները բացակայում են: Խնդրում ենք նորից գեներացնել:")
 
-                            
             st.divider()
-            # PDF-ի գեներացման հատվածը
+            # PDF-ի գեներացման կոճակը
             pdf_bytes = generate_pdf(st.session_state.schedule)
             st.download_button(
-                label="📥 Ներբեռնել PDF (English Only)",
+                label="📥 Նեռբեռնել PDF (Timetable)",
                 data=bytes(pdf_bytes),
                 file_name="School_Timetable.pdf",
                 mime="application/pdf",
