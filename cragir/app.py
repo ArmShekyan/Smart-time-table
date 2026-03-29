@@ -1077,33 +1077,57 @@ elif st.session_state.active_page == "normal":
         with col2:
             if st.session_state.teachers and st.session_state.classes:
                 sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", st.session_state.teachers, format_func=lambda x: x.name, key="t_sel_main")
+                
+                # Ուսուցչի առարկաները
                 all_teacher_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
 
                 with st.form("as_form", clear_on_submit=True):
                     st.markdown("### 🔗 Կապել Դասարանին")
                     sel_c = st.selectbox("Դասարան", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
                     
+                    # Ֆիլտրում ենք այն առարկաները, որոնք այս դասարանում դեռ ուսուցիչ չունեն
                     assigned_subject_ids = [a.subject_id for a in st.session_state.assignments if a.class_id == sel_c.id]
-                    available_subjs = [subj for subj in all_teacher_subjs if subj.id not in assigned_subject_ids]
+                    available_subjs = [s for s in all_teacher_subjs if s.id not in assigned_subject_ids]
 
                     if available_subjs:
                         sel_s = st.selectbox("Առարկա", available_subjs, format_func=lambda x: x.name)
                     else:
-                        st.warning(f"⚠️ Այս ուսուցչի բոլոր առարկաներն արդեն նշանակված են {sel_c.grade}{sel_c.section} դասարանում")
+                        st.warning(f"⚠️ Այս ուսուցչի բոլոր առարկաներն արդեն նշանակված են {sel_c.grade}{sel_c.section}-ում")
                         sel_s = None
 
                     hrs = st.number_input("Շաբաթական ժամեր", 1, 15, 2)
-                    class_rooms = [room for room in st.session_state.rooms if room.assigned_class_id == sel_c.id]
-                    available_types = list(set([room.type for room in class_rooms])) if class_rooms else ["Ընդհանուր"]
-                    sel_room_type = st.selectbox("📍 Սենյակի տիպը", sorted(available_types))
+
+                    # ✨ ԿԱԲԻՆԵՏՆԵՐԻ ՖԻԼՏՐՈՒՄ. Ցույց տալ միայն այս դասարանին կցված սենյակները
+                    # Եթե կոնկրետ սենյակ չկա, թույլ ենք տալիս ընտրել "Ընդհանուր"
+                    class_rooms = [r for r in st.session_state.rooms if r.assigned_class_id == sel_c.id]
                     
+                    if class_rooms:
+                        sel_room_obj = st.selectbox(
+                            "📍 Ընտրեք Կաբինետը", 
+                            class_rooms, 
+                            format_func=lambda x: f"{x.name} ({x.type})"
+                        )
+                        final_room_name = sel_room_obj.name
+                    else:
+                        st.info("ℹ️ Այս դասարանը սեփական կաբինետ չունի:")
+                        final_room_name = "Ընդհանուր"
+                        st.caption("Կօգտագործվի ընդհանուր դասասենյակ:")
+
                     if st.form_submit_button("Կապել", use_container_width=True):
                         if sel_s:
                             import uuid
-                            new_ass = Assignment(str(uuid.uuid4()), sel_t.id, sel_s.id, sel_c.id, hrs, sel_room_type)
+                            # Ստեղծում ենք նոր Assignment
+                            new_ass = Assignment(
+                                id=str(uuid.uuid4()), 
+                                teacher_id=sel_t.id, 
+                                subject_id=sel_s.id, 
+                                class_id=sel_c.id, 
+                                lessons_per_week=hrs, 
+                                room_type=final_room_name  # Այստեղ արդեն պահվում է կոնկրետ սենյակի անունը
+                            )
                             st.session_state.assignments.append(new_ass)
                             save_to_disk()
-                            st.toast(f"🔗 Կապը ստեղծվեց", icon="✅")
+                            st.toast(f"🔗 {sel_s.name}-ը կապվեց {sel_c.grade}{sel_c.section}-ին", icon="✅")
                             st.rerun()
 
         # --- 3. ԴԻՏԵԼ ԿԱՊԵՐԸ ---
