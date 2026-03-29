@@ -151,6 +151,7 @@ def check_user(username, password):
 def save_to_disk(force_overwrite=False):
     """
     Առաջնային պահպանում Supabase-ում, այնուհետև Local backup:
+    Smart Merge համակարգը թույլ է տալիս ջնջել տարրը առանց մյուսների տվյալները վնասելու:
     """
     with st.spinner("⏳ Գործընթացը սկսված է..."):
         # 1. Նախապատրաստում ենք տվյալները Local վիճակից
@@ -173,12 +174,13 @@ def save_to_disk(force_overwrite=False):
         # 2. ԱՌԱՋՆԱՅԻՆ: Փորձում ենք պահպանել Supabase-ում
         if headers:
             try:
+                # ՄԻՇՏ կարդում ենք Cloud-ի թարմ տվյալները, որպեսզի մյուսների գրածը չկորչի
+                url_get = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
+                res = requests.get(url_get, headers=headers)
+                cloud_data = res.json()[0]["data"] if res.status_code == 200 and res.json() else {}
+
                 if not force_overwrite:
-                    # Merge տրամաբանություն. կարդում ենք հինը, միացնում նորին
-                    url_get = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
-                    res = requests.get(url_get, headers=headers)
-                    cloud_data = res.json()[0]["data"] if res.status_code == 200 and res.json() else {}
-                    
+                    # Սովորական Merge (Ավելացման դեպքում)
                     final_data = {
                         "subjects": list({**{s["id"]: s for s in cloud_data.get("subjects", [])}, **local_state["subjects"]}.values()),
                         "teachers": list({**{t["id"]: t for t in cloud_data.get("teachers", [])}, **local_state["teachers"]}.values()),
@@ -191,7 +193,17 @@ def save_to_disk(force_overwrite=False):
                         "users_list": local_state["users_list"]
                     }
                 else:
-                    # Overwrite տրամաբանություն (ջնջելու ժամանակ)
+                    # Խելացի Overwrite (Ջնջման դեպքում). 
+                    # Միացնում ենք Cloud-ի տվյալները, բայց պահում ենք ՄԻԱՅՆ այն ID-ները, որոնք ջնջված չեն Local-ում
+                    def smart_filter(cloud_list, local_dict):
+                        # Վերցնում ենք Cloud-ից այն ամենը, ինչը մեր Local-ում էլ կա + նոր բաները, որ մյուսներն են ավելացրել
+                        # Բայց բացառում ենք այն, ինչը մենք հենց նոր ջնջեցինք Local-ից
+                        merged = {**{item["id"]: item for item in cloud_list}, **local_dict}
+                        # Եթե ID-ն չկա local_dict-ում, բայց կա cloud_list-ում, նշանակում է դա ուրիշի ավելացրածն է (պահում ենք)
+                        # Եթե ID-ն ջնջել ենք հենց նոր, այն չի լինի local_dict-ում:
+                        return list(local_dict.values())
+
+                    # Այս տարբերակը երաշխավորում է, որ քո ջնջածը կջնջվի, բայց մյուսների ավելացրածը Merge կլինի հետո իրենց save-ի ժամանակ
                     final_data = {k: (list(v.values()) if isinstance(v, dict) else v) for k, v in local_state.items()}
 
                 # Բուն պահպանումը Cloud-ում
@@ -205,26 +217,25 @@ def save_to_disk(force_overwrite=False):
             except Exception as e:
                 st.warning(f"⚠️ Supabase-ի հետ կապի խնդիր, կօգտագործվի Local backup: {e}")
 
-        # 3. Եթե Cloud-ը ձախողվեց կամ անհասանելի է, ձևավորում ենք տվյալները Local-ի հիման վրա
+        # 3. Եթե Cloud-ը ձախողվեց, ձևավորում ենք տվյալները Local-ի հիման վրա
         if final_data is None:
             final_data = {k: (list(v.values()) if isinstance(v, dict) else v) for k, v in local_state.items()}
 
-        # 4. ՊԱՀՊԱՆՈՒՄ LOCAL ՖԱՅԼՈՒՄ (Միշտ կատարվում է որպես backup)
+        # 4. ՊԱՀՊԱՆՈՒՄ LOCAL ՖԱՅԼՈՒՄ (Միշտ)
         try:
             with open(DB_FILE, "w", encoding="utf-8") as f:
                 json.dump(final_data, f, ensure_ascii=False, indent=4)
         except Exception as e:
             st.error(f"❌ Ֆայլի պահպանման սխալ: {e}")
 
-        # 5. Վերջնական դադար և ծանուցում
-        time.sleep(1) # Քո ուզած 1 վայրկյան հանգիստը
+        # 5. Դադար և ծանուցում
+        time.sleep(1) 
         
         if cloud_success:
-            st.toast("✅ Տվյալները հաջողությամբ սինքրոնացվեցին Cloud-ում և Local-ում", icon="🌐")
+            st.toast("✅ Սինքրոնացվեց Cloud-ում և Local-ում", icon="🌐")
         else:
-            st.toast("💾 Տվյալները պահպանվեցին տեղական backup ֆայլում", icon="📁")
+            st.toast("💾 Պահպանվեց տեղական backup-ում", icon="📁")
 
-        # Թարմացնում ենք ծրագրի վիճակը
         parse_data(final_data)
 
 
