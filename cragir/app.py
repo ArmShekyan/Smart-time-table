@@ -1320,101 +1320,55 @@ elif st.session_state.active_page == "normal":
 
     elif st.session_state.active_tab == "🤖 AI Օգնական":
         st.title("🤖 AI Օգնական (Gemini)")
-        st.caption(f"Բարև, **{st.session_state.username}**! Ես քո անձնական AI օգնականն եմ։")
+        st.caption(f"Բարև, **{st.session_state.username}**! Ես քո տեղեկատու բոտն եմ։")
 
         current_user = st.session_state.username
         if current_user not in st.session_state.chat_histories:
             st.session_state.chat_histories[current_user] = []
-
-        if "pending_proposal" not in st.session_state:
-            st.session_state.pending_proposal = None
 
         # Ցուցադրել չաթի պատմությունը
         for message in st.session_state.chat_histories[current_user]:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        # Եթե կա կախված առաջարկ (Pending Proposal)
-        if st.session_state.pending_proposal:
-            with st.chat_message("assistant"):
-                st.warning("💡 AI-ն ունի առաջարկ։ Ցանկանու՞մ եք տեսնել փոփոխված տարբերակը։")
-                col_yes, col_no = st.columns(2)
-                
-                if col_yes.button("✅ Կիրառել (Տեսնել նոր աղյուսակը)", use_container_width=True):
-                    proposal_text = st.session_state.pending_proposal
-                    st.session_state.pending_proposal = None
-                    
-                    with st.spinner("🧠 Գեներացվում է նոր աղյուսակը..."):
-                        try:
-                            context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
-                            context += "Օգտատերը ՀԱՄԱՁԱՅՆԵՑ քո առաջարկին։ Հիմա արա այդ փոփոխությունը և արդյունքը ցույց տուր ՏԵՔՍՏԱՅԻՆ ՀՈՐԻԶՈՆԱԿԱՆ ԱՂՅՈՒՍԱԿՈՎ (Markdown table)։\n"
-                            context += "Աղյուսակում տողերը պետք է լինեն ԺԱՄԵՐԸ (1, 2, 3...), իսկ սյունակները՝ ՕՐԵՐԸ (Երկուշաբթի, Երեքշաբթի...)։\n"
-                            
-                            if st.session_state.schedule:
-                                # 🚀 Տվյալների սեղմում տոկեններ խնայելու համար
-                                compact_sch = "\n".join([f"{i['Դասարան']}|{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in st.session_state.schedule])
-                                context += f"Նախնական դասացուցակ (Դասարան|Օր|Ժամ|Առարկա):\n{compact_sch}\n"
-
-                            client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-                            response = client.models.generate_content(
-                                model='gemini-1.5-flash',
-                                contents=f"{context}\nՔո նախորդ առաջարկը, որին համաձայնեցին՝ {proposal_text}",
-                            )
-                            response_text = response.text
-
-                            st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
-                            st.rerun()
-
-                        except Exception as e:
-                            st.error(f"❌ Սխալ: {str(e)}")
-
-                if col_no.button("❌ Չեղարկել", use_container_width=True):
-                    st.session_state.pending_proposal = None
-                    st.toast("Առաջարկը չեղարկվեց", icon="🗑️")
-                    st.rerun()
-
-        # Օգտատիրոջ նոր հարցումը
-        if prompt := st.chat_input("Ինչպե՞ս կարող եմ օգնել քեզ այսօր։"):
+        # Օգտատիրոջ հարցումը
+        if prompt := st.chat_input("Հարցրու դասացուցակի մասին (օր.՝ Երբ է մաթեմատիկան):"):
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
 
             with st.chat_message("assistant"):
-                with st.spinner("🧠 Մտածում եմ..."):
+                with st.spinner("🧠 Որոնում եմ պատասխանը..."):
                     try:
                         if "GEMINI_API_KEY" not in st.secrets:
-                            response_text = "⚠️ API բանալին բացակայում է Streamlit Cloud-ի Secrets-ից:"
+                            response_text = "⚠️ API բանալին բացակայում է:"
                         else:
-                            context = "Դու 'Smart Time Table' պրոյեկտի բազմաֆունկցիոնալ AI օգնականն ես։\n"
-                            context += f"Դու խոսում ես {current_user}-ի հետ։\n"
-                            context += "⚠️ ՔՈ ԴԵՐԵՐԸ ԵՎ ԿԱՆՈՆՆԵՐԸ:\n"
-                            context += "1. ℹ️ ՏԵՂԵԿԱՏՈՒ ԲՈՏ: Եթե հարցնում են դասացուցակի մասին, տուր հստակ պատասխան:\n"
-                            context += "2. 💡 ԽՈՐՀՐԴԱՏՈՒ: Եթե առաջարկում ես փոփոխություն, մի՛ գծիր աղյուսակը միանգամից, այլ բացատրիր և ասա՝ սեղմեն 'Կիրառել':\n"
-                            context += "3. 🛑 Մի՛ փոփոխիր st.session_state.schedule-ը:\n"
+                            # Մաքուր տեղեկատվական context
+                            context = "Դու 'Smart Time Table' համակարգի տեղեկատու բոտն ես:\n"
+                            context += "Քո խնդիրն է ՊԱՏԱՍԽԱՆԵԼ հարցերին՝ հիմնվելով տրված դասացուցակի վրա:\n"
+                            context += "Եթե հարցը դասացուցակի հետ կապ չունի, քաղաքավարի ասա այդ մասին:\n"
 
                             if st.session_state.schedule:
-                                # 🚀 Տվյալների սեղմում
                                 compact_sch = "\n".join([f"{i['Դասարան']}|{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in st.session_state.schedule])
-                                context += f"Ներկայիս դասացուցակ (Դասարան|Օր|Ժամ|Առարկա):\n{compact_sch}\n"
+                                context += f"Դասացուցակի տվյալներ:\n{compact_sch}\n"
                             else:
-                                context += "Դեռևս գեներացված դասացուցակ չկա։\n"
+                                context += "Առայժմ դասացուցակ ստեղծված չէ:\n"
 
-                            context += f"Օգտատիրոջ հարցը՝ {prompt}"
+                            context += f"Օգտատերը հարցնում է. {prompt}"
 
+                            # Օգտագործում ենք 1.5 Flash՝ լիմիտներից խուսափելու համար
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
-                                model='gemini-1.5-flash',
+                                model='gemini-1.5-flash', # Սա ավելի կայուն է լիմիտների հարցում
                                 contents=context,
                             )
                             response_text = response.text
 
-                            # Ստուգում ենք՝ արդյոք AI-ն առաջարկ է անում
-                            keywords = ["առաջարկ", "փոխել", "տեղափոխ", "swap", "փոփոխություն"]
-                            if any(x in response_text.lower() for x in keywords):
-                                st.session_state.pending_proposal = response_text
+                        st.markdown(response_text)
+                        st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
 
                     except Exception as e:
-                        response_text = f"❌ Սխալ տեղի ունեցավ API կանչի ժամանակ: {str(e)}"
-
-                    st.markdown(response_text)
-                    st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
+                        if "429" in str(e):
+                            st.error("⏳ API-ն ծանրաբեռնված է: Խնդրում եմ սպասել 1 րոպե:")
+                        else:
+                            st.error(f"❌ Սխալ: {str(e)}")
