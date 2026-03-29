@@ -823,73 +823,129 @@ elif st.session_state.active_page == "normal":
                 st.dataframe(df_t, use_container_width=True, hide_index=True)
             else: st.caption("Ուսուցիչներ գրանցված չեն:")
 
+
     elif st.session_state.active_tab == "📚 Առարկաներ":
         st.title("📚 Առարկաների Շտեմարան")
         
         col_l, col_r = st.columns([1, 1])
+        
+        # --- ՁԱԽ ՍՅՈՒՆ: Ավելացնել Subject Pool-ում ---
         with col_l:
             with st.form("add_to_pool", clear_on_submit=True):
                 st.markdown("### 🆕 Ավելացնել ցուցակում")
-                new_name = st.text_input("Առարկայի անուն")
+                new_name = st.text_input("Առարկայի անուն").strip()
+                
                 if st.form_submit_button("Ավելացնել ցանկում", use_container_width=True):
-                    if new_name and new_name not in st.session_state.subj_pool:
-                        st.session_state.subj_pool.append(new_name)
-                        st.toast(f"📚 {new_name}-ն ավելացվեց ցանկում:", icon="📝")
-                        st.rerun()
+                    if new_name:
+                        # Ստուգում ենք կրկնությունը Pool-ում (բոլորը սարքում ենք փոքրատառ ստուգելիս)
+                        if new_name.lower() in [name.lower() for name in st.session_state.subj_pool]:
+                            st.error(f"❌ '{new_name}' առարկան արդեն կա ցուցակում:")
+                        else:
+                            st.session_state.subj_pool.append(new_name)
+                            save_to_disk()  # Պահպանում ենք թարմացված Pool-ը
+                            st.toast(f"📚 {new_name}-ն ավելացվեց ցանկում:", icon="📝")
+                            st.rerun()
+                    else:
+                        st.warning("⚠️ Մուտքագրեք անունը:")
 
+        # --- ԱՋ ՍՅՈՒՆ: Գրանցել Առարկան (Բարդության հետ) ---
         with col_r:
             if st.session_state.subj_pool:
                 with st.form("register_subj", clear_on_submit=True):
                     st.markdown("### 📋 Գրանցել Առարկան")
                     selected = st.selectbox("Ընտրեք ցանկից", st.session_state.subj_pool)
-                    comp = st.select_slider("Բարդություն (1-5)", options=[1,2,3,4,5], value=3)
+                    comp = st.select_slider("Բարդություն (1-5)", options=[1, 2, 3, 4, 5], value=3)
+                    
                     if st.form_submit_button("Գրանցել", use_container_width=True):
-                        if not any(s.name == selected for s in st.session_state.subjects):
-                            st.session_state.subjects.append(Subject(str(uuid.uuid4()), selected, comp))
+                        # Ստուգում ենք կրկնությունը արդեն գրանցված առարկաների մեջ
+                        if any(s.name.lower() == selected.lower() for s in st.session_state.subjects):
+                            st.error(f"❌ {selected} առարկան արդեն գրանցված է:")
+                        else:
+                            new_subject = Subject(id=str(uuid.uuid4()), name=selected, complexity=comp)
+                            st.session_state.subjects.append(new_subject)
+                            save_to_disk()  # Սինքրոնացնում ենք Cloud-ի և Local-ի հետ
                             st.toast(f"✅ Առարկան գրանցվեց:", icon="📚")
                             st.rerun()
 
         st.divider()
         st.subheader("✅ Գրանցված Առարկաներ")
-        for i, s in enumerate(st.session_state.subjects):
-            with st.container(border=True):
-                c1, c2 = st.columns([5,1])
-                c1.markdown(f"📖 **{s.name}** | Բարդություն՝ <span style='color: #0d6efd; font-weight: bold;'>{s.complexity}</span>", unsafe_allow_html=True)
-                if c2.button("🗑️", key=f"s_{s.id}"):
-                    st.session_state.assignments = [a for a in st.session_state.assignments if a.subject_id != s.id]
-                    st.session_state.subjects.pop(i)
-                    st.toast(f"🗑️ Առարկան ջնջվեց:", icon="📚")
-                    st.rerun()
+        
+        # --- ԳՐԱՆՑՎԱԾ ԱՌԱՐԿԱՆԵՐԻ ՑՈՒՑԱԿ ---
+        if st.session_state.subjects:
+            # enumerate-ի փոխարեն օգտագործում ենք սովորական loop, որպեսզի pop-ի հետ խնդիր չլինի
+            for s in st.session_state.subjects:
+                with st.container(border=True):
+                    c1, c2 = st.columns([5, 1])
+                    c1.markdown(
+                        f"📖 **{s.name}** | Բարդություն՝ <span style='color: #0d6efd; font-weight: bold;'>{s.complexity}</span>", 
+                        unsafe_allow_html=True
+                    )
+                    
+                    if c2.button("🗑️", key=f"s_{s.id}"):
+                        # 1. Ջնջում ենք կապված assignments-ները
+                        st.session_state.assignments = [a for a in st.session_state.assignments if a.subject_id != s.id]
+                        
+                        # 2. Ջնջում ենք առարկան հիմնական ցուցակից
+                        st.session_state.subjects = [subj for subj in st.session_state.subjects if subj.id != s.id]
+                        
+                        # 3. Պահպանում ենք (ջնջման դեպքում force_overwrite=True)
+                        save_to_disk(force_overwrite=True)
+                        
+                        st.toast(f"🗑️ Առարկան ջնջվեց:", icon="📚")
+                        st.rerun()
+        else:
+            st.info("ℹ️ Դեռևս չկան գրանցված առարկաներ:")
+
 
     elif st.session_state.active_tab == "👩‍🏫 Ուսուցիչներ":
         st.title("👩‍🏫 Ուսուցիչների Շտեմարան")
-        
+    
         col_l, col_r = st.columns([1, 1])
+        
+        # --- ՁԱԽ ՍՅՈՒՆ: Ավելացնել Teacher Pool-ում ---
         with col_l:
             with st.form("add_t_pool", clear_on_submit=True):
                 st.markdown("### 🆕 Ավելացնել ցուցակում")
-                t_name = st.text_input("Ուսուցչի անուն")
+                t_name = st.text_input("Ուսուցչի անուն").strip()
+                
                 if st.form_submit_button("Ավելացնել ցանկում", use_container_width=True):
-                    if t_name and t_name not in st.session_state.teacher_pool:
-                        st.session_state.teacher_pool.append(t_name)
-                        st.toast(f"👤 {t_name}-ն ավելացվեց ցանկում:", icon="📝")
-                        st.rerun()
+                    if t_name:
+                        # Ստուգում ենք կրկնությունը teacher_pool-ում
+                        if t_name.lower() in [name.lower() for name in st.session_state.teacher_pool]:
+                            st.error(f"❌ '{t_name}' անունով ուսուցիչ արդեն կա ցուցակում:")
+                        else:
+                            st.session_state.teacher_pool.append(t_name)
+                            save_to_disk()  # Պահպանում ենք նոր անունը
+                            st.toast(f"👤 {t_name}-ն ավելացվեց ցանկում", icon="📝")
+                            st.rerun()
+                    else:
+                        st.warning("⚠️ Մուտքագրեք անունը:")
 
+        # --- ԱՋ ՍՅՈՒՆ: Գրանցել Ուսուցչին (Առարկաների հետ) ---
         with col_r:
             if st.session_state.teacher_pool and st.session_state.subjects:
                 with st.form("register_teacher", clear_on_submit=True):
                     st.markdown("### 📋 Գրանցել Ուսուցչին")
                     sel_t = st.selectbox("Ընտրեք ուսուցչին", st.session_state.teacher_pool)
                     sel_subjs = st.multiselect("Ընտրեք առարկաները", st.session_state.subjects, format_func=lambda x: x.name)
+                    
                     if st.form_submit_button("Գրանցել", use_container_width=True):
-                        if not any(t.name == sel_t for t in st.session_state.teachers):
-                            st.session_state.teachers.append(Teacher(str(uuid.uuid4()), sel_t, [s.id for s in sel_subjs]))
-                            st.toast(f"✅ Ուսուցիչը գրանցվեց:", icon="👩‍🏫")
+                        # Ստուգում ենք կրկնությունը հիմնական Teachers ցուցակում
+                        if any(t.name.lower() == sel_t.lower() for t in st.session_state.teachers):
+                            st.error(f"❌ {sel_t}-ն արդեն գրանցված է որպես ուսուցիչ:")
+                        elif not sel_subjs:
+                            st.warning("⚠️ Ընտրեք առնվազն մեկ առարկա:")
+                        else:
+                            new_teacher = Teacher(id=str(uuid.uuid4()), name=sel_t, subject_ids=[s.id for s in sel_subjs])
+                            st.session_state.teachers.append(new_teacher)
+                            save_to_disk()  # Պահպանում ենք գրանցումը
+                            st.toast(f"✅ Ուսուցիչը գրանցվեց", icon="👩‍🏫")
                             st.rerun()
 
         st.divider()
         st.subheader("📋 Դիտել Ուսուցիչներն ըստ Առարկաների")
 
+        # --- ՈՒՍՈՒՑԻՉՆԵՐԻ ՑՈՒՑԱԿ ԵՎ ՖԻԼՏՐԱՑԻԱ ---
         if st.session_state.subjects and st.session_state.teachers:
             all_subjects_option = Subject(id="all", name="🌐 Բոլոր Առարկաները", complexity=0)
             subject_options = [all_subjects_option] + st.session_state.subjects
@@ -900,6 +956,7 @@ elif st.session_state.active_page == "normal":
                 format_func=lambda x: x.name
             )
 
+            # Ֆիլտրման տրամաբանություն
             if selected_subject_view.id == "all":
                 filtered_teachers = [(i, t) for i, t in enumerate(st.session_state.teachers)]
                 st.markdown("📌 **Բոլոր գրանցված ուսուցիչները.**")
@@ -910,6 +967,7 @@ elif st.session_state.active_page == "normal":
                 ]
                 st.markdown(f"📌 **{selected_subject_view.name}** դասավանդող ուսուցիչները.")
 
+            # Ուսուցիչների քարտերը
             if filtered_teachers:
                 for i, t in filtered_teachers:
                     with st.container(border=True):
@@ -922,10 +980,14 @@ elif st.session_state.active_page == "normal":
                             unsafe_allow_html=True
                         )
                         
-                        if c2.button("🗑️", key=f"t_view_{i}"):
+                        if c2.button("🗑️", key=f"t_view_{t.id}"): # Օգտագործում ենք t.id կրկնությունից խուսափելու համար
+                            # Ջնջում ենք կապված assignments-ները
                             st.session_state.assignments = [a for a in st.session_state.assignments if a.teacher_id != t.id]
-                            st.session_state.teachers.pop(i)
-                            st.toast(f"🗑️ Ուսուցիչը ջնջվեց:", icon="👩‍🏫")
+                            # Ջնջում ենք ուսուցչին
+                            st.session_state.teachers = [teacher for teacher in st.session_state.teachers if teacher.id != t.id]
+                            # Պահպանում ենք (ջնջման դեպքում force_overwrite=True)
+                            save_to_disk(force_overwrite=True)
+                            st.toast(f"🗑️ Ուսուցիչը ջնջվեց", icon="👩‍🏫")
                             st.rerun()
             else:
                 st.info(f"ℹ️ {selected_subject_view.name} առարկայի համար դեռ ոչ մի ուսուցիչ չկա գրանցված։")
@@ -941,11 +1003,10 @@ elif st.session_state.active_page == "normal":
             if not st.session_state.classes:
                 st.warning("⚠️ Սենյակ ավելացնելու համար նախ ստեղծեք գոնե մեկ դասարան:")
             else:
-                # clear_on_submit=True-ն մաքրում է տեքստային դաշտերը ավելացնելուց հետո
                 with st.form("room_add_form", clear_on_submit=True):
                     st.markdown("### 🆕 Նոր Կաբինետ")
                     c_r1, c_r2, c_r3 = st.columns([2, 2, 2])
-                    r_name = c_r1.text_input("Կաբինետի անուն/համար")
+                    r_name = c_r1.text_input("Կաբինետի անուն/համար").strip()
                     r_type = c_r2.selectbox("Կաբինետի տիպ", ["Ընդհանուր", "Լաբորատոր", "Մարզադահլիճ", "Համակարգչային"])
                     r_class = c_r3.selectbox(
                         "Որ դասարանի համար է", 
@@ -955,13 +1016,18 @@ elif st.session_state.active_page == "normal":
                     
                     if st.form_submit_button("➕ Ավելացնել Կաբինետ", use_container_width=True):
                         if r_name:
-                            import uuid
-                            new_room = Room(id=str(uuid.uuid4()), name=r_name, type=r_type, assigned_class_id=r_class.id)
-                            st.session_state.rooms.append(new_room)
-                            save_to_disk() # Ավելացման ժամանակ կարող ենք սովորական save անել
-                            st.rerun()
+                            # ✨ Ստուգում ենք կաբինետի կրկնությունը
+                            if r_name.lower() in [room.name.lower() for room in st.session_state.rooms]:
+                                st.error(f"❌ '{r_name}' կաբինետն արդեն գոյություն ունի:")
+                            else:
+                                import uuid
+                                new_room = Room(id=str(uuid.uuid4()), name=r_name, type=r_type, assigned_class_id=r_class.id)
+                                st.session_state.rooms.append(new_room)
+                                save_to_disk()
+                                st.toast(f"📍 {r_name} կաբինետն ավելացվեց", icon="✅")
+                                st.rerun()
 
-            # Սենյակների ցուցակը և ջնջումը
+            # Սենյակների ցուցակը
             if st.session_state.rooms:
                 st.write("---")
                 for r in st.session_state.rooms:
@@ -971,7 +1037,6 @@ elif st.session_state.active_page == "normal":
                     col_info, col_del = st.columns([5, 1])
                     col_info.markdown(f"📍 **{r.name}** ({r.type}) — 🏫 {c_name}")
                     
-                    # 🗑️ Ջնջում ենք force_overwrite=True-ով, որ Cloud-ից հետ չգա
                     if col_del.button("🗑️", key=f"del_room_btn_{r.id}"):
                         st.session_state.rooms = [room for room in st.session_state.rooms if room.id != r.id]
                         save_to_disk(force_overwrite=True) 
@@ -979,35 +1044,44 @@ elif st.session_state.active_page == "normal":
 
         st.divider() 
         
-        # --- 2. ԴԱՍԱՐԱՆՆԵՐ ԵՎ ԿԱՊԵՐ ---
+        # --- 2. ԴԱՍԱՐԱՆՆԵՐԻ ՍՏԵՂԾՈՒՄ ԵՎ ԿԱՊԵՐ ---
         col1, col2 = st.columns(2)
         
         with col1:
             with st.form("class_form", clear_on_submit=True):
                 st.markdown("### 🆕 Նոր Դասարան")
-                g = st.text_input("Հոսք (օր. ԱԲ)")
-                s = st.text_input("Թիվ/Տառ (օր. 1 կամ Ա)")
+                g = st.text_input("Հոսք (օր. ԱԲ)").strip()
+                s = st.text_input("Թիվ/Տառ (օր. 1 կամ Ա)").strip()
+                
                 if st.form_submit_button("Ավելացնել", use_container_width=True):
                     if g and s:
-                        import uuid
-                        st.session_state.classes.append(ClassGroup(str(uuid.uuid4()), g, s))
-                        save_to_disk()
-                        st.rerun()
+                        # ✨ Ստուգում ենք դասարանի կրկնությունը
+                        new_class_full_name = f"{g}{s}".lower()
+                        existing_classes = [f"{c.grade}{c.section}".lower() for c in st.session_state.classes]
+                        
+                        if new_class_full_name in existing_classes:
+                            st.error(f"❌ {g}{s} դասարանն արդեն գոյություն ունի:")
+                        else:
+                            import uuid
+                            st.session_state.classes.append(ClassGroup(str(uuid.uuid4()), g, s))
+                            save_to_disk()
+                            st.toast(f"🏫 {g}{s} դասարանը ստեղծվեց", icon="✅")
+                            st.rerun()
+                    else:
+                        st.warning("⚠️ Լրացրեք երկու դաշտն էլ:")
 
         with col2:
             if st.session_state.teachers and st.session_state.classes:
                 sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", st.session_state.teachers, format_func=lambda x: x.name, key="t_sel_main")
                 
-                # 1. Վերցնում ենք ուսուցչի բոլոր առարկաները
                 all_teacher_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
 
                 with st.form("as_form", clear_on_submit=True):
                     st.markdown("### 🔗 Կապել Դասարանին")
                     sel_c = st.selectbox("Դասարան", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
                     
-                    # 2. ✨ ՖԻԼՏՐՈՒՄ. Ցույց տալ միայն այն առարկաները, որոնք ԱՅՍ դասարանում դեռ ուսուցիչ չունեն
                     assigned_subject_ids = [a.subject_id for a in st.session_state.assignments if a.class_id == sel_c.id]
-                    available_subjs = [s for s in all_teacher_subjs if s.id not in assigned_subject_ids]
+                    available_subjs = [subj for subj in all_teacher_subjs if subj.id not in assigned_subject_ids]
 
                     if available_subjs:
                         sel_s = st.selectbox("Առարկա", available_subjs, format_func=lambda x: x.name)
@@ -1015,11 +1089,10 @@ elif st.session_state.active_page == "normal":
                         st.warning(f"⚠️ Այս ուսուցչի բոլոր առարկաներն արդեն նշանակված են {sel_c.grade}{sel_c.section} դասարանում:")
                         sel_s = None
 
-                    hrs = st.number_input("Շաբաթական ժամեր", 1, 10, 2)
+                    hrs = st.number_input("Շաբաթական ժամեր", 1, 15, 2)
 
-                    # Սենյակների զտում ըստ ընտրված դասարանի
-                    class_rooms = [r for r in st.session_state.rooms if r.assigned_class_id == sel_c.id]
-                    available_types = list(set([r.type for r in class_rooms])) if class_rooms else ["Ընդհանուր"]
+                    class_rooms = [room for room in st.session_state.rooms if room.assigned_class_id == sel_c.id]
+                    available_types = list(set([room.type for room in class_rooms])) if class_rooms else ["Ընդհանուր"]
                     sel_room_type = st.selectbox("📍 Սենյակի տիպը", sorted(available_types))
                     
                     if st.form_submit_button("Կապել", use_container_width=True):
@@ -1028,9 +1101,10 @@ elif st.session_state.active_page == "normal":
                             new_ass = Assignment(str(uuid.uuid4()), sel_t.id, sel_s.id, sel_c.id, hrs, sel_room_type)
                             st.session_state.assignments.append(new_ass)
                             save_to_disk()
+                            st.toast(f"🔗 Կապը ստեղծվեց", icon="✅")
                             st.rerun()
 
-        # --- 3. ԴԻՏԵԼ ԿԱՊԵՐԸ (ՆԵՐՔԵՎՈՒՄ) ---
+        # --- 3. ԴԻՏԵԼ ԿԱՊԵՐԸ ---
         st.divider() 
         st.markdown("### 📋 Դիտել Կապերը")
         
@@ -1043,15 +1117,15 @@ elif st.session_state.active_page == "normal":
                     t_obj = next((t for t in st.session_state.teachers if t.id == a.teacher_id), None)
                     s_obj = next((s for s in st.session_state.subjects if s.id == a.subject_id), None)
                     
-                    c1, c2 = st.columns([5, 1])
-                    c1.info(f"🔹 **{s_obj.name if s_obj else 'Անհայտ'}** ({t_obj.name if t_obj else 'Ուսուցիչ'}) — {a.lessons_per_week}ժ — *{a.room_type}*")
-                    
-                    if c2.button("🗑️", key=f"del_as_btn_{a.id}"):
-                        st.session_state.assignments = [x for x in st.session_state.assignments if x.id != a.id]
-                        save_to_disk(force_overwrite=True) 
-                        st.rerun()
+                    with st.container(border=True):
+                        c1, c2 = st.columns([5, 1])
+                        c1.markdown(f"🔹 **{s_obj.name if s_obj else 'Անհայտ'}** — {t_obj.name if t_obj else 'Ուսուցիչ'} — `{a.lessons_per_week}ժ` — *{a.room_type}*")
+                        
+                        if c2.button("🗑️", key=f"del_as_btn_{a.id}"):
+                            st.session_state.assignments = [x for x in st.session_state.assignments if x.id != a.id]
+                            save_to_disk(force_overwrite=True) 
+                            st.rerun()
             else:
-                # ✨ Ահա քո ուզած լրացուցիչ հաղորդագրությունը
                 st.info(f"ℹ️ **{view_c.grade}{view_c.section}** դասարանի համար դեռևս կապեր չկան:")
             
 
