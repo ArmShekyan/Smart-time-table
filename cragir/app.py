@@ -1357,7 +1357,7 @@ elif st.session_state.active_page == "normal":
 
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
-                                model='gemini-2.0-flash',
+                                model='gemini-1.5-flash',
                                 contents=f"{context}\nՔո նախորդ առաջարկը, որին համաձայնեցին՝ {proposal_text}",
                             )
                             response_text = response.text
@@ -1403,7 +1403,7 @@ elif st.session_state.active_page == "normal":
 
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
-                                model='gemini-2.0-flash',
+                                model='gemini-1.5-flash',
                                 contents=context,
                             )
                             response_text = response.text
