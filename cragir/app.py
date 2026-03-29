@@ -1176,7 +1176,6 @@ elif st.session_state.active_page == "normal":
                     return room.name
             return None # Եթե բոլոր սենյակները զբաղված են
 
-
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", use_container_width=True, type="primary"):
             if not st.session_state.classes or not st.session_state.assignments:
                 st.error("❌ Բացակայում են դասարանները կամ ժամերը գեներացման համար:")
@@ -1224,17 +1223,12 @@ elif st.session_state.active_page == "normal":
                             if chosen_candidate_idx == -1:
                                 continue
 
-                            # 1. Վերցնում ենք թեկնածուին, բայց դեռ չենք հանում ցուցակից (pop չենք անում)
                             target = class_fund[chosen_candidate_idx]
-                            
-                            # 2. ✨ Գտնում ենք ազատ սենյակ
                             room_to_assign = find_free_room(target.room_type, best_day, next_hour, final_schedule)
 
-                            # 3. Եթե սենյակ չգտնվեց, այս անգամ բաց ենք թողնում (կփորձի այլ ժամ/օր)
                             if room_to_assign is None:
                                 continue
 
-                            # 4. Եթե ամեն ինչ OK է, նոր միայն հանում ենք ցուցակից ու գրանցում
                             class_fund.pop(chosen_candidate_idx)
                             
                             t_name = next((t.name for t in st.session_state.teachers if t.id == target.teacher_id), "Անհայտ")
@@ -1244,8 +1238,9 @@ elif st.session_state.active_page == "normal":
                                 "Դասարան": f"{cls.grade}{cls.section}",
                                 "Օր": best_day, 
                                 "Ժամ": next_hour, 
-                                "Առարկա": f"{subj_name} ({t_name})",
-                                "Սենյակ": room_to_assign  # ✨ Սենյակը գրանցվեց
+                                "Առարկա": subj_name,
+                                "Ուսուցիչ": t_name,
+                                "Սենյակ": room_to_assign
                             })
                             
                             teacher_occupancy[best_day][next_hour].add(target.teacher_id)
@@ -1261,24 +1256,33 @@ elif st.session_state.active_page == "normal":
                     st.success("🎉 Դասացուցակը հաջողությամբ գեներացվեց:")
                     st.balloons() 
                 else:
-                    st.error("⚠️ Ալգորիթմը խճճվեց բախումների մեջ։ Փորձեք նորից սեղմել կոճակը կամ թեթևացրեք ժամաքանակը։")
+                    st.error("⚠️ Ալգորիթմը խճճվեց բախումների մեջ։ Փորձեք նորից սեղմել կոճակը։")
 
         if st.session_state.get('schedule'):
             df = pd.DataFrame(st.session_state.schedule)
             st.subheader("📋 Արդյունքներն ըստ Դասարանների")
             
-            for c in df['Դասարան'].unique():
-                with st.expander(f"🏫 Դասարան՝ {c}", expanded=True):
-                    cls_df = df[df['Դասարան'] == c].copy()
-                    cls_df['Առարկա'] = cls_df['Առարկա'].apply(lambda x: x.split(" (")[0])
-                    pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
+            for c_name in df['Դասարան'].unique():
+                with st.expander(f"🏫 Դասարան՝ {c_name}", expanded=True):
+                    cls_df = df[df['Դասարան'] == c_name].copy()
                     
+                    # Սարքում ենք աղյուսակը դիտելու համար
+                    pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
                     existing_days = [day for day in DAYS_AM if day in pivot.columns]
                     if existing_days:
-                        ordered_days = [d for d in DAYS_AM if d in existing_days]
-                        pivot = pivot[ordered_days]
+                        pivot = pivot[[d for d in DAYS_AM if d in existing_days]]
 
                     st.dataframe(pivot, use_container_width=True)
+
+                    # ✨ ՆՈՐ. Մանրամասների Popover կոճակը
+                    with st.popover(f"🔍 {c_name} դասարանի մանրամասներ"):
+                        st.markdown(f"#### ℹ️ {c_name} - Ուսուցիչներ և Կաբինետներ")
+                        # Վերցնում ենք կոնկրետ այս դասարանի տվյալները և խմբավորում ըստ առարկայի
+                        details = cls_df[['Առարկա', 'Ուսուցիչ', 'Սենյակ']].drop_duplicates()
+                        for _, row in details.iterrows():
+                            st.write(f"📖 **{row['Առարկա']}**")
+                            st.caption(f"👨‍🏫 {row['Ուսուցչ']} | 📍 Սենյակ՝ {row['Սենյակ']}")
+                            st.write("---")
 
             st.divider()
             pdf_bytes = generate_pdf(st.session_state.schedule)
