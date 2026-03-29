@@ -1359,7 +1359,7 @@ elif st.session_state.active_page == "normal":
                             # Օգտագործում ենք 1.5 Flash՝ լիմիտներից խուսափելու համար
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
-                                model='gemini-1.5-flash', # Սա ավելի կայուն է լիմիտների հարցում
+                                model='gemini-2.0-flash', # Սա ավելի կայուն է լիմիտների հարցում
                                 contents=context,
                             )
                             response_text = response.text
