@@ -551,21 +551,25 @@ def generate_pdf(schedule_data):
         cls_df = df[df['Դասարան'] == cls].copy()
         cls_df['Օր'] = cls_df['Օր'].map(day_mapping)
         
-        # 1. Մաքրում ենք առարկայի անունը և ավելացնում սենյակը
+        # 1. Առարկայի անվան մշակում և սենյակի ապահով ավելացում (KeyError-ից խուսափելու համար)
         def format_subject(row):
-            base_subj = str(row['Առարկա']).split(" (")[0]
-            room = str(row['Սենյակ']) if 'Սենյակ' in row and row['Սենյակ'] and row['Սենյակ'] != "-" else ""
-            return f"{base_subj} [{room}]" if room else base_subj
+            # Վերցնում ենք առարկան, հեռացնում հին փակագծերը
+            base_subj = str(row.get('Առարկա', 'Lesson')).split(" (")[0]
+            # Ստուգում ենք սենյակը .get() մեթոդով
+            room = str(row.get('Սենյակ', ''))
+            if not room or room == "-" or room == "nan":
+                return base_subj
+            return f"{base_subj} [{room}]"
 
         cls_df['Առարկա'] = cls_df.apply(format_subject, axis=1)
         
-        # Pivot table սարքելը
+        # 2. Աղյուսակի կառուցում (Pivot)
         try:
             pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
         except:
             continue
 
-        # Աղյուսակի գլխամաս
+        # Աղյուսակի Header
         pdf.set_font("Helvetica", style='B', size=10)
         pdf.cell(15, 8, "Hr", border=1, align='C')
         for day in days_eng:
@@ -580,18 +584,24 @@ def generate_pdf(schedule_data):
                 val = pivot.get(day, {}).get(hour, "-")
                 cell_text = str(val)
                 
-                # ASCII ստուգում (քանի որ Helvetica-ն հայերեն չի տպում)
+                # Եթե կան հայերեն տառեր, փոխում ենք "Lesson"-ի (ASCII սահմանափակման պատճառով)
                 if any(ord(c) > 127 for c in cell_text):
-                    # Եթե սենյակը լատինատառ է (օր. Fast), փորձենք պահել դա
-                    room_part = cell_text.split('[')[-1].replace(']', '') if '[' in cell_text else ""
-                    cell_text = f"Lesson [{room_part}]" if room_part and not any(ord(c) > 127 for c in room_part) else "Lesson"
+                    # Փորձում ենք պահել սենյակը, եթե այն լատինատառ է (օր. [Fast])
+                    room_info = cell_text.split('[')[-1].replace(']', '') if '[' in cell_text else ""
+                    if room_info and not any(ord(c) > 127 for c in room_info):
+                        cell_text = f"Lesson [{room_info}]"
+                    else:
+                        cell_text = "Lesson"
                 
                 pdf.cell(35, 8, cell_text[:18], border=1, align='C')
             pdf.ln()
         pdf.ln(10)
 
-    # ❗ ԿԱՐԵՎՈՐ: Վերադարձնում ենք բայթերը Streamlit-ի համար
-    return pdf.output(dest='S') if isinstance(pdf.output(dest='S'), bytes) else pdf.output(dest='S').encode('latin-1', errors='ignore')
+    # 3. ՎԵՐՋՆԱԿԱՆ ԵԼՔ (Ուղղված AttributeError-ի համար)
+    output = pdf.output(dest='S')
+    if isinstance(output, str):
+        return output.encode('latin-1', errors='ignore')
+    return output
 
 
 st.sidebar.title(f"👤 {st.session_state.username}")
