@@ -1136,6 +1136,10 @@ elif st.session_state.active_page == "normal":
     elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Պրոֆեսիոնալ Գեներացում")
 
+        # 1. Սկզբնավորում ենք Toggle-ի վիճակը, եթե չկա
+        if "show_tables" not in st.session_state:
+            st.session_state.show_tables = True
+
         # ✨ ԱՎՏՈՄԱՏ ՍԵՆՅԱԿԻ ՈՐՈՇՈՒՄ
         def get_auto_room(subj_name, class_label):
             s_name = str(subj_name).lower()
@@ -1146,6 +1150,7 @@ elif st.session_state.active_page == "normal":
             else:
                 return f"{class_label} class"
 
+        # 🔘 ԳԵՆԵՐԱՑՄԱՆ ԿՈՃԱԿ
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", use_container_width=True, type="primary"):
             if not st.session_state.classes or not st.session_state.assignments:
                 st.error("❌ Բացակայում են դասարանները կամ ժամերը գեներացման համար:")
@@ -1165,6 +1170,7 @@ elif st.session_state.active_page == "normal":
                     for cls in shuffled_classes:
                         class_label = f"{cls.grade}{cls.section}"
                         class_fund = []
+                        # Այստեղ օգտագործում ենք քո հիմնական assignments-ը
                         assignments_for_cls = [a for a in st.session_state.assignments if a.class_id == cls.id]
                         for ass in assignments_for_cls:
                             class_fund.extend([ass] * ass.lessons_per_week)
@@ -1225,39 +1231,51 @@ elif st.session_state.active_page == "normal":
 
         # 📊 ԱՐԴՅՈՒՆՔՆԵՐԻ ՑՈՒՑԱԴՐՈՒՄ
         if st.session_state.get('schedule'):
-            df = pd.DataFrame(st.session_state.schedule)
-            st.subheader("📋 Արդյունքներն ըստ Դասարանների")
+            st.divider()
             
-            for c_name in df['Դասարան'].unique():
-                with st.expander(f"🏫 Դասարան՝ {c_name}", expanded=True):
-                    cls_df = df[df['Դասարան'] == c_name].copy()
-                    
-                    # ✨ ՓՈՓՈԽՈՒԹՅՈՒՆ: Այստեղ Cell-ի մեջ դնում ենք ՄԻԱՅՆ առարկան
-                    cls_df['Cell'] = cls_df['Առարկա'] 
-                    
-                    pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Cell').fillna("-")
-                    
-                    existing_days = [day for day in DAYS_AM if day in pivot.columns]
-                    if existing_days:
-                        pivot = pivot[[d for d in DAYS_AM if d in existing_days]]
+            # 🔘 TOGGLE ԿՈՃԱԿ՝ ԹԱՔՑՆԵԼՈՒ / ՑՈՒՅՑ ՏԱԼՈՒ ՀԱՄԱՐ
+            t_btn_text = "🙈 Թաքցնել բոլոր աղյուսակները" if st.session_state.show_tables else "📋 Ցուցադրել բոլոր աղյուսակները"
+            if st.button(t_btn_text, use_container_width=True):
+                st.session_state.show_tables = not st.session_state.show_tables
+                st.rerun()
 
-                    st.dataframe(pivot, use_container_width=True)
+            # Եթե True է, ցուցադրում ենք աղյուսակները
+            if st.session_state.show_tables:
+                df = pd.DataFrame(st.session_state.schedule)
+                st.subheader("📋 Արդյունքներն ըստ Դասարանների")
+                
+                for c_name in df['Դասարան'].unique():
+                    with st.expander(f"🏫 Դասարան՝ {c_name}", expanded=True):
+                        cls_df = df[df['Դասարան'] == c_name].copy()
+                        
+                        # ✨ Ցուցադրում ենք ՄԻԱՅՆ առարկան (առանց սենյակի)
+                        cls_df['Cell'] = cls_df['Առարկա'] 
+                        
+                        pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Cell').fillna("-")
+                        
+                        existing_days = [day for day in DAYS_AM if day in pivot.columns]
+                        if existing_days:
+                            # Ապահովում ենք շաբաթվա օրերի ճիշտ հերթականությունը
+                            pivot = pivot.reindex(columns=[d for d in DAYS_AM if d in existing_days])
 
-                    # Մանրամասների մեջ թողնում ենք սենյակը, որ պետք եղած դեպքում տեսնես
-                    with st.popover(f"🔍 {c_name} դասարանի մանրամասներ"):
-                        details = cls_df[['Առարկա', 'Ուսուցիչ', 'Սենյակ']].drop_duplicates()
-                        for _, row in details.iterrows():
-                            st.markdown(f"📖 **{row['Առարկա']}**")
-                            st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {row['Սենյակ']}")
-                            st.write("---")
+                        st.dataframe(pivot, use_container_width=True)
 
+                        # Մանրամասները պահում ենք Popover-ի մեջ
+                        with st.popover(f"🔍 {c_name} դասարանի մանրամասներ"):
+                            details = cls_df[['Առարկա', 'Ուսուցիչ', 'Սենյակ']].drop_duplicates()
+                            for _, row in details.iterrows():
+                                st.markdown(f"📖 **{row['Առարկա']}**")
+                                st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {row['Սենյակ']}")
+                                st.write("---")
+            else:
+                st.info("💡 Աղյուսակները թաքցված են։")
+
+            # 📥 PDF ՆԵՐԲԵՌՆՈՒՄ
             st.divider()
             try:
-                # ✨ PDF-ի համար նույնպես ուղարկում ենք միայն անհրաժեշտ տվյալները
-                # Եթե generate_pdf ֆունկցիան սենյակը վերցնում է 'Առարկա' սյունակից, ապա այն կլինի մաքուր
                 pdf_data = generate_pdf(st.session_state.schedule)
                 st.download_button(
-                    label="📥 Ներբեռնել PDF (Timetable)",
+                    label="📥 Ներբեռնել PDF (Ամբողջական)",
                     data=pdf_data if isinstance(pdf_data, bytes) else str(pdf_data).encode('utf-8', errors='ignore'),
                     file_name="School_Timetable.pdf",
                     mime="application/pdf",
