@@ -519,13 +519,13 @@ def get_subj_complexity(sid):
 
 
 def generate_pdf(schedule_data):
-    # Ստեղծում ենք PDF օբյեկտը
     pdf = FPDF()
     pdf.add_page()
     
-    # Ավելացնում ենք հայերեն ֆոնտը: 
-    # ՈՒՇԱԴՐՈՒԹՅՈՒՆ. arial.ttf-ն պետք է վերբեռնես GitHub (app.py-ի կողքին)
-    pdf.add_font('Armenian', '', 'arial.ttf')
+    # Քանի որ ֆայլը 'cragir' թղթապանակի մեջ է
+    font_path = "cragir/arial.ttf" 
+    
+    pdf.add_font('Armenian', '', font_path)
     pdf.set_font('Armenian', '', 12)
 
     # Վերնագիր
@@ -1232,11 +1232,10 @@ elif st.session_state.active_page == "normal":
                 pdf_data = generate_pdf(st.session_state.schedule)
                 st.download_button(
                     label="📥 Ներբեռնել PDF (Ամբողջական)",
-                    data=pdf_data if isinstance(pdf_data, bytes) else str(pdf_data).encode('utf-8', errors='ignore'),
+                    data=pdf_data,  # fpdf2-ը միանգամից bytes է տալիս
                     file_name="School_Timetable.pdf",
                     mime="application/pdf",
                     use_container_width=True,
-                    type="primary"
                 )
             except Exception as e:
                 st.error(f"PDF-ի սխալ: {e}")
