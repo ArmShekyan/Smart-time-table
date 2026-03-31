@@ -1339,15 +1339,26 @@ elif st.session_state.active_page == "normal":
         if "pending_proposal" not in st.session_state:
             st.session_state.pending_proposal = None
 
+        # --- Թիրախավորված դասարանի ընտրություն տոկեններ խնայելու համար ---
+        classes = list(set([i['Դասարան'] for i in st.session_state.schedule])) if st.session_state.schedule else []
+        
+        if classes:
+            selected_class = st.selectbox("🎯 Ընտրեք դասարանը AI խորհրդատվության համար", classes)
+            # Ֆիլտրում ենք միայն ընտրված դասարանի տվյալները
+            filtered_data = [i for i in st.session_state.schedule if i['Դասարան'] == selected_class]
+        else:
+            st.info("Դեռ գեներացված դասացուցակ չկա:")
+            filtered_data = []
+
         # 1. Ցուցադրել չաթի պատմությունը
         for message in st.session_state.chat_histories[current_user]:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        # 2. ԱՌԱՋԱՐԿԻ ԿՈՃԱԿԸ (ցուցադրվում է միանգամից rerun-ի շնորհիվ)
+        # 2. ԱՌԱՋԱՐԿԻ ԿՈՃԱԿԸ
         if st.session_state.pending_proposal:
             with st.chat_message("assistant"):
-                st.warning("💡 Ունեմ առաջարկ։ Կիրառե՞նք փոփոխությունը։")
+                st.warning(f"💡 Ունեմ առաջարկ {selected_class} դասարանի համար։ Կիրառե՞նք։")
                 col_yes, col_no = st.columns(2)
                 
                 if col_yes.button("✅ Կիրառել", use_container_width=True):
@@ -1356,19 +1367,18 @@ elif st.session_state.active_page == "normal":
                     
                     with st.spinner("🧠 Մշակվում է..."):
                         try:
-                            # Մինիմալիստական համատեքստ տոկեններ խնայելու համար
-                            context = f"User agreed to: {proposal_text}. Apply change and show Markdown table (Rows: Hours, Cols: Days)."
-                            if st.session_state.schedule:
-                                compact_sch = "\n".join([f"{i['Դասարան']}|{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in st.session_state.schedule])
-                                context += f"\nData:\n{compact_sch}"
+                            # Կարճ անգլերեն հրահանգներ տոկենների մինիմալ ծախսի համար
+                            context = f"Apply agreed change for class {selected_class}: {proposal_text}. Show Markdown table."
+                            compact_sch = "\n".join([f"{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in filtered_data])
+                            context += f"\nCurrent Data:\n{compact_sch}"
 
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
                                 model='gemini-2.5-flash',
-                                contents=context
+                                contents=context,
+                                config={'max_output_tokens': 500}
                             )
-                            res_text = response.text
-                            st.session_state.chat_histories[current_user].append({"role": "assistant", "content": res_text})
+                            st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response.text})
                             st.rerun()
                         except Exception as e:
                             st.error(f"Error: {e}")
@@ -1378,36 +1388,34 @@ elif st.session_state.active_page == "normal":
                     st.rerun()
 
         # 3. Նոր հարցում
-        if prompt := st.chat_input("Հարցրու ինձ..."):
+        if prompt := st.chat_input("Հարցրու միայն ընտրված դասարանի մասին..."):
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
-            
-            # Ցուցադրում ենք օգտատիրոջ հարցը միանգամից
             with st.chat_message("user"):
                 st.markdown(prompt)
 
             with st.chat_message("assistant"):
                 with st.spinner("🧠..."):
                     try:
-                        # Տոկենների խնայողություն. համառոտ հրահանգներ
-                        system_prompt = "Role: Smart Time Table Assistant. Rule 1: If suggesting changes, explain and say 'Apply'. Rule 2: Don't draw tables yet. Rule 3: Be brief."
+                        # Խիստ հրահանգներ միայն մեկ դասարանի վրա կենտրոնանալու համար
+                        system_prompt = f"Role: Assistant for class {selected_class}. Max 1-2 brief suggestions. Don't draw tables yet. Use Armenian."
                         
-                        compact_sch = ""
-                        if st.session_state.schedule:
-                            compact_sch = "\n".join([f"{i['Դասարան']}|{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in st.session_state.schedule])
-                        
-                        full_prompt = f"{system_prompt}\nSchedule:\n{compact_sch}\nUser: {prompt}"
+                        compact_sch = "\n".join([f"{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in filtered_data])
+                        full_prompt = f"{system_prompt}\nData for {selected_class}:\n{compact_sch}\nUser: {prompt}"
 
                         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-                        response = client.models.generate_content(model='gemini-2.5-flash', contents=full_prompt)
+                        response = client.models.generate_content(
+                            model='gemini-2.5-flash', 
+                            contents=full_prompt,
+                            config={'max_output_tokens': 300}
+                        )
                         response_text = response.text
 
-                        # Ստուգում ենք առաջարկը
                         keywords = ["առաջարկ", "փոխել", "տեղափոխ", "swap", "change", "փոփոխություն"]
                         if any(x in response_text.lower() for x in keywords):
                             st.session_state.pending_proposal = response_text
                         
                         st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
-                        st.rerun() # ՍԱ Է ԿԱՐԵՎՈՐԸ. այն վերաթարմացնում է էջը և կոճակը հայտնվում է
+                        st.rerun()
 
                     except Exception as e:
                         st.error(f"API Error: {e}")
