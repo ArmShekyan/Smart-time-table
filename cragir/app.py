@@ -1396,10 +1396,11 @@ elif st.session_state.active_page == "normal":
                     try:
                         # Խիստ հրահանգներ՝ առանց ավելորդ ողջույնների և բարձր լիմիտով
                         system_prompt = (
-                            f"Act as the 'Smart Time Table' assistant for class {selected_class}. "
-                            "Do NOT introduce yourself or say hello again. "
-                            "Answer the user's question directly in Armenian. "
-                            "ONLY if you suggest a schedule change, end with '[PROPOSAL]'."
+                            f"Դու 'Smart Time Table' օգնականն ես {selected_class} դասարանի համար: "
+                            "1. Եղիր ընկերական. եթե օգտատերը բարևում է, պատասխանիր բարևով: "
+                            "2. Մի՛ ուղարկիր ամբողջ դասացուցակը, եթե քեզնից դա չեն խնդրել: "
+                            "3. Պատասխանիր հակիրճ հայերենով: "
+                            "4. Միայն եթե հստակ առաջարկում ես ՓՈՓՈԽՈՒԹՅՈՒՆ, ապա պատասխանիդ ՎԵՐՋՈՒՄ ավելացրու '[PROPOSAL]':"
                         )
                         
                         compact_sch = "\n".join([f"{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in filtered_data])
