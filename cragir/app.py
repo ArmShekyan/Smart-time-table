@@ -519,12 +519,12 @@ def get_subj_complexity(sid):
 
 
 def generate_pdf(schedule_data):
-    # Ստեղծում ենք PDF-ը
+    # Ստեղծում ենք PDF օբյեկտը
     pdf = FPDF()
     pdf.add_page()
     
-    # Ավելացնում ենք հայերեն ֆոնտը (առանց ստուգումների)
-    # Եթե ֆայլը չլինի, այս տողի վրա ծրագիրը Error կտա
+    # Ավելացնում ենք հայերեն ֆոնտը: 
+    # ՈՒՇԱԴՐՈՒԹՅՈՒՆ. arial.ttf-ն պետք է վերբեռնես GitHub (app.py-ի կողքին)
     pdf.add_font('Armenian', '', 'arial.ttf')
     pdf.set_font('Armenian', '', 12)
 
@@ -532,7 +532,7 @@ def generate_pdf(schedule_data):
     pdf.cell(200, 10, txt="Դպրոցական Դասացուցակ", ln=True, align='C')
     pdf.ln(10)
 
-    # Աղյուսակի գլխամաս
+    # Աղյուսակի գլխամաս (Headers)
     pdf.cell(40, 10, 'Դասարան', 1)
     pdf.cell(40, 10, 'Օր', 1)
     pdf.cell(30, 10, 'Ժամ', 1)
@@ -541,13 +541,13 @@ def generate_pdf(schedule_data):
 
     # Տվյալների լրացում
     for item in schedule_data:
-        # Եթե տվյալների մեջ լինի Unicode սիմվոլ, որը ֆոնտը չի տեսնում, կտա Error
         pdf.cell(40, 10, str(item.get('Դասարան', '-')), 1)
         pdf.cell(40, 10, str(item.get('Օր', '-')), 1)
         pdf.cell(30, 10, str(item.get('Ժամ', '-')), 1)
         pdf.cell(60, 10, str(item.get('Առարկա', '-')), 1)
         pdf.ln()
 
+    # Վերադարձնում ենք բայթերը Streamlit-ի համար
     return pdf.output()
 
 
