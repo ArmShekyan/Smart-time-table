@@ -519,28 +519,43 @@ def get_subj_complexity(sid):
 
 
 def generate_pdf(schedule_data):
+    # Ստեղծում ենք PDF օբյեկտը
     pdf = FPDF()
     pdf.add_page()
     
-    # ❗ ԿԱՐԵՎՈՐ: Պետք է ներբեռնես և օգտագործես մի ֆոնտ, որը աջակցում է հայերեն (օր. DejaVuSans)
-    # Եթե չունես ֆոնտի ֆայլը, ապա առանց դրա հայերենը սխալ կերևա:
+    # --- ԿԱՐԵՎՈՐ: Հայերեն ֆոնտի ավելացում ---
+    # Համոզվիր, որ arial.ttf ֆայլը գտնվում է app.py-ի կողքին
     try:
-        # Ավելացրու քո project folder-ում որևէ .ttf ֆոնտ (օրինակ Arial կամ DejaVu)
-        # pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
-        # pdf.set_font('DejaVu', '', 12)
-        pdf.set_font("Arial", size=12) # Եթե չկա հատուկ ֆոնտ, կօգտագործվի ստանդարտը
-    except:
-        pdf.set_font("Arial", size=12)
+        pdf.add_font('Armenian', '', 'arial.ttf', uni=True)
+        pdf.set_font('Armenian', '', 12)
+    except Exception as e:
+        # Եթե ֆոնտը չգտնվի, կօգտագործվի ստանդարտը (հայերենը սխալ կլինի, բայց ֆայլը կբացվի)
+        pdf.set_font('Arial', '', 12)
+        print(f"Font Error: {e}")
 
-    pdf.cell(200, 10, txt="Smart Time Table - Schedule", ln=True, align='C')
+    # Վերնագիր
+    pdf.cell(200, 10, txt="Smart Time Table - Դասացուցակ", ln=True, align='C')
     pdf.ln(10)
 
-    for item in schedule_data:
-        # Օգտագործում ենք .encode('latin-1', 'replace').decode('latin-1'), որպեսզի 404/Error չտա
-        text = f"{item['Դասարան']} | {item['Օր']} | {item['Ժամ']} | {item['Առարկա']}"
-        pdf.cell(0, 10, txt=text.encode('latin-1', 'ignore').decode('latin-1'), ln=True)
+    # Աղյուսակի գլխամաս (Headers)
+    pdf.set_fill_color(200, 220, 255)
+    pdf.cell(30, 10, 'Դասարան', 1, 0, 'C', True)
+    pdf.cell(40, 10, 'Օր', 1, 0, 'C', True)
+    pdf.cell(20, 10, 'Ժամ', 1, 0, 'C', True)
+    pdf.cell(50, 10, 'Առարկա', 1, 0, 'C', True)
+    pdf.cell(50, 10, 'Ուսուցիչ', 1, 1, 'C', True)
 
-    return pdf.output(dest='S').encode('latin-1')
+    # Տվյալների լրացում
+    for item in schedule_data:
+        pdf.cell(30, 10, str(item.get('Դասարան', '-')), 1)
+        pdf.cell(40, 10, str(item.get('Օր', '-')), 1)
+        pdf.cell(20, 10, str(item.get('Ժամ', '-')), 1)
+        pdf.cell(50, 10, str(item.get('Առարկա', '-')), 1)
+        pdf.cell(50, 10, str(item.get('Ուսուցիչ', '-')), 1)
+        pdf.ln()
+
+    # Վերադարձնում ենք PDF-ը որպես բայթերի շարք (bytes)
+    return pdf.output(dest='S')
 
 
 st.sidebar.title(f"👤 {st.session_state.username}")
