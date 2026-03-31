@@ -1051,29 +1051,33 @@ elif st.session_state.active_page == "normal":
 
         with col2:
             if st.session_state.teachers and st.session_state.classes:
-                sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", st.session_state.teachers, format_func=lambda x: x.name, key="t_sel_main")
+                st.markdown("### 🔗 Կապել Դասարանին")
                 
-                # Ուսուցչի առարկաները
+                # Ուսուցչի ընտրությունը դնում ենք ֆորմայից ԴՈՒՐՍ, որպեսզի առարկաները թարմանան
+                sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", 
+                                     st.session_state.teachers, 
+                                     format_func=lambda x: x.name, 
+                                     key="t_sel_main")
+                
+                # Դասարանի ընտրությունը նույնպես դնում ենք դուրս
+                sel_c = st.selectbox("🏫 Ընտրեք Դասարանը", 
+                                     st.session_state.classes, 
+                                     format_func=lambda x: f"{x.grade}{x.section}",
+                                     key="c_sel_main")
+
+                # 1. Ֆիլտրում ենք այս ուսուցչի առարկաները
                 all_teacher_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
+                
+                # 2. ԼՈՒԾՈՒՄ: Ստուգում ենք՝ որ առարկաներն արդեն ունեն ուսուցիչ ԱՅՍ դասարանում
+                assigned_subject_ids = [a.subject_id for a in st.session_state.assignments if a.class_id == sel_c.id]
+                available_subjs = [s for s in all_teacher_subjs if s.id not in assigned_subject_ids]
 
-                with st.form("as_form", clear_on_submit=True):
-                    st.markdown("### 🔗 Կապել Դասարանին")
-                    sel_c = st.selectbox("Դասարան", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}")
-                    
-                    # Ֆիլտրում ենք այն առարկաները, որոնք այս դասարանում դեռ ուսուցիչ չունեն
-                    assigned_subject_ids = [a.subject_id for a in st.session_state.assignments if a.class_id == sel_c.id]
-                    available_subjs = [s for s in all_teacher_subjs if s.id not in assigned_subject_ids]
-
-                    if available_subjs:
-                        sel_s = st.selectbox("Առարկա", available_subjs, format_func=lambda x: x.name)
-                    else:
-                        st.warning(f"⚠️ Այս ուսուցչի բոլոր առարկաներն արդեն նշանակված են {sel_c.grade}{sel_c.section}-ում")
-                        sel_s = None
-
-                    hrs = st.number_input("Շաբաթական ժամեր", 1, 15, 2)
-
-                    if st.form_submit_button("Հաստատել Կապը", use_container_width=True):
-                        if sel_s:
+                if available_subjs:
+                    with st.form("as_form", clear_on_submit=True):
+                        sel_s = st.selectbox("📚 Առարկա", available_subjs, format_func=lambda x: x.name)
+                        hrs = st.number_input("📅 Շաբաթական ժամեր", 1, 15, 2)
+                        
+                        if st.form_submit_button("Հաստատել Կապը", use_container_width=True, type="primary"):
                             import uuid
                             new_ass = Assignment(
                                 id=str(uuid.uuid4()), 
@@ -1081,12 +1085,14 @@ elif st.session_state.active_page == "normal":
                                 subject_id=sel_s.id, 
                                 class_id=sel_c.id, 
                                 lessons_per_week=hrs,
-                                room_type="Ավտոմատ" # Սենյակը կորոշվի գեներացման ժամանակ
+                                room_type="Ավտոմատ"
                             )
                             st.session_state.assignments.append(new_ass)
                             save_to_disk()
-                            st.toast(f"🔗 {sel_s.name}-ը կապվեց {sel_c.grade}{sel_c.section}-ին", icon="✅")
+                            st.success(f"✅ {sel_s.name}-ը կապվեց {sel_c.grade}{sel_c.section}-ին")
                             st.rerun()
+                else:
+                    st.warning(f"⚠️ {sel_t.name}-ի բոլոր առարկաներն արդեն նշանակված են {sel_c.grade}{sel_c.section} դասարանում:")
             else:
                 st.info("💡 Կապեր ստեղծելու համար նախ ավելացրեք ուսուցիչներ և դասարաններ:")
 
@@ -1098,7 +1104,6 @@ elif st.session_state.active_page == "normal":
                 col_c1, col_c2 = st.columns([5, 1])
                 col_c1.markdown(f"🏫 **{c.grade}{c.section}** դասարան")
                 if col_c2.button("🗑️", key=f"del_cls_{c.id}"):
-                    # Հեռացնում ենք դասարանը և նրան կցված բոլոր ժամերը
                     st.session_state.classes = [x for x in st.session_state.classes if x.id != c.id]
                     st.session_state.assignments = [a for a in st.session_state.assignments if a.class_id != c.id]
                     save_to_disk(force_overwrite=True)
@@ -1108,10 +1113,14 @@ elif st.session_state.active_page == "normal":
 
         # --- 3. ԴԻՏԵԼ ԿԱՊԵՐԸ (ԺԱՄԵՐԸ) ---
         st.divider() 
-        st.markdown("### 🔗 Դիտել Ժամերի Բաշխումը")
+        st.markdown("### 🔍 Դիտել Ժամերի Բաշխումը")
         
         if st.session_state.classes:
-            view_c = st.selectbox("🔍 Ընտրեք դասարանը՝ կապերը տեսնելու համար", st.session_state.classes, format_func=lambda x: f"{x.grade}{x.section}", key="v_bot_view")
+            view_c = st.selectbox("Ընտրեք դասարանը՝ կապերը տեսնելու համար", 
+                                  st.session_state.classes, 
+                                  format_func=lambda x: f"{x.grade}{x.section}", 
+                                  key="v_bot_view")
+            
             filtered = [a for a in st.session_state.assignments if a.class_id == view_c.id]
             
             if filtered:
