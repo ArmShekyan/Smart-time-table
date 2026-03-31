@@ -519,89 +519,28 @@ def get_subj_complexity(sid):
 
 
 def generate_pdf(schedule_data):
-    from fpdf import FPDF
-    import pandas as pd
-    
     pdf = FPDF()
     pdf.add_page()
     
-    # Վերնագիր
-    pdf.set_font("Helvetica", style='B', size=14)
-    pdf.cell(200, 10, txt="Smart Time Table - School Schedule", ln=True, align='C')
+    # ❗ ԿԱՐԵՎՈՐ: Պետք է ներբեռնես և օգտագործես մի ֆոնտ, որը աջակցում է հայերեն (օր. DejaVuSans)
+    # Եթե չունես ֆոնտի ֆայլը, ապա առանց դրա հայերենը սխալ կերևա:
+    try:
+        # Ավելացրու քո project folder-ում որևէ .ttf ֆոնտ (օրինակ Arial կամ DejaVu)
+        # pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
+        # pdf.set_font('DejaVu', '', 12)
+        pdf.set_font("Arial", size=12) # Եթե չկա հատուկ ֆոնտ, կօգտագործվի ստանդարտը
+    except:
+        pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, txt="Smart Time Table - Schedule", ln=True, align='C')
     pdf.ln(10)
 
-    df = pd.DataFrame(schedule_data)
-    if df.empty:
-        return b""
+    for item in schedule_data:
+        # Օգտագործում ենք .encode('latin-1', 'replace').decode('latin-1'), որպեսզի 404/Error չտա
+        text = f"{item['Դասարան']} | {item['Օր']} | {item['Ժամ']} | {item['Առարկա']}"
+        pdf.cell(0, 10, txt=text.encode('latin-1', 'ignore').decode('latin-1'), ln=True)
 
-    days_eng = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    
-    day_mapping = {
-        "Երկուշաբթի": "Monday",
-        "Երեքշաբթի": "Tuesday",
-        "Չորեքշաբթի": "Wednesday",
-        "Հինգշաբթի": "Thursday",
-        "Ուրբաթ": "Friday"
-    }
-
-    for cls in df['Դասարան'].unique():
-        pdf.set_font("Helvetica", style='B', size=12)
-        pdf.cell(0, 10, txt=f"Class: {cls}", ln=True)
-        
-        cls_df = df[df['Դասարան'] == cls].copy()
-        cls_df['Օր'] = cls_df['Օր'].map(day_mapping)
-        
-        # 1. Առարկայի անվան մշակում և սենյակի ապահով ավելացում (KeyError-ից խուսափելու համար)
-        def format_subject(row):
-            # Վերցնում ենք առարկան, հեռացնում հին փակագծերը
-            base_subj = str(row.get('Առարկա', 'Lesson')).split(" (")[0]
-            # Ստուգում ենք սենյակը .get() մեթոդով
-            room = str(row.get('Սենյակ', ''))
-            if not room or room == "-" or room == "nan":
-                return base_subj
-            return f"{base_subj} [{room}]"
-
-        cls_df['Առարկա'] = cls_df.apply(format_subject, axis=1)
-        
-        # 2. Աղյուսակի կառուցում (Pivot)
-        try:
-            pivot = cls_df.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
-        except:
-            continue
-
-        # Աղյուսակի Header
-        pdf.set_font("Helvetica", style='B', size=10)
-        pdf.cell(15, 8, "Hr", border=1, align='C')
-        for day in days_eng:
-            pdf.cell(35, 8, day, border=1, align='C')
-        pdf.ln()
-
-        # Աղյուսակի տվյալներ
-        pdf.set_font("Helvetica", size=9)
-        for hour in sorted(pivot.index):
-            pdf.cell(15, 8, str(hour), border=1, align='C')
-            for day in days_eng:
-                val = pivot.get(day, {}).get(hour, "-")
-                cell_text = str(val)
-                
-                # Եթե կան հայերեն տառեր, փոխում ենք "Lesson"-ի (ASCII սահմանափակման պատճառով)
-                if any(ord(c) > 127 for c in cell_text):
-                    # Փորձում ենք պահել սենյակը, եթե այն լատինատառ է (օր. [Fast])
-                    room_info = cell_text.split('[')[-1].replace(']', '') if '[' in cell_text else ""
-                    if room_info and not any(ord(c) > 127 for c in room_info):
-                        cell_text = f"Lesson [{room_info}]"
-                    else:
-                        cell_text = "Lesson"
-                
-                pdf.cell(35, 8, cell_text[:18], border=1, align='C')
-            pdf.ln()
-        pdf.ln(10)
-
-    # 3. ՎԵՐՋՆԱԿԱՆ ԵԼՔ (Ուղղված AttributeError-ի համար)
-    output = pdf.output(dest='S')
-    if isinstance(output, str):
-        return output.encode('latin-1', errors='ignore')
-    return output
+    return pdf.output(dest='S').encode('latin-1')
 
 
 st.sidebar.title(f"👤 {st.session_state.username}")
