@@ -1376,7 +1376,7 @@ elif st.session_state.active_page == "normal":
                             response = client.models.generate_content(
                                 model='gemini-2.5-flash',
                                 contents=context,
-                                config={'max_output_tokens': 500}
+                                config={'max_output_tokens': 1000}
                             )
                             st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response.text})
                             st.rerun()
@@ -1406,7 +1406,7 @@ elif st.session_state.active_page == "normal":
                         response = client.models.generate_content(
                             model='gemini-2.5-flash', 
                             contents=full_prompt,
-                            config={'max_output_tokens': 300}
+                            config={'max_output_tokens': 1500}
                         )
                         response_text = response.text
 
