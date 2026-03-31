@@ -1143,7 +1143,7 @@ elif st.session_state.active_page == "normal":
             
 
     elif st.session_state.active_tab == "🚀 Գեներացում":
-        st.title("🚀 Պրոֆեսիոնալ Գեներացում")
+        st.title("🚀 Դասացուցակի Գեներացում")
 
         # 1. Սկզբնավորում ենք Toggle-ի վիճակը, եթե չկա
         if "show_tables" not in st.session_state:
