@@ -519,43 +519,36 @@ def get_subj_complexity(sid):
 
 
 def generate_pdf(schedule_data):
-    # Ստեղծում ենք PDF օբյեկտը
+    # Ստեղծում ենք PDF-ը
     pdf = FPDF()
     pdf.add_page()
     
-    # --- ԿԱՐԵՎՈՐ: Հայերեն ֆոնտի ավելացում ---
-    # Համոզվիր, որ arial.ttf ֆայլը գտնվում է app.py-ի կողքին
-    try:
-        pdf.add_font('Armenian', '', 'arial.ttf', uni=True)
-        pdf.set_font('Armenian', '', 12)
-    except Exception as e:
-        # Եթե ֆոնտը չգտնվի, կօգտագործվի ստանդարտը (հայերենը սխալ կլինի, բայց ֆայլը կբացվի)
-        pdf.set_font('Arial', '', 12)
-        print(f"Font Error: {e}")
+    # Ավելացնում ենք հայերեն ֆոնտը (առանց ստուգումների)
+    # Եթե ֆայլը չլինի, այս տողի վրա ծրագիրը Error կտա
+    pdf.add_font('Armenian', '', 'arial.ttf')
+    pdf.set_font('Armenian', '', 12)
 
     # Վերնագիր
-    pdf.cell(200, 10, txt="Smart Time Table - Դասացուցակ", ln=True, align='C')
+    pdf.cell(200, 10, txt="Դպրոցական Դասացուցակ", ln=True, align='C')
     pdf.ln(10)
 
-    # Աղյուսակի գլխամաս (Headers)
-    pdf.set_fill_color(200, 220, 255)
-    pdf.cell(30, 10, 'Դասարան', 1, 0, 'C', True)
-    pdf.cell(40, 10, 'Օր', 1, 0, 'C', True)
-    pdf.cell(20, 10, 'Ժամ', 1, 0, 'C', True)
-    pdf.cell(50, 10, 'Առարկա', 1, 0, 'C', True)
-    pdf.cell(50, 10, 'Ուսուցիչ', 1, 1, 'C', True)
+    # Աղյուսակի գլխամաս
+    pdf.cell(40, 10, 'Դասարան', 1)
+    pdf.cell(40, 10, 'Օր', 1)
+    pdf.cell(30, 10, 'Ժամ', 1)
+    pdf.cell(60, 10, 'Առարկա', 1)
+    pdf.ln()
 
     # Տվյալների լրացում
     for item in schedule_data:
-        pdf.cell(30, 10, str(item.get('Դասարան', '-')), 1)
+        # Եթե տվյալների մեջ լինի Unicode սիմվոլ, որը ֆոնտը չի տեսնում, կտա Error
+        pdf.cell(40, 10, str(item.get('Դասարան', '-')), 1)
         pdf.cell(40, 10, str(item.get('Օր', '-')), 1)
-        pdf.cell(20, 10, str(item.get('Ժամ', '-')), 1)
-        pdf.cell(50, 10, str(item.get('Առարկա', '-')), 1)
-        pdf.cell(50, 10, str(item.get('Ուսուցիչ', '-')), 1)
+        pdf.cell(30, 10, str(item.get('Ժամ', '-')), 1)
+        pdf.cell(60, 10, str(item.get('Առարկա', '-')), 1)
         pdf.ln()
 
-    # Վերադարձնում ենք PDF-ը որպես բայթերի շարք (bytes)
-    return pdf.output(dest='S')
+    return pdf.output()
 
 
 st.sidebar.title(f"👤 {st.session_state.username}")
