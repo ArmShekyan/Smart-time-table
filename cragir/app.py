@@ -1339,23 +1339,22 @@ elif st.session_state.active_page == "normal":
         if "pending_proposal" not in st.session_state:
             st.session_state.pending_proposal = None
 
-        # --- Թիրախավորված դասարանի ընտրություն տոկեններ խնայելու համար ---
+        # --- Դասարանի ընտրություն տվյալների ֆիլտրման համար ---
         classes = list(set([i['Դասարան'] for i in st.session_state.schedule])) if st.session_state.schedule else []
         
         if classes:
-            selected_class = st.selectbox("🎯 Ընտրեք դասարանը AI խորհրդատվության համար", classes)
-            # Ֆիլտրում ենք միայն ընտրված դասարանի տվյալները
+            selected_class = st.selectbox("🎯 Ընտրեք դասարանը", classes)
             filtered_data = [i for i in st.session_state.schedule if i['Դասարան'] == selected_class]
         else:
             st.info("Դեռ գեներացված դասացուցակ չկա:")
             filtered_data = []
 
-        # 1. Ցուցադրել չաթի պատմությունը
+        # 1. Չաթի պատմության ցուցադրում
         for message in st.session_state.chat_histories[current_user]:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-        # 2. ԱՌԱՋԱՐԿԻ ԿՈՃԱԿԸ (ցուցադրվում է, եթե AI-ն PROPOSAL է արել)
+        # 2. ԱՌԱՋԱՐԿԻ ԿՈՃԱԿՆԵՐ (հայտնվում են միայն PROPOSAL-ի դեպքում)
         if st.session_state.pending_proposal:
             with st.chat_message("assistant"):
                 st.warning(f"💡 Ունեմ առաջարկ {selected_class} դասարանի համար։ Կիրառե՞նք։")
@@ -1367,16 +1366,15 @@ elif st.session_state.active_page == "normal":
                     
                     with st.spinner("🧠 Մշակվում է..."):
                         try:
-                            # Կիրառման հրահանգներ և տոկենների բարձրացված լիմիտ աղյուսակի համար
-                            context = f"Apply agreed change for class {selected_class}: {proposal_text}. Show Markdown table."
+                            context = f"Apply changes for {selected_class}: {proposal_text}. Output ONLY the new schedule in Markdown table."
                             compact_sch = "\n".join([f"{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in filtered_data])
-                            context += f"\nCurrent Data:\n{compact_sch}"
+                            context += f"\nData:\n{compact_sch}"
 
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
                                 model='gemini-2.5-flash',
                                 contents=context,
-                                config={'max_output_tokens': 1500} # Աղյուսակի համար բավարար լիմիտ
+                                config={'max_output_tokens': 1500}
                             )
                             st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response.text})
                             st.rerun()
@@ -1387,7 +1385,7 @@ elif st.session_state.active_page == "normal":
                     st.session_state.pending_proposal = None
                     st.rerun()
 
-        # 3. Նոր հարցում
+        # 3. Նոր հարցում (Chat Input)
         if prompt := st.chat_input("Հարցրու միայն ընտրված դասարանի մասին..."):
             st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
             with st.chat_message("user"):
@@ -1396,34 +1394,35 @@ elif st.session_state.active_page == "normal":
             with st.chat_message("assistant"):
                 with st.spinner("🧠..."):
                     try:
-                        # Տեղեկատու/Խորհրդատու տարբերակման հրահանգ
+                        # Խիստ հրահանգներ՝ առանց ավելորդ ողջույնների և բարձր լիմիտով
                         system_prompt = (
-                            f"Դու 'Smart Time Table' օգնականն ես {selected_class} դասարանի համար: "
-                            "1. Եթե օգտատերը ուղղակի զրուցում է, պատասխանիր որպես տեղեկատու: "
-                            "2. Միայն եթե հստակ առաջարկում ես ՓՈՓՈԽՈՒԹՅՈՒՆ, ապա պատասխանիդ ՎԵՐՋՈՒՄ ավելացրու '[PROPOSAL]' բառը:"
+                            f"Act as the 'Smart Time Table' assistant for class {selected_class}. "
+                            "Do NOT introduce yourself or say hello again. "
+                            "Answer the user's question directly in Armenian. "
+                            "ONLY if you suggest a schedule change, end with '[PROPOSAL]'."
                         )
                         
                         compact_sch = "\n".join([f"{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in filtered_data])
-                        full_prompt = f"{system_prompt}\nՏվյալներ:\n{compact_sch}\nUser: {prompt}"
+                        full_prompt = f"{system_prompt}\nSchedule:\n{compact_sch}\nUser: {prompt}"
 
                         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                         response = client.models.generate_content(
                             model='gemini-2.5-flash', 
                             contents=full_prompt,
-                            config={'max_output_tokens': 800} # Հայերեն տեքստի համար օպտիմալ լիմիտ
+                            config={'max_output_tokens': 1500} # Բարձրացված լիմիտ տեքստը չկտրելու համար
                         )
                         response_text = response.text
 
-                        # Ստուգում ենք հատուկ տեգը
+                        # Տրամաբանություն՝ առաջարկի կոճակը ցուցադրելու համար
                         if "[PROPOSAL]" in response_text:
                             clean_text = response_text.replace("[PROPOSAL]", "").strip()
                             st.session_state.pending_proposal = clean_text
-                            final_display_text = clean_text
+                            final_text = clean_text
                         else:
                             st.session_state.pending_proposal = None
-                            final_display_text = response_text
+                            final_text = response_text
                         
-                        st.session_state.chat_histories[current_user].append({"role": "assistant", "content": final_display_text})
+                        st.session_state.chat_histories[current_user].append({"role": "assistant", "content": final_text})
                         st.rerun()
 
                     except Exception as e:
