@@ -548,7 +548,7 @@ def generate_pdf(schedule_data):
         pdf.ln()
 
     # Վերադարձնում ենք բայթերը Streamlit-ի համար
-    return pdf.output()
+    return bytes(pdf.output())
 
 
 st.sidebar.title(f"👤 {st.session_state.username}")
@@ -1231,11 +1231,11 @@ elif st.session_state.active_page == "normal":
             try:
                 pdf_data = generate_pdf(st.session_state.schedule)
                 st.download_button(
-                    label="📥 Ներբեռնել PDF (Ամբողջական)",
-                    data=pdf_data,  # fpdf2-ը միանգամից bytes է տալիս
+                    label="📥 Ներբեռնել PDF",
+                    data=pdf_data, # Այստեղ արդեն մաքուր bytes են
                     file_name="School_Timetable.pdf",
                     mime="application/pdf",
-                    use_container_width=True,
+                    use_container_width=True
                 )
             except Exception as e:
                 st.error(f"PDF-ի սխալ: {e}")
