@@ -113,7 +113,12 @@ def show_instruction_modal():
 DB_FILE = "smart_timetable_final.json"
 DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
-DEFAULT_OWNER = {"username": "armshekyan", "password": "arms567", "role": "owner"}
+
+DEFAULT_OWNER = {
+    "username": st.secrets["owner_username"], 
+    "password": st.secrets["owner_password"], 
+    "role": "owner"
+}
 
 
 # --- 🔑 ՏՎՅԱԼՆԵՐԻ ԲԱԶԱՅԻ ԵՎ ԼՈԳԻՆԻ ՖՈՒՆԿՑԻԱՆԵՐ ---
