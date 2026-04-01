@@ -1302,32 +1302,34 @@ elif st.session_state.active_page == "normal":
             db_time, db_user = "--:--", "Անհայտ"
 
         # 2. Դասավորում ենք Վերնագիրը և Ժամը
-        col_title, col_time = st.columns([1.5, 1]) # Աջ սյունակը մի քիչ փոքրացրինք, որ բլոկը կարճ լինի
+        col_title, col_time = st.columns([1.3, 1.2]) 
         
         with col_title:
             st.title("📂 Պահպանված Դասացուցակ")
             
         with col_time:
-            # Քո նշած չափով և գույներով բլոկը
+            # Քո ուզած վերջնական դիզայնը
             st.markdown(f"""
                 <div style="
                     display: flex; 
                     justify-content: center; 
                     align-items: center; 
-                    margin-top: 15px; 
-                    padding: 10px; 
+                    margin-top: 10px; 
+                    padding: 10px 15px; 
                     border-radius: 12px; 
-                    background: rgba(88, 166, 255, 0.1); 
+                    background: rgba(88, 166, 255, 0.08); 
                     border: 1px solid rgba(88, 166, 255, 0.2);
                     width: 100%;
                 ">
                     <div style="text-align: right; margin-right: 15px;">
-                        <p style="margin:0; font-size:11px; color:#1a73e8; font-weight: bold; text-transform: uppercase;">Վերջին պահպանում</p>
-                        <p style="margin:0; font-size:10px; color:#555;">հեղինակ՝ {db_user}</p>
+                        <p style="margin:0; font-size:14px; color:#1a73e8; font-weight: 800; text-transform: uppercase;">Վերջին պահպանում</p>
+                        <p style="margin:0; font-size:15px; color:#ffffff; font-weight: bold;">
+                            հեղինակ՝ <span style="color:#00ff00; font-weight: 900;">{db_user}</span>
+                        </p>
                     </div>
-                    <div style="display: flex; align-items: center; border-left: 1px solid rgba(88,166,255,0.3); padding-left: 15px;">
-                        <span style="font-size: 18px; margin-right: 5px;">🕒</span>
-                        <h2 style="margin:0; color:#58a6ff; font-family: monospace; font-size: 26px;">{db_time}</h2>
+                    <div style="display: flex; align-items: center; border-left: 2px solid rgba(88,166,255,0.3); padding-left: 15px;">
+                        <span style="font-size: 22px; margin-right: 8px;">🕒</span>
+                        <h2 style="margin:0; color:#58a6ff; font-family: 'Courier New', monospace; font-size: 32px; line-height: 1;">{db_time}</h2>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
