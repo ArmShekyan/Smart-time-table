@@ -1316,7 +1316,6 @@ elif st.session_state.active_page == "normal":
             st.title("📂 Պահպանված Դասացուցակ")
             
         with col_time:
-            # Քո ուզած վերջնական դիզայնը
             st.markdown(f"""
                 <div style="
                     display: flex; 
@@ -1332,7 +1331,7 @@ elif st.session_state.active_page == "normal":
                     <div style="text-align: right; margin-right: 15px;">
                         <p style="margin:0; font-size:14px; color:#1a73e8; font-weight: 800; text-transform: uppercase;">Վերջին պահպանում</p>
                         <p style="margin:0; font-size:15px; color:#ffffff; font-weight: bold;">
-                            հեղինակ՝ <span style="color:#00ff00; font-weight: 900;">{db_user}</span>
+                            <span style="color:#0047AB; font-weight: 900;">հեղինակ՝</span> <span style="color:#00ff00; font-weight: 900;">{db_user}</span>
                         </p>
                     </div>
                     <div style="display: flex; align-items: center; border-left: 2px solid rgba(88,166,255,0.3); padding-left: 15px;">
