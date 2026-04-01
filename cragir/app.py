@@ -369,45 +369,40 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
+    /* Քո ունեցած Sidebar-ի տրամաբանությունը */
     [data-testid="stSidebar"] {
-        background-color: #1a1c24;
-        border-right: 1px solid #343a40;
+        background-color: #161b22; /* Ավելի մաքուր մուգ գույն */
+        border-right: 1px solid #30363d;
     }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {
-        color: #f8f9fa;
-    }
+    
+    /* Կոճակների կլորացումը պահում ենք, ավելացնում ենք գույն */
     [data-testid="stSidebar"] .stButton>button {
+        border-radius: 12px;
+        background-color: #238636;
+        color: white;
+        border: none;
+    }
+
+    /* Ավելացնում ենք AI չաթի ներմուծման դաշտի դիզայնը */
+    [data-testid="stChatInput"] {
         border-radius: 20px;
-        transition: all 0.3s ease-in-out;
+        border: 1px solid #30363d;
+        background-color: #0d1117;
     }
-    [data-testid="stSidebar"] .stButton>button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
-    }
-    [data-testid="stDataFrameDataframe"] div table {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-    [data-testid="stDataFrameDataframe"] div table thead tr th {
-        background-color: #343a40 !important;
-        color: white !important;
-    }
-    [data-testid="stMetricValue"] {
-        color: #0d6efd;
-        font-weight: bold;
-    }
-    .streamlit-expanderHeader {
-        background-color: #e9ecef;
-        border-radius: 8px;
-        font-weight: bold;
-    }
+
+    /* Ավելացնում ենք սահուն անցում (Fade In) ամբողջ էջի համար */
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
     .stApp {
-        animation: fadeIn 0.8s ease-in-out;
+        animation: fadeIn 1s ease-in-out;
+    }
+    
+    /* Աղյուսակների սիրունացումը */
+    [data-testid="stDataFrameDataframe"] {
+        border-radius: 15px;
+        overflow: hidden;
     }
 </style>
 """, unsafe_allow_html=True)
