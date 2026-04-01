@@ -645,8 +645,16 @@ if st.sidebar.button("💾 Պահպանել Բոլորը", use_container_width=T
     try:
         # PATCH հարցում ենք անում տվյալը թարմացնելու համար
         requests.patch(url, headers=headers, json=data)
-        st.sidebar.success(f"🕒 Ժամը թարմացվեց՝ {arm_time}")
-    except:
+        
+        # 1. Ստեղծում ենք դատարկ տեղ sidebar-ում
+        msg_area = st.sidebar.empty()
+        msg_area.success(f"🕒 Ժամը թարմացվեց՝ {arm_time}")
+        # 3. Սպասում ենք 1.5 վայրկյան
+        time.sleep(1.5)
+        msg_area.empty()
+        
+    except Exception as e:
+        # Սա կօգնի տեսնել, եթե հանկարծ սխալ լինի
         pass
 
 
