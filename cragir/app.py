@@ -265,12 +265,23 @@ def reset_all_data():
         headers = get_supabase_headers()
         if headers:
             try:
+                # 1. Ջնջում ենք դասացուցակի հիմնական տվյալները
                 url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
                 payload = {"id": 1, "data": data}
                 headers["Prefer"] = "resolution=merge-duplicates"
                 requests.post(url, headers=headers, data=json.dumps(payload))
+
+                # 2. ԱՎԵԼԱՑՐՈՒ ԱՅՍ ՄԱՍԸ՝ Զրոյացնում ենք վերջին պահպանման ժամն ու հեղինակին
+                update_url = f"{st.secrets['supabase_url']}/rest/v1/global_updates?id=eq.1"
+                reset_update = {
+                    "last_update": "--:--", 
+                    "updated_by": "Ոչ ոք"
+                }
+                requests.patch(update_url, headers=headers, json=reset_update)
+
                 st.toast("💥 Բազան զրոյացվեց Cloud-ում:", icon="💣")
                 st.balloons()
+                st.rerun() # Սա ավելացրու, որ էջը թարմանա ու միանգամից տեսնես փոփոխությունը
                 return
             except Exception:
                 pass
@@ -279,6 +290,7 @@ def reset_all_data():
             json.dump(data, f, ensure_ascii=False, indent=4)
         st.toast("💥 Բազան զրոյացվեց տեղական ֆայլում:", icon="💣")
         st.balloons()
+        st.rerun()
 
 
 def manual_refresh():
