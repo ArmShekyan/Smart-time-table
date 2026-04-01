@@ -1346,7 +1346,7 @@ elif st.session_state.active_page == "normal":
             df = pd.DataFrame(st.session_state.schedule)
             all_grades = sorted(list(set([c.grade for c in st.session_state.classes])))
             if all_grades:
-                sel_grade = st.selectbox("Ընտրեք հոսքը", all_grades)
+                sel_grade = st.selectbox("Ընտրեք դասարանը", all_grades)
                 for cls in [f"{c.grade}{c.section}" for c in st.session_state.classes if c.grade == sel_grade]:
                     cls_data = df[df['Դասարան'] == cls]
                     if not cls_data.empty:
