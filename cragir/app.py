@@ -628,10 +628,10 @@ if st.sidebar.button("💾 Պահպանել Բոլորը", use_container_width=T
     save_to_disk() # Քո հին ֆունկցիան
     
     # --- Թարմացնում ենք ժամը REST API-ով ---
-    url = f"{st.secrets['SUPABASE_URL']}/rest/v1/global_updates?id=eq.1"
+    url = f"{st.secrets['supabase_url']}/rest/v1/global_updates?id=eq.1"
     headers = {
-        "apikey": st.secrets["SUPABASE_KEY"],
-        "Authorization": f"Bearer {st.secrets['SUPABASE_KEY']}",
+        "apikey": st.secrets["supabase_key"],
+        "Authorization": f"Bearer {st.secrets['supabase_key']}",
         "Content-Type": "application/json",
         "Prefer": "return=minimal"
     }
