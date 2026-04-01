@@ -1288,17 +1288,17 @@ elif st.session_state.active_page == "normal":
 
 
     elif st.session_state.active_tab == "📂 Վերջին պահպանվածը":
-        # 1. Վերցնում ենք թարմացման տվյալները Supabase-ից (REST API-ով)
+        # 1. Վերցնում ենք թարմացման տվյալները Supabase-ից 
         try:
-            read_url = f"{st.secrets['SUPABASE_URL']}/rest/v1/global_updates?id=eq.1&select=*"
+            read_url = f"{st.secrets['supabase_url']}/rest/v1/global_updates?id=eq.1&select=*"
             headers = {
-                "apikey": st.secrets["SUPABASE_KEY"],
-                "Authorization": f"Bearer {st.secrets['SUPABASE_KEY']}"
+                "apikey": st.secrets["supabase_key"],
+                "Authorization": f"Bearer {st.secrets['supabase_key']}"
             }
             resp = requests.get(read_url, headers=headers).json()
             db_time = resp[0]['last_update']
             db_user = resp[0]['updated_by']
-        except:
+        except Exception as e:
             db_time, db_user = "--:--", "Անհայտ"
 
         # 2. Դասավորում ենք Վերնագիրը և Ժամը քո նշած անկյունում
@@ -1308,7 +1308,7 @@ elif st.session_state.active_page == "normal":
             st.title("📂 Պահպանված Դասացուցակ")
             
         with col_time:
-            # Սա հենց քո նշած կարմիր շրջանակի հատվածն է
+            # Սա հենց քո նշած վերևի աջ անկյունն է
             st.markdown(f"""
                 <div style="text-align: right; margin-top: 15px; padding: 8px; border-radius: 12px; background: rgba(88, 166, 255, 0.1); border: 1px solid rgba(88, 166, 255, 0.2);">
                     <p style="margin:0; font-size:10px; color:#888; text-transform: uppercase;">Վերջին պահպանում</p>
