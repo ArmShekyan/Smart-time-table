@@ -1301,33 +1301,33 @@ elif st.session_state.active_page == "normal":
         except Exception as e:
             db_time, db_user = "--:--", "Անհայտ"
 
-        # 2. Դասավորում ենք Վերնագիրը և Ժամը (Հարաբերակցությունը փոխված է ավելի լայն տեսքի համար)
-        col_title, col_time = st.columns([1.1, 2])
+        # 2. Դասավորում ենք Վերնագիրը և Ժամը
+        col_title, col_time = st.columns([1.5, 1]) # Աջ սյունակը մի քիչ փոքրացրինք, որ բլոկը կարճ լինի
         
         with col_title:
             st.title("📂 Պահպանված Դասացուցակ")
             
         with col_time:
-            # Քո ուզած երկար ու նեղ բլոկը՝ Flexbox-ով
+            # Քո նշած չափով և գույներով բլոկը
             st.markdown(f"""
                 <div style="
                     display: flex; 
-                    justify-content: space-between; 
+                    justify-content: center; 
                     align-items: center; 
                     margin-top: 15px; 
-                    padding: 5px 15px; 
+                    padding: 10px; 
                     border-radius: 12px; 
                     background: rgba(88, 166, 255, 0.1); 
                     border: 1px solid rgba(88, 166, 255, 0.2);
                     width: 100%;
                 ">
-                    <div style="text-align: left;">
-                        <p style="margin:0; font-size:10px; color:#888; text-transform: uppercase;">Վերջին պահպանում</p>
+                    <div style="text-align: right; margin-right: 15px;">
+                        <p style="margin:0; font-size:11px; color:#1a73e8; font-weight: bold; text-transform: uppercase;">Վերջին պահպանում</p>
                         <p style="margin:0; font-size:10px; color:#555;">հեղինակ՝ {db_user}</p>
                     </div>
-                    <div style="display: flex; align-items: center;">
-                        <span style="font-size: 20px; margin-right: 8px;">🕒</span>
-                        <h2 style="margin:0; color:#58a6ff; font-family: monospace; font-size: 28px;">{db_time}</h2>
+                    <div style="display: flex; align-items: center; border-left: 1px solid rgba(88,166,255,0.3); padding-left: 15px;">
+                        <span style="font-size: 18px; margin-right: 5px;">🕒</span>
+                        <h2 style="margin:0; color:#58a6ff; font-family: monospace; font-size: 26px;">{db_time}</h2>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
