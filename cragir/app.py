@@ -462,7 +462,7 @@ st.markdown("""
         font-weight: bold;
     }
 
-    /* --- 2. Expander-ի գլխամասի դիզայնը --- */
+    /* --- 2. Expander-ի դիզայնը և սլաքների փոփոխությունը --- */
     [data-testid="stExpander"] {
         background-color: #f8f9fa;
         border-radius: 8px !important;
@@ -470,15 +470,13 @@ st.markdown("""
         margin-bottom: 10px;
     }
 
-    /* --- 3. Եռանկյունիների (▶ և ▼) տրամաբանությունը --- */
-    
-    /* Թաքցնում ենք օրիգինալ սլաքը և դրա տարածքը */
+    /* Թաքցնում ենք օրիգինալ SVG սլաքը */
     [data-testid="stExpander"] svg[data-testid="stExpanderIcon"],
     [data-testid="stExpanderIconContainer"] {
         display: none !important;
     }
 
-    /* Սարքում ենք գլխամասը որպես լիարժեք կոճակ */
+    /* Սարքում ենք summary-ն որպես սեղմվող տող */
     [data-testid="stExpander"] summary {
         display: flex !important;
         flex-direction: row !important;
@@ -489,7 +487,7 @@ st.markdown("""
         padding: 10px !important;
     }
 
-    /* Ավելացնում ենք մեր եռանկյունին ՓԱԿ վիճակում */
+    /* Ավելացնում ենք եռանկյունին ՓԱԿ վիճակում */
     [data-testid="stExpander"] summary::before {
         content: '▶';
         display: inline-block;
@@ -498,14 +496,30 @@ st.markdown("""
         transition: transform 0.2s ease;
     }
 
-    /* Փոխում ենք եռանկյունին ԲԱՑ վիճակում (երբ details-ը open է) */
+    /* Փոխում ենք եռանկյունին ԲԱՑ վիճակում */
     [data-testid="stExpander"] details[open] summary::before {
         content: '▼';
     }
 
-    /* Հեռացնում ենք բրաուզերային ստանդարտ մարկերները */
     [data-testid="stExpander"] summary::-webkit-details-marker {
         display: none !important;
+    }
+
+    /* --- 3. Selectbox-ների (ընտրության դաշտերի) սլաքների ուղղում --- */
+    /* Թաքցնում ենք Selectbox-ի ներկառուցված սլաքը */
+    [data-testid="stSelectbox"] svg, 
+    [data-baseweb="select"] svg {
+        display: none !important;
+    }
+
+    /* Ավելացնում ենք մեր ▼ սլաքը Selectbox-ի մեջ */
+    [data-testid="stSelectbox"] [data-baseweb="select"]::after {
+        content: '▼';
+        position: absolute;
+        right: 15px;
+        font-size: 12px;
+        color: #f8f9fa; /* Գույնը կարող ես փոխել */
+        pointer-events: none;
     }
 
     /* --- 4. Անիմացիան --- */
