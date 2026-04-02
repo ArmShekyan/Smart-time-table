@@ -155,26 +155,26 @@ def hash_password(password):
 
 def check_user(username, password):
     # 1. ՆԱԽ ՍՏՈՒԳՈՒՄ ԵՆՔ ԼՈԿԱԼ (Admin-ի համար .env-ից)
-    # Սա կաշխատի նույնիսկ եթե ինտերնետ կամ բազա չկա
-    if username == DEFAULT_OWNER["username"] and password == DEFAULT_OWNER["password"]:
+    # Ուշադրություն. ստուգում ենք սովորական տեքստով, որովհետև .env-ում տեքստ է
+    if DEFAULT_OWNER["username"] and username == DEFAULT_OWNER["username"] and password == DEFAULT_OWNER["password"]:
         return DEFAULT_OWNER
 
     # 2. ԵԹԵ ԼՈԿԱԼ ՉԷ, ԴԻՄՈՒՄ ԵՆՔ SUPABASE-ԻՆ (մնացած օգտատերերի համար)
+    # Այստեղ արդեն սարքում ենք Hash, որովհետև բազայում Hash է պահված
     hashed_input = hash_password(password)
     headers = get_supabase_headers()
     
     if headers:
         url = f"{st.secrets['supabase_url']}/rest/v1/users?username=eq.{username}&password=eq.{hashed_input}"
         try:
-            response = requests.get(url, headers=headers, timeout=5) # Ավելացրի timeout, որ երկար չսպասի
+            # timeout=5-ը թույլ չի տա, որ ծրագիրը կախվի, եթե կապ չլինի
+            response = requests.get(url, headers=headers, timeout=5)
             if response.status_code == 200:
                 data = response.json()
                 if data:
-                    return data[0]
+                    return data[0]  # Վերադարձնում է բազայի օգտատիրոջը
         except Exception as e:
-            # Եթե բազան չկա, բայց մենք արդեն վերևում ստուգել ենք լոկալը,
-            # ապա այստեղ ուղղակի զգուշացնում ենք
-            st.warning("⚠️ Բազայի հետ կապ չկա, հասանելի է միայն լոկալ մուտքը:")
+            st.warning("⚠️ Բազայի հետ կապ չկա:")
             
     return None
 
