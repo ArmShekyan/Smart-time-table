@@ -115,11 +115,23 @@ DB_FILE = "smart_timetable_final.json"
 DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
 
+import os
+from dotenv import load_dotenv
+
+# 1. Բեռնում ենք .env-ը
+load_dotenv()
+
+# 2. Սահմանում ենք DEFAULT_OWNER-ը՝ ՄԻԱՅՆ .env-ից
+# Եթե .env-ում չկան OWNER_USER կամ OWNER_PASS, ապա կստանան None
 DEFAULT_OWNER = {
-    "username": st.secrets["owner_username"], 
-    "password": st.secrets["owner_password"], 
+    "username": os.getenv("OWNER_USER"), 
+    "password": os.getenv("OWNER_PASS"), 
     "role": "owner"
 }
+
+# 3. Ստուգում (ըստ ցանկության), որ եթե տվյալները չկան, զգուշացնի
+if not DEFAULT_OWNER["username"] or not DEFAULT_OWNER["password"]:
+    print("⚠️ Զգուշացում. .env ֆայլում Admin-ի տվյալները բացակայում են:")
 
 
 # --- 🔑 ՏՎՅԱԼՆԵՐԻ ԲԱԶԱՅԻ ԵՎ ԼՈԳԻՆԻ ՖՈՒՆԿՑԻԱՆԵՐ ---
