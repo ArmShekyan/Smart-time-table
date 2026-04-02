@@ -13,6 +13,7 @@ from fpdf import FPDF
 from datetime import datetime, timedelta
 from streamlit_cookies_controller import CookieController
 from google import genai
+from dotenv import load_dotenv
 import hashlib
 
 # --- ՄՈԴԵԼՆԵՐ ---
@@ -115,11 +116,10 @@ DB_FILE = "smart_timetable_final.json"
 DAYS_AM = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
 
-import os
-from dotenv import load_dotenv
+
 
 # 1. Բեռնում ենք .env-ը
-load_dotenv()
+load_dotenv(override=True)
 
 # 2. Սահմանում ենք DEFAULT_OWNER-ը՝ ՄԻԱՅՆ .env-ից
 # Եթե .env-ում չկան OWNER_USER կամ OWNER_PASS, ապա կստանան None
@@ -129,9 +129,10 @@ DEFAULT_OWNER = {
     "role": "owner"
 }
 
+
 # 3. Ստուգում (ըստ ցանկության), որ եթե տվյալները չկան, զգուշացնի
 if not DEFAULT_OWNER["username"] or not DEFAULT_OWNER["password"]:
-    print("⚠️ Զգուշացում. .env ֆայլում Admin-ի տվյալները բացակայում են:")
+    print("⚠️ Զգուշացում. .env ֆայլում Owner-ի տվյալները բացակայում են:")
 
 
 # --- 🔑 ՏՎՅԱԼՆԵՐԻ ԲԱԶԱՅԻ ԵՎ ԼՈԳԻՆԻ ՖՈՒՆԿՑԻԱՆԵՐ ---
@@ -153,22 +154,27 @@ def hash_password(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
 
 def check_user(username, password):
-    # 1. Օգտատիրոջ գրած գաղտնաբառը անմիջապես սարքում ենք Hash
+    # 1. ՆԱԽ ՍՏՈՒԳՈՒՄ ԵՆՔ ԼՈԿԱԼ (Admin-ի համար .env-ից)
+    # Սա կաշխատի նույնիսկ եթե ինտերնետ կամ բազա չկա
+    if username == DEFAULT_OWNER["username"] and password == DEFAULT_OWNER["password"]:
+        return DEFAULT_OWNER
+
+    # 2. ԵԹԵ ԼՈԿԱԼ ՉԷ, ԴԻՄՈՒՄ ԵՆՔ SUPABASE-ԻՆ (մնացած օգտատերերի համար)
     hashed_input = hash_password(password)
-    
-    # 2. Դիմում ենք Supabase-ին՝ հարցնելով ՀԵՆՑ այդ Hash-ը
     headers = get_supabase_headers()
+    
     if headers:
-        # Ուշադրություն. password=eq.{hashed_input}
         url = f"{st.secrets['supabase_url']}/rest/v1/users?username=eq.{username}&password=eq.{hashed_input}"
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=5) # Ավելացրի timeout, որ երկար չսպասի
             if response.status_code == 200:
                 data = response.json()
                 if data:
-                    return data[0]  # Եթե գտանք օգտատիրոջը բազայում
+                    return data[0]
         except Exception as e:
-            st.error(f"Բազայի հետ կապի սխալ: {e}")
+            # Եթե բազան չկա, բայց մենք արդեն վերևում ստուգել ենք լոկալը,
+            # ապա այստեղ ուղղակի զգուշացնում ենք
+            st.warning("⚠️ Բազայի հետ կապ չկա, հասանելի է միայն լոկալ մուտքը:")
             
     return None
 
