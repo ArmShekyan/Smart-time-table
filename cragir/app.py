@@ -1247,11 +1247,9 @@ elif st.session_state.active_page == "normal":
                     final_schedule = []
                     total_success = False
                     
-                    # --- ՄԵԾ ՑԻԿԼ (100 անգամ փորձելու համար) ---
                     for attempt in range(100):
                         teacher_occupancy = {d: {h: set() for h in range(1, 9)} for d in DAYS_AM}
                         class_occupancy = {d: {h: set() for h in range(1, 9)} for d in DAYS_AM}
-                        # Հիշում ենք՝ որ օրը որ դասարանը ինչ առարկա է արդեն արել
                         class_daily_subjects = {cls.id: {d: [] for d in DAYS_AM} for cls in st.session_state.classes}
                         
                         current_attempt_schedule = []
@@ -1268,7 +1266,6 @@ elif st.session_state.active_page == "normal":
                             for ass in assignments_for_cls:
                                 class_fund.extend([ass] * ass.lessons_per_week)
                             
-                            # Բարդ առարկաները առաջնահերթ
                             class_fund.sort(key=lambda x: get_subj_complexity(x.subject_id), reverse=True)
                             class_day_counts = {d: 0 for d in DAYS_AM}
                             
@@ -1286,14 +1283,25 @@ elif st.session_state.active_page == "normal":
                                 
                                 for idx, candidate in enumerate(class_fund):
                                     subj_name = get_subj_name(candidate.subject_id)
+                                    subj_name_low = subj_name.lower()
+
+                                    # ✨ ՆՈՐ ՏՐԱՄԱԲԱՆՈՒԹՅՈՒՆ
+                                    subj_count_today = class_daily_subjects[cls.id][best_day].count(subj_name)
                                     
-                                    # ✨ ԿԱՆՈՆ: Բացի այս 3-ից, մնացածը օրական 1 ժամ
-                                    priority_subjs = ["հանրահաշիվ", "python", "ai"]
-                                    is_priority = any(p in subj_name.lower() for p in priority_subjs)
-                                    
-                                    if not is_priority and subj_name in class_daily_subjects[cls.id][best_day]:
-                                        continue # Եթե արդեն կար ու պրիորիտետ չի՝ բաց թող
-                                    
+                                    # Ստուգում ենք՝ արդյո՞ք թույլատրվում է օրական 2 ժամ
+                                    is_double_allowed = (
+                                        "python" in subj_name_low or 
+                                        "ai" in subj_name_low or 
+                                        candidate.lessons_per_week >= 6
+                                    )
+
+                                    if is_double_allowed:
+                                        if subj_count_today >= 2:
+                                            continue
+                                    else:
+                                        if subj_count_today >= 1:
+                                            continue
+
                                     # Ստուգում ենք ուսուցչի և դասարանի ազատ լինելը
                                     if (candidate.teacher_id not in teacher_occupancy[best_day][next_hour] and 
                                         class_label not in class_occupancy[best_day][next_hour]):
@@ -1323,19 +1331,16 @@ elif st.session_state.active_page == "normal":
                         if not generation_failed:
                             final_schedule = current_attempt_schedule
                             total_success = True
-                            break # Եթե ստացվեց, դուրս ենք գալիս 100 փորձի ցիկլից
+                            break
 
                     if total_success:
                         st.session_state.schedule = final_schedule
-                        
-                        # ✨ Որոշում ենք վերջավորությունը (1-ի դեպքում "-ին", մնացածի դեպքում "-րդ")
                         num = attempt + 1
                         suffix = "-ին" if num == 1 else "-րդ"
-                        
                         st.success(f"🎉 Լավագույն տարբերակը գտնվեց {num}{suffix} փորձից:")
                         st.balloons()
                     else:
-                        st.error("⚠️ Նույնիսկ 100 փորձից հետո չհաջողվեց լուծել բոլոր բախումները: Փորձեք թեթևացնել ժամերը:")
+                        st.error("⚠️ Նույնիսկ 100 փորձից հետո չհաջողվեց լուծել բոլոր բախումները:")
 
         # 📊 ԱՐԴՅՈՒՆՔՆԵՐԻ ՑՈՒՑԱԴՐՈՒՄ
         if st.session_state.get('schedule'):
