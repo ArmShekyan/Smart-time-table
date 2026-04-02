@@ -319,6 +319,15 @@ def manual_refresh():
                 if response.status_code == 200 and response.json():
                     data = response.json()[0]["data"]
                     parse_data(data)
+                    
+                    # ✨ ԼՈՒԾՈՒՄԸ. Մաքրում ենք selectbox-ի հիշողությունը
+                    if "v_bot_view" in st.session_state:
+                        del st.session_state["v_bot_view"]
+                    
+                    # Եթե դասարաններ կան, սահմանում ենք առաջինը որպես ընթացիկ
+                    if st.session_state.classes:
+                        st.session_state.v_bot_view = st.session_state.classes[0]
+                        
                     st.toast("✅ Տվյալները թարմ են:", icon="🔄")
                     st.rerun()
                     return
@@ -330,6 +339,13 @@ def manual_refresh():
                 with open(DB_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     parse_data(data)
+                    
+                    # ✨ Նույնը տեղական ֆայլի դեպքում
+                    if "v_bot_view" in st.session_state:
+                        del st.session_state["v_bot_view"]
+                    if st.session_state.classes:
+                        st.session_state.v_bot_view = st.session_state.classes[0]
+                        
                     st.toast("✅ Տեղական տվյալները թարմ են:", icon="🔄")
             except Exception:
                 pass
@@ -1169,12 +1185,25 @@ elif st.session_state.active_page == "normal":
         # --- 3. ԴԻՏԵԼ ԿԱՊԵՐԸ (ԺԱՄԵՐԸ) ---
         st.divider() 
         st.markdown("### 🔍 Դիտել Ժամերի Բաշխումը")
-        
+
         if st.session_state.classes:
-            view_c = st.selectbox("Ընտրեք դասարանը՝ կապերը տեսնելու համար", 
-                                  st.session_state.classes, 
-                                  format_func=lambda x: f"{x.grade}{x.section}", 
-                                  key="v_bot_view")
+            # 1. Որոշում ենք, թե որ ինդեքսը պետք է ցույց տա Selectbox-ը
+            # Եթե session_state-ում արդեն կա ընտրված դասարան, գտնում ենք դրա տեղը ցուցակում
+            current_idx = 0
+            if "v_bot_view" in st.session_state:
+                try:
+                    current_idx = st.session_state.classes.index(st.session_state.v_bot_view)
+                except (ValueError, IndexError):
+                    current_idx = 0
+
+            # 2. Selectbox-ը՝ index պարամետրով
+            view_c = st.selectbox(
+                "Ընտրեք դասարանը՝ կապերը տեսնելու համար", 
+                st.session_state.classes, 
+                index=current_idx, # ✨ Սա ստիպում է widget-ին ցույց տալ այն, ինչ կոդում է
+                format_func=lambda x: f"{x.grade}{x.section}", 
+                key="v_bot_view"
+            )
             
             filtered = [a for a in st.session_state.assignments if a.class_id == view_c.id]
             
