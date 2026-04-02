@@ -429,8 +429,10 @@ def parse_data(data):
 # --- INITIALIZATION ---
 st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅")
 
+
 st.markdown("""
 <style>
+    /* --- Քո ունեցած Sidebar-ի և ընդհանուր դիզայնի CSS-ը --- */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
         border-right: 1px solid #343a40;
@@ -459,11 +461,46 @@ st.markdown("""
         color: #0d6efd;
         font-weight: bold;
     }
+    
+    /* --- Քո նշած Expander-ի գլխամասի դիզայնը --- */
     .streamlit-expanderHeader {
-        background-color: #e9ecef;
-        border-radius: 8px;
-        font-weight: bold;
+        background-color: #e9ecef !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        padding: 10px !important;
     }
+
+    /* --- ՆՈՐ. Եռանկյունիների տրամաբանությունը (▶ և ▼) --- */
+    
+    /* 1. Թաքցնում ենք Streamlit-ի ստանդարտ սլաքը (SVG) */
+    [data-testid="stExpander"] svg {
+        display: none !important;
+    }
+
+    /* 2. Ավելացնում ենք մեր եռանկյունին ՓԱԿ վիճակում */
+    [data-testid="stExpander"] summary::before {
+        content: '▶';
+        display: inline-block;
+        margin-right: 10px;
+        font-size: 14px;
+        color: #343a40;
+        transition: transform 0.2s ease;
+    }
+
+    /* 3. Փոխում ենք եռանկյունին ԲԱՑ վիճակում */
+    [data-testid="stExpander"] details[open] summary::before {
+        content: '▼';
+    }
+
+    /* 4. Մաքրում ենք լրացուցիչ մարկերները */
+    [data-testid="stExpander"] summary {
+        list-style: none !important;
+    }
+    [data-testid="stExpander"] summary::-webkit-details-marker {
+        display: none !important;
+    }
+
+    /* --- Անիմացիան --- */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
