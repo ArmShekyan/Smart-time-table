@@ -429,8 +429,10 @@ def parse_data(data):
 # --- INITIALIZATION ---
 st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅")
 
+
 st.markdown("""
 <style>
+    /* --- 1. Sidebar և ընդհանուր դիզայն --- */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
         border-right: 1px solid #343a40;
@@ -459,11 +461,54 @@ st.markdown("""
         color: #0d6efd;
         font-weight: bold;
     }
-    .streamlit-expanderHeader {
-        background-color: #e9ecef;
-        border-radius: 8px;
-        font-weight: bold;
+
+    /* --- 2. Expander-ի գլխամասի դիզայնը --- */
+    [data-testid="stExpander"] {
+        background-color: #f8f9fa;
+        border-radius: 8px !important;
+        border: 1px solid #e9ecef !important;
+        margin-bottom: 10px;
     }
+
+    /* --- 3. Եռանկյունիների (▶ և ▼) տրամաբանությունը --- */
+    
+    /* Թաքցնում ենք օրիգինալ սլաքը և դրա տարածքը */
+    [data-testid="stExpander"] svg[data-testid="stExpanderIcon"],
+    [data-testid="stExpanderIconContainer"] {
+        display: none !important;
+    }
+
+    /* Սարքում ենք գլխամասը որպես լիարժեք կոճակ */
+    [data-testid="stExpander"] summary {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px;
+        list-style: none !important;
+        cursor: pointer !important;
+        padding: 10px !important;
+    }
+
+    /* Ավելացնում ենք մեր եռանկյունին ՓԱԿ վիճակում */
+    [data-testid="stExpander"] summary::before {
+        content: '▶';
+        display: inline-block;
+        font-size: 14px;
+        color: #343a40;
+        transition: transform 0.2s ease;
+    }
+
+    /* Փոխում ենք եռանկյունին ԲԱՑ վիճակում (երբ details-ը open է) */
+    [data-testid="stExpander"] details[open] summary::before {
+        content: '▼';
+    }
+
+    /* Հեռացնում ենք բրաուզերային ստանդարտ մարկերները */
+    [data-testid="stExpander"] summary::-webkit-details-marker {
+        display: none !important;
+    }
+
+    /* --- 4. Անիմացիան --- */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
