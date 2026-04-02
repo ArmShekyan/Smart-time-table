@@ -1193,13 +1193,23 @@ elif st.session_state.active_page == "normal":
                 except (ValueError, IndexError):
                     current_idx = 0
 
+            # 1. Նախապես որոշում ենք, թե որ դասարանն է հիմա ընտրված session_state-ում
+            current_idx = 0
+            if "v_bot_view" in st.session_state:
+                # Փորձում ենք գտնել նախորդ ընտրված դասարանի ինդեքսը նոր ցուցակում
+                try:
+                    prev_selected = st.session_state.v_bot_view
+                    current_idx = st.session_state.classes.index(prev_selected)
+                except (ValueError, AttributeError):
+                    current_idx = 0
+
             # 2. Selectbox-ը՝ index պարամետրով
             view_c = st.selectbox(
                 "Ընտրեք դասարանը՝ կապերը տեսնելու համար", 
                 st.session_state.classes, 
-                index=current_idx, # ✨ Սա ստիպում է widget-ին ցույց տալ այն, ինչ կոդում է
+                index=current_idx,  # ✨ Սա պահում է ընտրված դասարանը թարմացումից հետո
                 format_func=lambda x: f"{x.grade}{x.section}", 
-                key="v_bot_view"
+                key="v_bot_view"    # Սա Streamlit-ին ասում է, որ հիշի այս widget-ի վիճակը
             )
             
             filtered = [a for a in st.session_state.assignments if a.class_id == view_c.id]
