@@ -429,10 +429,8 @@ def parse_data(data):
 # --- INITIALIZATION ---
 st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅")
 
-
 st.markdown("""
 <style>
-    /* --- 1. Sidebar և ընդհանուր դիզայն --- */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
         border-right: 1px solid #343a40;
@@ -461,68 +459,11 @@ st.markdown("""
         color: #0d6efd;
         font-weight: bold;
     }
-
-    /* --- 2. Expander-ի դիզայնը և սլաքների փոփոխությունը --- */
-    [data-testid="stExpander"] {
-        background-color: #f8f9fa;
-        border-radius: 8px !important;
-        border: 1px solid #e9ecef !important;
-        margin-bottom: 10px;
+    .streamlit-expanderHeader {
+        background-color: #e9ecef;
+        border-radius: 8px;
+        font-weight: bold;
     }
-
-    /* Թաքցնում ենք օրիգինալ SVG սլաքը */
-    [data-testid="stExpander"] svg[data-testid="stExpanderIcon"],
-    [data-testid="stExpanderIconContainer"] {
-        display: none !important;
-    }
-
-    /* Սարքում ենք summary-ն որպես սեղմվող տող */
-    [data-testid="stExpander"] summary {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        gap: 10px;
-        list-style: none !important;
-        cursor: pointer !important;
-        padding: 10px !important;
-    }
-
-    /* Ավելացնում ենք եռանկյունին ՓԱԿ վիճակում */
-    [data-testid="stExpander"] summary::before {
-        content: '▶';
-        display: inline-block;
-        font-size: 14px;
-        color: #343a40;
-        transition: transform 0.2s ease;
-    }
-
-    /* Փոխում ենք եռանկյունին ԲԱՑ վիճակում */
-    [data-testid="stExpander"] details[open] summary::before {
-        content: '▼';
-    }
-
-    [data-testid="stExpander"] summary::-webkit-details-marker {
-        display: none !important;
-    }
-
-    /* --- 3. Selectbox-ների (ընտրության դաշտերի) սլաքների ուղղում --- */
-    /* Թաքցնում ենք Selectbox-ի ներկառուցված սլաքը */
-    [data-testid="stSelectbox"] svg, 
-    [data-baseweb="select"] svg {
-        display: none !important;
-    }
-
-    /* Ավելացնում ենք մեր ▼ սլաքը Selectbox-ի մեջ */
-    [data-testid="stSelectbox"] [data-baseweb="select"]::after {
-        content: '▼';
-        position: absolute;
-        right: 15px;
-        font-size: 12px;
-        color: #f8f9fa; /* Գույնը կարող ես փոխել */
-        pointer-events: none;
-    }
-
-    /* --- 4. Անիմացիան --- */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
