@@ -913,9 +913,22 @@ elif st.session_state.active_page == "normal":
         with c2:
             st.subheader("👩‍🏫 Ուսուցիչներ")
             if st.session_state.teachers:
-                df_t = pd.DataFrame([{"Անուն": t.name, "Առարկաներ": len(t.subject_ids)} for t in st.session_state.teachers])
+                teacher_data = []
+                for t in st.session_state.teachers:
+                    # Ստանում ենք առարկաների անունների ցուցակը ըստ ID-ների
+                    subj_names = [get_subj_name(sid) for sid in t.subject_ids]
+                    # Միացնում ենք իրար ստորակետով
+                    names_str = ", ".join(subj_names) if subj_names else "Առարկա չկա"
+                    
+                    teacher_data.append({
+                        "Անուն": t.name, 
+                        "Առարկաներ": names_str
+                    })
+                    
+                df_t = pd.DataFrame(teacher_data)
                 st.dataframe(df_t, use_container_width=True, hide_index=True)
-            else: st.caption("Ուսուցիչներ գրանցված չեն:")
+            else: 
+                st.caption("Ուսուցիչներ գրանցված չեն:")
 
 
     elif st.session_state.active_tab == "📚 Առարկաներ":
