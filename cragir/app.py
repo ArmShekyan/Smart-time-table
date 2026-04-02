@@ -1184,31 +1184,30 @@ elif st.session_state.active_page == "normal":
         st.markdown("### 🔍 Դիտել Ժամերի Բաշխումը")
 
         if st.session_state.classes:
-            # 1. Որոշում ենք current_idx-ը՝ օգտագործելով ID-ն, որ էջը թարմանալուց չթռնի
-            current_idx = 0
-            
-            # Ստուգում ենք՝ արդյո՞ք արդեն ունենք ընտրված դասարան session_state-ում
-            if "v_bot_view" in st.session_state and st.session_state.v_bot_view:
-                try:
-                    # Վերցնում ենք նախկինում ընտրված դասարանի ID-ն
-                    prev_id = st.session_state.v_bot_view.id
-                    
-                    # Գտնում ենք այդ ID-ով դասարանի տեղը (index-ը) նոր ցուցակում
-                    for i, cls in enumerate(st.session_state.classes):
-                        if cls.id == prev_id:
-                            current_idx = i
-                            break
-                except (AttributeError, ValueError):
-                    current_idx = 0
+            # 1. Սկզբից ստուգում ենք՝ արդյո՞ք արդեն ունենք ընտրված ID մեր "հիշողության" մեջ
+            # Եթե առաջին անգամն է, վերցնում ենք առաջին դասարանի ID-ն
+            if "selected_class_id" not in st.session_state:
+                st.session_state.selected_class_id = st.session_state.classes[0].id
 
-            # 2. Selectbox-ը՝ index պարամետրով
+            # 2. Գտնում ենք, թե այդ ID-ն որերորդն է նոր (թարմացված) ցուցակում
+            current_idx = 0
+            for i, cls in enumerate(st.session_state.classes):
+                if cls.id == st.session_state.selected_class_id:
+                    current_idx = i
+                    break
+
+            # 3. Selectbox-ը՝ մեր գտած ինդեքսով
             view_c = st.selectbox(
                 "Ընտրեք դասարանը՝ կապերը տեսնելու համար", 
                 st.session_state.classes, 
                 index=current_idx,
                 format_func=lambda x: f"{x.grade}{x.section}", 
-                key="v_bot_view"
+                key="class_selector_widget"
             )
+
+            # 4. Հենց օգտատերը փոխի ընտրությունը, թարմացնում ենք մեր "հիշողության" ID-ն
+            if view_c:
+                st.session_state.selected_class_id = view_c.id
             
             filtered = [a for a in st.session_state.assignments if a.class_id == view_c.id]
             
