@@ -844,8 +844,29 @@ elif st.session_state.active_page == "normal":
 
         # 🏫 Դասարանի ընտրության դաշտ (Ֆիլտր)
         if st.session_state.classes:
+            # 1. Սարքում ենք անունների ցուցակը
             class_options = ["🌐 Բոլոր դասարանները"] + [f"{c.grade}{c.section}" for c in st.session_state.classes]
-            selected_class = st.selectbox("🔍 Ընտրեք դասարանը՝ գրաֆիկները ֆիլտրելու համար", class_options)
+            
+            # 2. Հիշողության մեջ պահում ենք ընտրված դասարանի ԱՆՈՒՆԸ
+            if "selected_analysis_class_name" not in st.session_state:
+                st.session_state.selected_analysis_class_name = "🌐 Բոլոր դասարանները"
+
+            # 3. Գտնում ենք current_idx-ը ըստ անվան
+            try:
+                current_idx = class_options.index(st.session_state.selected_analysis_class_name)
+            except (ValueError, IndexError):
+                current_idx = 0
+
+            # 4. Selectbox-ը
+            selected_class = st.selectbox(
+                "🔍 Ընտրեք դասարանը՝ գրաֆիկները ֆիլտրելու համար", 
+                class_options,
+                index=current_idx,
+                key="analysis_class_selector"
+            )
+
+            # 5. Թարմացնում ենք հիշողությունը
+            st.session_state.selected_analysis_class_name = selected_class
         else:
             selected_class = "🌐 Բոլոր դասարանները"
 
@@ -1478,18 +1499,42 @@ elif st.session_state.active_page == "normal":
                 </div>
             """, unsafe_allow_html=True)
 
-        # 3. Քո մնացած կոդը՝ ԱՆՓՈՓՈԽ
+        # 3. Քո մնացած կոդը՝ ՀԻՇՈՂՈՒԹՅԱՄԲ
         if st.session_state.schedule:
             df = pd.DataFrame(st.session_state.schedule)
             all_grades = sorted(list(set([c.grade for c in st.session_state.classes])))
+            
             if all_grades:
-                sel_grade = st.selectbox("Ընտրեք դասարանը", all_grades)
+                # ✨ ՀԻՇՈՂՈՒԹՅՈՒՆ: Պահում ենք ընտրված դասարանի թիվը (grade)
+                if "selected_view_grade" not in st.session_state:
+                    st.session_state.selected_view_grade = all_grades[0]
+
+                # Գտնում ենք current_idx-ը ըստ պահված դասարանի
+                try:
+                    current_idx = all_grades.index(st.session_state.selected_view_grade)
+                except (ValueError, IndexError):
+                    current_idx = 0
+
+                # Selectbox-ը՝ index-ով և key-ով
+                sel_grade = st.selectbox(
+                    "Ընտրեք դասարանը", 
+                    all_grades, 
+                    index=current_idx,
+                    key="grade_view_selector"
+                )
+
+                # Թարմացնում ենք հիշողությունը
+                st.session_state.selected_view_grade = sel_grade
+
+                # Ցուցադրման տրամաբանությունը
                 for cls in [f"{c.grade}{c.section}" for c in st.session_state.classes if c.grade == sel_grade]:
                     cls_data = df[df['Դասարան'] == cls]
                     if not cls_data.empty:
                         with st.expander(f"🏫 Դասարան՝ {cls}", expanded=True):
                             cls_df_clean = cls_data.copy()
-                            cls_df_clean['Առարկա'] = cls_df_clean['Առարկա'].apply(lambda x: x.split(" (")[0])
+                            # Մաքրում ենք առարկայի անունը (հանում ենք ID-ն փակագծերով)
+                            cls_df_clean['Առարկա'] = cls_df_clean['Առարկա'].apply(lambda x: str(x).split(" (")[0])
+                            
                             pivot = cls_df_clean.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
                             
                             existing_days = [day for day in DAYS_AM if day in pivot.columns]
@@ -1497,8 +1542,10 @@ elif st.session_state.active_page == "normal":
                                 pivot = pivot[existing_days]
 
                             st.dataframe(pivot, use_container_width=True)
-            else: st.info("Դեռ դասարաններ չկան")
-        else: st.info("Պահպանված տվյալներ չկան")
+            else: 
+                st.info("Դեռ դասարաններ չկան")
+        else: 
+            st.info("Պահպանված տվյալներ չկան")
 
 
     elif st.session_state.active_tab == "👤 Ուսուցչի Անձնական":
