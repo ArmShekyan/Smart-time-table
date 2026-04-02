@@ -5,3 +5,4 @@ fpdf2
 google_genai
 streamlit_cookies_controller
 datetime
+python-dotenv
