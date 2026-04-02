@@ -137,9 +137,6 @@ def get_supabase_headers():
     return None
 
 def hash_password(password):
-    return hashlib.sha256(str.encode(password)).hexdigest()
-
-def hash_password(password):
     """Գաղտնաբառը դարձնում է անհասկանալի Hash կոդ"""
     return hashlib.sha256(str.encode(password)).hexdigest()
 
