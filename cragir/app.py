@@ -1327,8 +1327,13 @@ elif st.session_state.active_page == "normal":
 
                     if total_success:
                         st.session_state.schedule = final_schedule
-                        st.success(f"🎉 Լավագույն տարբերակը գտնվեց {attempt+1}-րդ փորձից:")
-                        st.balloons() 
+                        
+                        # ✨ Որոշում ենք վերջավորությունը (1-ի դեպքում "-ին", մնացածի դեպքում "-րդ")
+                        num = attempt + 1
+                        suffix = "-ին" if num == 1 else "-րդ"
+                        
+                        st.success(f"🎉 Լավագույն տարբերակը գտնվեց {num}{suffix} փորձից:")
+                        st.balloons()
                     else:
                         st.error("⚠️ Նույնիսկ 100 փորձից հետո չհաջողվեց լուծել բոլոր բախումները: Փորձեք թեթևացնել ժամերը:")
 
