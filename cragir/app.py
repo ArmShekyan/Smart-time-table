@@ -13,6 +13,7 @@ from fpdf import FPDF
 from datetime import datetime, timedelta
 from streamlit_cookies_controller import CookieController
 from google import genai
+import hashlib
 
 # --- ՄՈԴԵԼՆԵՐ ---
 @dataclass
@@ -135,22 +136,31 @@ def get_supabase_headers():
         pass
     return None
 
+def hash_password(password):
+    return hashlib.sha256(str.encode(password)).hexdigest()
+
+def hash_password(password):
+    """Գաղտնաբառը դարձնում է անհասկանալի Hash կոդ"""
+    return hashlib.sha256(str.encode(password)).hexdigest()
 
 def check_user(username, password):
-    for u in st.session_state.users_list:
-        if u["username"] == username and u["password"] == password:
-            return u
-
+    # 1. Օգտատիրոջ գրած գաղտնաբառը անմիջապես սարքում ենք Hash
+    hashed_input = hash_password(password)
+    
+    # 2. Դիմում ենք Supabase-ին՝ հարցնելով ՀԵՆՑ այդ Hash-ը
     headers = get_supabase_headers()
     if headers:
-        url = f"{st.secrets['supabase_url']}/rest/v1/users?username=eq.{username}&password=eq.{password}"
+        # Ուշադրություն. password=eq.{hashed_input}
+        url = f"{st.secrets['supabase_url']}/rest/v1/users?username=eq.{username}&password=eq.{hashed_input}"
         try:
             response = requests.get(url, headers=headers)
-            if response.status_code == 200 and response.json():
-                return response.json()[0]
-        except Exception:
-            pass
-
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    return data[0]  # Եթե գտանք օգտատիրոջը բազայում
+        except Exception as e:
+            st.error(f"Բազայի հետ կապի սխալ: {e}")
+            
     return None
 
 
@@ -653,26 +663,32 @@ if st.sidebar.button("💾 Պահպանել Բոլորը", use_container_width=T
         "Prefer": "return=minimal"
     }
     
+    # Հայաստանի ժամը (UTC+4)
     arm_time = (datetime.utcnow() + timedelta(hours=4)).strftime("%H:%M")
     data = {
         "last_update": arm_time,
-        "updated_by": st.session_state.username
+        "updated_by": st.session_state.get('username', 'Unknown')
     }
     
     try:
         # PATCH հարցում ենք անում տվյալը թարմացնելու համար
-        requests.patch(url, headers=headers, json=data)
+        response = requests.patch(url, headers=headers, json=data)
         
-        # 1. Ստեղծում ենք դատարկ տեղ sidebar-ում
+        # Ստեղծում ենք դատարկ տեղ sidebar-ում հաղորդագրության համար
         msg_area = st.sidebar.empty()
-        msg_area.success(f"🕒 Ժամը թարմացվեց՝ {arm_time}")
-        # 3. Սպասում ենք 1.5 վայրկյան
-        time.sleep(1.5)
-        msg_area.empty()
         
+        if response.status_code in [200, 204]:
+            msg_area.success(f"🕒 Պահպանվեց և ժամը թարմացվեց՝ {arm_time}")
+            time.sleep(1.2) # Մի փոքր սպասում ենք, որ օգտատերը տեսնի Success-ը
+            msg_area.empty()
+            
+            # ✨ ԱՅՍՏԵՂ Է ԼՈՒԾՈՒՄԸ. Թարմացնում ենք ամբողջ էջը
+            st.rerun() 
+        else:
+            st.sidebar.error("❌ Բազայի հետ կապի սխալ:")
+            
     except Exception as e:
-        # Սա կօգնի տեսնել, եթե հանկարծ սխալ լինի
-        pass
+        st.sidebar.error(f"⚠️ Սխալ: {e}")
 
 
 if st.session_state.user_role == 'owner':
@@ -730,51 +746,72 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
         with st.form("add_user_form", clear_on_submit=True):
             st.subheader("🆕 Ավելացնել Նոր Օգտատեր")
             new_u = st.text_input("Username")
-            new_p = st.text_input("Password")
+            # Ավելացված է type="password", որ գրելիս չերևա
+            new_p = st.text_input("Password", type="password")
             
             roles_list = ["user", "subject_editor", "teacher_editor", "admin"]
             new_r = st.selectbox("Դերը", roles_list)
             
             if st.form_submit_button("Ավելացնել Օգտատեր", use_container_width=True):
                 if new_u and new_p:
-                    if not any(u['username'] == new_u for u in st.session_state.users_list):
-                        new_user_data = {"username": new_u, "password": new_p, "role": new_r}
-                        st.session_state.users_list.append(new_user_data)
+                    # Ստուգում ենք տեղական ցուցակում, որ նույն անունով մարդ չլինի
+                    if not any(u.get('username') == new_u for u in st.session_state.users_list):
+                        
+                        # ✨ Գաղտնաբառի հաշավորում նախքան ուղարկելը
+                        hashed_password = hash_password(new_p)
+                        
+                        new_user_data = {
+                            "username": new_u, 
+                            "password": hashed_password, 
+                            "role": new_r
+                        }
                         
                         headers = get_supabase_headers()
                         if headers:
                             try:
                                 url = f"{st.secrets['supabase_url']}/rest/v1/users"
                                 response = requests.post(url, headers=headers, data=json.dumps(new_user_data))
-                                st.toast(f"✅ Օգտատեր {new_u}-ն ավելացվեց Cloud-ում:", icon="👤")
-                            except Exception:
-                                pass
-                        st.rerun()
+                                
+                                if response.status_code in [200, 201]:
+                                    # Միայն հաջողության դեպքում ենք ավելացնում տեղական ցուցակում
+                                    st.session_state.users_list.append(new_user_data)
+                                    st.toast(f"✅ Օգտատեր {new_u}-ն ավելացվեց բազայում", icon="👤")
+                                    time.sleep(0.5)
+                                    st.rerun()
+                                else:
+                                    st.error(f"Սխալ բազայում պահպանելիս: {response.text}")
+                            except Exception as e:
+                                st.error(f"Կապի սխալ: {e}")
+                    else:
+                        st.warning("Այսպիսի Username արդեն կա:")
+                else:
+                    st.error("Լրացրեք բոլոր դաշտերը:")
 
     st.divider()
     
-    # 🆕 ԿՈՃԱԿ՝ ՄԻԱՅՆ ՕԳՏԱՏԵՐԵՐԻ ՑՈՒՑԱԿԸ SQL-ԻՑ ԹԱՐՄԱՑՆԵԼՈՒ ՀԱՄԱՐ
     if st.button("🔄 Թարմացնել Ցուցակը (Կարդալ SQL բազայից)", use_container_width=True):
         refresh_users_only()
 
     st.subheader("📋 Գրանցված Օգտատերեր")
     
+    # Օգտատերերի ցուցադրում
     for i, u in enumerate(st.session_state.users_list):
         with st.container(border=True):
             c1, c2, c3 = st.columns([3, 3, 1])
             c1.markdown(f"👤 **{u['username']}**")
-            
             c2.markdown(f"🎭 Դերը՝ <span style='color: #0d6efd;'>{u['role']}</span>", unsafe_allow_html=True)
             
+            # Ջնջելու իրավունքների ստուգում
             can_delete = True
-            if u['username'] == st.session_state.username or u['role'] == 'owner':
+            if u['username'] == st.session_state.get('username') or u['role'] == 'owner':
                 can_delete = False 
-            elif u['role'] == 'admin' and st.session_state.user_role != 'owner':
+            elif u['role'] == 'admin' and st.session_state.get('user_role') != 'owner':
                 can_delete = False
                     
             if can_delete:
                 if c3.button("🗑️", key=f"del_user_{i}"):
                     confirm_delete_user_modal(i)
+                    
 
 elif st.session_state.active_page == "normal":
 
@@ -1163,11 +1200,9 @@ elif st.session_state.active_page == "normal":
     elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Դասացուցակի Գեներացում")
 
-        # 1. Սկզբնավորում ենք Toggle-ի վիճակը, եթե չկա
         if "show_tables" not in st.session_state:
             st.session_state.show_tables = True
 
-        # ✨ ԱՎՏՈՄԱՏ ՍԵՆՅԱԿԻ ՈՐՈՇՈՒՄ
         def get_auto_room(subj_name, class_label):
             s_name = str(subj_name).lower()
             if "python" in s_name or "ai" in s_name:
@@ -1177,84 +1212,99 @@ elif st.session_state.active_page == "normal":
             else:
                 return f"{class_label} class"
 
-        # 🔘 ԳԵՆԵՐԱՑՄԱՆ ԿՈՃԱԿ
         if st.button("🔥 Ստեղծել Խելացի Դասացուցակ", use_container_width=True, type="primary"):
             if not st.session_state.classes or not st.session_state.assignments:
                 st.error("❌ Բացակայում են դասարանները կամ ժամերը գեներացման համար:")
             else:
-                with st.spinner("🧠 Ալգորիթմը մտածում է..."):
-                    time.sleep(1.0) 
+                with st.spinner("🧠 Ալգորիթմը փնտրում է լավագույն տարբերակը (Max 100 փորձ)..."):
                     
                     final_schedule = []
-                    teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
-                    class_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
-
-                    shuffled_classes = list(st.session_state.classes)
-                    random.shuffle(shuffled_classes)
-
-                    success = True
-
-                    for cls in shuffled_classes:
-                        class_label = f"{cls.grade}{cls.section}"
-                        class_fund = []
-                        # Այստեղ օգտագործում ենք քո հիմնական assignments-ը
-                        assignments_for_cls = [a for a in st.session_state.assignments if a.class_id == cls.id]
-                        for ass in assignments_for_cls:
-                            class_fund.extend([ass] * ass.lessons_per_week)
+                    total_success = False
+                    
+                    # --- ՄԵԾ ՑԻԿԼ (100 անգամ փորձելու համար) ---
+                    for attempt in range(100):
+                        teacher_occupancy = {d: {h: set() for h in range(1, 9)} for d in DAYS_AM}
+                        class_occupancy = {d: {h: set() for h in range(1, 9)} for d in DAYS_AM}
+                        # Հիշում ենք՝ որ օրը որ դասարանը ինչ առարկա է արդեն արել
+                        class_daily_subjects = {cls.id: {d: [] for d in DAYS_AM} for cls in st.session_state.classes}
                         
-                        class_fund.sort(key=lambda x: get_subj_complexity(x.subject_id), reverse=True)
-                        class_day_counts = {d: 0 for d in DAYS_AM}
+                        current_attempt_schedule = []
+                        shuffled_classes = list(st.session_state.classes)
+                        random.shuffle(shuffled_classes)
                         
-                        timeout = 0
-                        while class_fund and timeout < 3000:
-                            timeout += 1
-                            min_count = min(class_day_counts.values())
-                            lightest_days = [d for d in DAYS_AM if class_day_counts[d] == min_count]
-                            best_day = random.choice(lightest_days)
+                        generation_failed = False
+                        
+                        for cls in shuffled_classes:
+                            class_label = f"{cls.grade}{cls.section}"
+                            class_fund = []
+                            assignments_for_cls = [a for a in st.session_state.assignments if a.class_id == cls.id]
                             
-                            if class_day_counts[best_day] >= 7:
-                                continue 
+                            for ass in assignments_for_cls:
+                                class_fund.extend([ass] * ass.lessons_per_week)
                             
-                            next_hour = class_day_counts[best_day] + 1
-                            chosen_candidate_idx = -1
+                            # Բարդ առարկաները առաջնահերթ
+                            class_fund.sort(key=lambda x: get_subj_complexity(x.subject_id), reverse=True)
+                            class_day_counts = {d: 0 for d in DAYS_AM}
                             
-                            for idx, candidate in enumerate(class_fund):
-                                if (candidate.teacher_id not in teacher_occupancy[best_day][next_hour] and 
-                                    class_label not in class_occupancy[best_day][next_hour]):
-                                    chosen_candidate_idx = idx
-                                    break 
+                            timeout = 0
+                            while class_fund and timeout < 2000:
+                                timeout += 1
+                                min_count = min(class_day_counts.values())
+                                lightest_days = [d for d in DAYS_AM if class_day_counts[d] == min_count]
+                                best_day = random.choice(lightest_days)
+                                
+                                if class_day_counts[best_day] >= 7: continue 
+                                
+                                next_hour = class_day_counts[best_day] + 1
+                                chosen_candidate_idx = -1
+                                
+                                for idx, candidate in enumerate(class_fund):
+                                    subj_name = get_subj_name(candidate.subject_id)
+                                    
+                                    # ✨ ԿԱՆՈՆ: Բացի այս 3-ից, մնացածը օրական 1 ժամ
+                                    priority_subjs = ["հանրահաշիվ", "python", "ai"]
+                                    is_priority = any(p in subj_name.lower() for p in priority_subjs)
+                                    
+                                    if not is_priority and subj_name in class_daily_subjects[cls.id][best_day]:
+                                        continue # Եթե արդեն կար ու պրիորիտետ չի՝ բաց թող
+                                    
+                                    # Ստուգում ենք ուսուցչի և դասարանի ազատ լինելը
+                                    if (candidate.teacher_id not in teacher_occupancy[best_day][next_hour] and 
+                                        class_label not in class_occupancy[best_day][next_hour]):
+                                        chosen_candidate_idx = idx
+                                        break 
 
-                            if chosen_candidate_idx == -1:
-                                continue
+                                if chosen_candidate_idx != -1:
+                                    target = class_fund.pop(chosen_candidate_idx)
+                                    subj_full_name = get_subj_name(target.subject_id)
+                                    room_to_assign = get_auto_room(subj_full_name, class_label)
+                                    t_name = next((t.name for t in st.session_state.teachers if t.id == target.teacher_id), "Անհայտ")
+                                    
+                                    current_attempt_schedule.append({
+                                        "Դասարան": class_label, "Օր": best_day, "Ժամ": next_hour, 
+                                        "Առարկա": subj_full_name, "Ուսուցիչ": t_name, "Սենյակ": room_to_assign
+                                    })
+                                    
+                                    teacher_occupancy[best_day][next_hour].add(target.teacher_id)
+                                    class_occupancy[best_day][next_hour].add(class_label)
+                                    class_daily_subjects[cls.id][best_day].append(subj_full_name)
+                                    class_day_counts[best_day] += 1
 
-                            target = class_fund.pop(chosen_candidate_idx)
-                            subj_full_name = get_subj_name(target.subject_id)
-                            room_to_assign = get_auto_room(subj_full_name, class_label)
-                            t_name = next((t.name for t in st.session_state.teachers if t.id == target.teacher_id), "Անհայտ")
-                            
-                            final_schedule.append({
-                                "Դասարան": class_label,
-                                "Օր": best_day, 
-                                "Ժամ": next_hour, 
-                                "Առարկա": subj_full_name,
-                                "Ուսուցիչ": t_name,
-                                "Սենյակ": room_to_assign
-                            })
-                            
-                            teacher_occupancy[best_day][next_hour].add(target.teacher_id)
-                            class_occupancy[best_day][next_hour].add(class_label)
-                            class_day_counts[best_day] += 1
+                            if timeout >= 2000:
+                                generation_failed = True
+                                break
+                        
+                        if not generation_failed:
+                            final_schedule = current_attempt_schedule
+                            total_success = True
+                            break # Եթե ստացվեց, դուրս ենք գալիս 100 փորձի ցիկլից
 
-                        if timeout >= 3000:
-                            success = False
-                            break
-
-                if success:
-                    st.session_state.schedule = final_schedule
-                    st.success("🎉 Դասացուցակը հաջողությամբ գեներացվեց:")
-                    st.balloons() 
-                else:
-                    st.error("⚠️ Ալգորիթմը չկարողացավ լուծել բախումները: Փորձեք նորից:")
+                    if total_success:
+                        st.session_state.schedule = final_schedule
+                        st.success(f"🎉 Լավագույն տարբերակը գտնվեց {attempt+1}-րդ փորձից:")
+                        st.balloons() 
+                    else:
+                        st.error("⚠️ Նույնիսկ 100 փորձից հետո չհաջողվեց լուծել բոլոր բախումները: Փորձեք թեթևացնել ժամերը:")
 
         # 📊 ԱՐԴՅՈՒՆՔՆԵՐԻ ՑՈՒՑԱԴՐՈՒՄ
         if st.session_state.get('schedule'):
