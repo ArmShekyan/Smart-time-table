@@ -1184,32 +1184,30 @@ elif st.session_state.active_page == "normal":
         st.markdown("### 🔍 Դիտել Ժամերի Բաշխումը")
 
         if st.session_state.classes:
-            # 1. Որոշում ենք, թե որ ինդեքսը պետք է ցույց տա Selectbox-ը
-            # Եթե session_state-ում արդեն կա ընտրված դասարան, գտնում ենք դրա տեղը ցուցակում
+            # 1. Որոշում ենք current_idx-ը՝ օգտագործելով ID-ն, որ էջը թարմանալուց չթռնի
             current_idx = 0
-            if "v_bot_view" in st.session_state:
+            
+            # Ստուգում ենք՝ արդյո՞ք արդեն ունենք ընտրված դասարան session_state-ում
+            if "v_bot_view" in st.session_state and st.session_state.v_bot_view:
                 try:
-                    current_idx = st.session_state.classes.index(st.session_state.v_bot_view)
-                except (ValueError, IndexError):
-                    current_idx = 0
-
-            # 1. Նախապես որոշում ենք, թե որ դասարանն է հիմա ընտրված session_state-ում
-            current_idx = 0
-            if "v_bot_view" in st.session_state:
-                # Փորձում ենք գտնել նախորդ ընտրված դասարանի ինդեքսը նոր ցուցակում
-                try:
-                    prev_selected = st.session_state.v_bot_view
-                    current_idx = st.session_state.classes.index(prev_selected)
-                except (ValueError, AttributeError):
+                    # Վերցնում ենք նախկինում ընտրված դասարանի ID-ն
+                    prev_id = st.session_state.v_bot_view.id
+                    
+                    # Գտնում ենք այդ ID-ով դասարանի տեղը (index-ը) նոր ցուցակում
+                    for i, cls in enumerate(st.session_state.classes):
+                        if cls.id == prev_id:
+                            current_idx = i
+                            break
+                except (AttributeError, ValueError):
                     current_idx = 0
 
             # 2. Selectbox-ը՝ index պարամետրով
             view_c = st.selectbox(
                 "Ընտրեք դասարանը՝ կապերը տեսնելու համար", 
                 st.session_state.classes, 
-                index=current_idx,  # ✨ Սա պահում է ընտրված դասարանը թարմացումից հետո
+                index=current_idx,
                 format_func=lambda x: f"{x.grade}{x.section}", 
-                key="v_bot_view"    # Սա Streamlit-ին ասում է, որ հիշի այս widget-ի վիճակը
+                key="v_bot_view"
             )
             
             filtered = [a for a in st.session_state.assignments if a.class_id == view_c.id]
