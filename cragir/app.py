@@ -1057,13 +1057,30 @@ elif st.session_state.active_page == "normal":
             all_subjects_option = Subject(id="all", name="🌐 Բոլոր Առարկաները", complexity=0)
             subject_options = [all_subjects_option] + st.session_state.subjects
 
+            # 1. Որոշում ենք current_idx-ը՝ օգտագործելով պահված ID-ն
+            if "selected_filter_subj_id" not in st.session_state:
+                st.session_state.selected_filter_subj_id = "all"
+
+            current_idx = 0
+            for i, subj in enumerate(subject_options):
+                if subj.id == st.session_state.selected_filter_subj_id:
+                    current_idx = i
+                    break
+
+            # 2. Selectbox-ը՝ index պարամետրով
             selected_subject_view = st.selectbox(
                 "🔍 Ֆիլտրել ըստ առարկայի", 
                 subject_options, 
-                format_func=lambda x: x.name
+                index=current_idx,
+                format_func=lambda x: x.name,
+                key="teacher_filter_selectbox"
             )
 
-            # Ֆիլտրման տրամաբանություն
+            # 3. Թարմացնում ենք հիշողությունը հենց ընտրությունը փոխվի
+            if selected_subject_view:
+                st.session_state.selected_filter_subj_id = selected_subject_view.id
+
+            # --- Ֆիլտրման տրամաբանություն (մնում է նույնը) ---
             if selected_subject_view.id == "all":
                 filtered_teachers = [(i, t) for i, t in enumerate(st.session_state.teachers)]
                 st.markdown("📌 **Բոլոր գրանցված ուսուցիչները.**")
@@ -1087,12 +1104,9 @@ elif st.session_state.active_page == "normal":
                             unsafe_allow_html=True
                         )
                         
-                        if c2.button("🗑️", key=f"t_view_{t.id}"): # Օգտագործում ենք t.id կրկնությունից խուսափելու համար
-                            # Ջնջում ենք կապված assignments-ները
+                        if c2.button("🗑️", key=f"t_view_{t.id}"):
                             st.session_state.assignments = [a for a in st.session_state.assignments if a.teacher_id != t.id]
-                            # Ջնջում ենք ուսուցչին
                             st.session_state.teachers = [teacher for teacher in st.session_state.teachers if teacher.id != t.id]
-                            # Պահպանում ենք (ջնջման դեպքում force_overwrite=True)
                             save_to_disk(force_overwrite=True)
                             st.toast(f"🗑️ Ուսուցիչը ջնջվեց", icon="👩‍🏫")
                             st.rerun()
@@ -1492,21 +1506,39 @@ elif st.session_state.active_page == "normal":
         
         # Ստուգում ենք՝ արդյոք ունենք դասացուցակ և ուսուցիչներ
         if st.session_state.get('schedule') and st.session_state.get('teachers'):
+            
+            # 1. Հիշողության մեջ պահում ենք ընտրված ուսուցչի ID-ն
+            if "selected_personal_t_id" not in st.session_state:
+                st.session_state.selected_personal_t_id = st.session_state.teachers[0].id
+
+            # 2. Գտնում ենք current_idx-ը ըստ ID-ի
+            current_idx = 0
+            for i, t in enumerate(st.session_state.teachers):
+                if t.id == st.session_state.selected_personal_t_id:
+                    current_idx = i
+                    break
+
+            # 3. Ուսուցչի ընտրություն (Selectbox)
+            sel_t = st.selectbox(
+                "Ընտրեք ուսուցչին", 
+                st.session_state.teachers, 
+                index=current_idx,
+                format_func=lambda x: x.name,
+                key="personal_teacher_selector"
+            )
+
+            # 4. Թարմացնում ենք ID-ն session_state-ում
+            if sel_t:
+                st.session_state.selected_personal_t_id = sel_t.id
+
+            # Գրաֆիկի ցուցադրում
             df = pd.DataFrame(st.session_state.schedule)
-            
-            # Ուսուցչի ընտրություն
-            sel_t = st.selectbox("Ընտրեք ուսուցչին", 
-                                st.session_state.teachers, 
-                                format_func=lambda x: x.name)
-            
-            # ✨ ՃԻՇՏ ՖԻԼՏՐՈՒՄ: Փնտրում ենք հենց 'Ուսուցիչ' սյունակի մեջ
             t_data = df[df['Ուսուցիչ'] == sel_t.name]
             
             if not t_data.empty:
                 t_data_clean = t_data.copy()
                 
-                # Ձևավորում ենք ցուցադրվող տեքստը (Դասարան + Առարկա)
-                # Օգտագործում ենք միայն առարկայի անունը (առանց փակագծերի)
+                # Ձևավորում ենք ցուցադրվող տեքստը
                 t_data_clean['Ցուցադրում'] = t_data_clean['Դասարան'] + " - " + \
                                             t_data_clean['Առարկա'].apply(lambda x: str(x).split(" (")[0])
                 
@@ -1518,10 +1550,7 @@ elif st.session_state.active_page == "normal":
                 if existing_days:
                     pivot = pivot[existing_days]
                 
-                # Ցուցադրում ենք աղյուսակը
                 st.dataframe(pivot, use_container_width=True)
-                
-                # Լրացուցիչ ինֆո
                 st.info(f"💡 Ցուցադրված է {sel_t.name}-ի դասացուցակը:")
             else:
                 st.warning(f"⚠️ {sel_t.name}-ի համար դեռևս դասեր չկան բաշխված։")
