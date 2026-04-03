@@ -597,26 +597,24 @@ def pdf_shorten_name(name):
 
 def generate_pdf(schedule_data):
     # Էջը դնում ենք լայնակի (Landscape)
-    pdf = FPDF(orientation='L', unit='mm', format='A4')
+    pdf = FPDF(orientation='L', unit='mm', format='A4') 
     
     font_path = "cragir/arial.ttf"
-    # unicode=True-ն կարևոր է հայերենի համար
     pdf.add_font('Armenian', '', font_path)
     
     classes = sorted(list(set(item['Դասարան'] for item in schedule_data)))
     days = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
     for i, class_name in enumerate(classes):
-        # Ամեն 2 դասարանը մեկ ավելացնում ենք նոր էջ
+        # ✨ Ավելացնում ենք նոր էջ ամեն 2 դասարանը մեկ
         if i % 2 == 0:
             pdf.add_page()
+            # Գլխավոր Վերնագիր (միայն նոր էջի սկզբում)
             pdf.set_font('Armenian', '', 20)
-            pdf.set_text_color(0, 0, 0)
             pdf.cell(0, 15, txt="Դպրոցական Դասացուցակ", ln=True, align='C')
             pdf.ln(5)
         else:
-            # Եթե էջի երկրորդ դասարանն է, ուղղակի մի փոքր բացատ ենք թողնում նախորդից
-            pdf.ln(10)
+            pdf.ln(10) # Բացատ նույն էջի երկու դասարանների արանքում
 
         # Դասարանի վերնագիր
         pdf.set_font('Armenian', '', 14)
@@ -635,28 +633,22 @@ def generate_pdf(schedule_data):
 
         # Լրացնում ենք ժամերը
         pdf.set_font('Armenian', '', 10)
-        
-        # Գտնում ենք տվյալ դասարանի վերջին ժամը
-        class_lessons = [item for item in schedule_data if item['Դասարան'] == class_name]
-        max_hour = max([int(item['Ժամ']) for item in class_lessons]) if class_lessons else 0
-
-        for hour in range(1, max_hour + 1):
-            # Ստուգում ենք՝ արդյոք այս ժամին որևէ օր դաս կա
-            has_any_lesson = any(int(item['Ժամ']) == hour for item in class_lessons)
-            if not has_any_lesson:
+        for hour in range(1, 9):
+            has_lesson = any(item['Դասարան'] == class_name and int(item['Ժամ']) == hour for item in schedule_data)
+            if not has_lesson:
                 continue
                 
             pdf.cell(15, 10, str(hour), 1, 0, 'C')
             
             for day in days:
                 subject = ""
-                for item in class_lessons:
-                    if item['Օր'] == day and int(item['Ժամ']) == hour:
+                for item in schedule_data:
+                    if item['Դասարան'] == class_name and item['Օր'] == day and int(item['Ժամ']) == hour:
                         subject = item['Առարկա']
                         break
                 pdf.cell(50, 10, subject, 1, 0, 'C')
             pdf.ln()
-
+        
     return bytes(pdf.output())
 
 
@@ -1504,7 +1496,7 @@ elif st.session_state.active_page == "normal":
                 pdf_data = generate_pdf(pdf_schedule) 
                 
                 st.download_button(
-                    label="📥 Ներբեռնել PDF (Կոմպակտ)",
+                    label="📥 Ներբեռնել PDF",
                     data=pdf_data, 
                     file_name="School_Timetable.pdf",
                     mime="application/pdf",
