@@ -601,7 +601,7 @@ def generate_pdf(schedule_data):
     
     font_path = "cragir/arial.ttf"
     # unicode=True-ն կարևոր է հայերենի համար
-    pdf.add_font('Armenian', '', font_path, unicode=True)
+    pdf.add_font('Armenian', '', font_path)
     
     classes = sorted(list(set(item['Դասարան'] for item in schedule_data)))
     days = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
