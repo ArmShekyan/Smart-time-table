@@ -596,57 +596,71 @@ def pdf_shorten_name(name):
 
 
 def generate_pdf(schedule_data):
-    # Էջը դնում ենք լայնակի (Landscape)
+    # Landscape կողմնորոշում
     pdf = FPDF(orientation='L', unit='mm', format='A4') 
     pdf.add_page()
     
     font_path = "cragir/arial.ttf"
     pdf.add_font('Armenian', '', font_path)
     
-    # 1. Գլխավոր Վերնագիր
-    pdf.set_font('Armenian', '', 20)
-    pdf.cell(0, 15, txt="Դպրոցական Դասացուցակ", ln=True, align='C')
+    # 1. Գլխավոր Վերնագիր (Գրվում է միայն ՄԵԿ անգամ՝ սկզբում)
+    pdf.set_font('Armenian', '', 22)
+    pdf.set_text_color(44, 62, 80)
+    pdf.cell(0, 20, txt="Դպրոցական Դասացուցակ", ln=True, align='C')
     pdf.ln(5)
 
     classes = sorted(list(set(item['Դասարան'] for item in schedule_data)))
     days = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
     for class_name in classes:
+        # ✨ ԽԵԼԱՑԻ ԷՋԱԴՐՈՒՄ
+        # Եթե էջի վրա մնացել է 90մմ-ից քիչ տեղ (աղյուսակի կեսից քիչ), ապա նոր էջ ենք բացում
+        if pdf.get_y() > 120: 
+            pdf.add_page()
+            pdf.ln(10) # Փոքրիկ բացատ նոր էջի վերևից
+
         # Դասարանի վերնագիր
-        pdf.set_font('Armenian', '', 14)
-        pdf.set_text_color(50, 50, 50)
-        pdf.cell(0, 10, f"Դասարան՝ {class_name}", ln=True, align='L')
+        pdf.set_font('Armenian', '', 16)
+        pdf.set_text_color(52, 73, 94)
+        pdf.cell(0, 12, f"Դասարան՝ {class_name}", ln=True, align='L')
         
-        # Աղյուսակի գլխամաս (Օրերը)
-        pdf.set_font('Armenian', '', 10)
+        # Աղյուսակի գլխամաս
+        pdf.set_font('Armenian', '', 11)
         pdf.set_text_color(0, 0, 0)
-        pdf.set_fill_color(230, 230, 230) # Մոխրագույն ֆոն
+        pdf.set_fill_color(230, 230, 230) # Մոխրագույն ֆոն գլխամասի համար
         
         pdf.cell(15, 10, "Ժամ", 1, 0, 'C', True)
         for day in days:
             pdf.cell(50, 10, day, 1, 0, 'C', True)
         pdf.ln()
 
-        # Լրացնում ենք ժամերը
+        # Աղյուսակի պարունակություն
         pdf.set_font('Armenian', '', 10)
-        for hour in range(1, 9):
-            # Ստուգում ենք՝ արդյոք այս ժամին դաս կա
-            has_lesson = any(item['Դասարան'] == class_name and int(item['Ժամ']) == hour for item in schedule_data)
-            if not has_lesson:
-                continue
-                
-            pdf.cell(15, 10, str(hour), 1, 0, 'C')
-            
-            for day in days:
-                subject = ""
-                for item in schedule_data:
-                    if item['Դասարան'] == class_name and item['Օր'] == day and int(item['Ժամ']) == hour:
-                        subject = item['Առարկա']
-                        break
-                pdf.cell(50, 10, subject, 1, 0, 'C')
-            pdf.ln()
+        pdf.set_text_color(0, 0, 0)
         
-        pdf.ln(10) # Բացատ հաջորդ դասարանից առաջ
+        class_lessons = [item for item in schedule_data if item['Դասարան'] == class_name]
+        if class_lessons:
+            # Որոշում ենք առավելագույն ժամը տվյալ դասարանի համար
+            max_hour = max([int(item['Ժամ']) for item in class_lessons])
+            
+            for hour in range(1, max_hour + 1):
+                # Ստուգում ենք՝ արդյոք այս ժամին որևէ օր դաս կա
+                has_any_lesson = any(int(item['Ժամ']) == hour for item in class_lessons)
+                if not has_any_lesson:
+                    continue
+
+                pdf.cell(15, 10, str(hour), 1, 0, 'C')
+                
+                for day in days:
+                    subject = ""
+                    for item in class_lessons:
+                        if item['Օր'] == day and int(item['Ժամ']) == hour:
+                            subject = item['Առարկա']
+                            break
+                    pdf.cell(50, 10, subject, 1, 0, 'C')
+                pdf.ln()
+        
+        pdf.ln(15) # Բացատ հաջորդ դասարանի համար
 
     return bytes(pdf.output())
 
