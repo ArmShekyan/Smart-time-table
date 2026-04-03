@@ -603,37 +603,37 @@ def generate_pdf(schedule_data):
     font_path = "cragir/arial.ttf"
     pdf.add_font('Armenian', '', font_path)
     
-    # Գլխավոր Վերնագիր (ավելի սեղմ)
-    pdf.set_font('Armenian', '', 16)
-    pdf.cell(0, 10, txt="Դպրոցական Դասացուցակ", ln=True, align='C')
+    # 1. Գլխավոր Վերնագիր (ավելի փոքր բացատով)
+    pdf.set_font('Armenian', '', 18)
+    pdf.cell(0, 12, txt="Դպրոցական Դասացուցակ", ln=True, align='C')
     pdf.ln(2)
 
     classes = sorted(list(set(item['Դասարան'] for item in schedule_data)))
     days = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
     for class_name in classes:
-        # Խելացի էջադրում՝ եթե մնացել է 50մմ-ից քիչ, անցիր նոր էջ
-        if pdf.get_y() > 175: 
+        # Խելացի էջադրում՝ ստուգում ենք, որ աղյուսակը չկիսվի
+        if pdf.get_y() > 160: 
             pdf.add_page()
             pdf.ln(5)
 
-        # Դասարանի վերնագիր
-        pdf.set_font('Armenian', '', 11)
+        # Դասարանի վերնագիր (ավելի փոքր)
+        pdf.set_font('Armenian', '', 12)
         pdf.set_text_color(50, 50, 50)
-        pdf.cell(0, 7, f"Դասարան՝ {class_name}", ln=True, align='L')
+        pdf.cell(0, 8, f"Դասարան՝ {class_name}", ln=True, align='L')
         
-        # Աղյուսակի գլխամաս (Բարձրությունը՝ 6.5)
-        pdf.set_font('Armenian', '', 8)
+        # Աղյուսակի գլխամաս (Օրերը) - Բարձրությունը 8մմ
+        pdf.set_font('Armenian', '', 9)
         pdf.set_text_color(0, 0, 0)
-        pdf.set_fill_color(235, 235, 235) 
+        pdf.set_fill_color(230, 230, 230) 
         
-        pdf.cell(10, 6.5, "Ժամ", 1, 0, 'C', True)
+        pdf.cell(12, 8, "Ժամ", 1, 0, 'C', True)
         for day in days:
-            pdf.cell(45, 6.5, day, 1, 0, 'C', True)
+            pdf.cell(48, 8, day, 1, 0, 'C', True)
         pdf.ln()
 
-        # Լրացնում ենք ժամերը (Բարձրությունը՝ 6.5)
-        pdf.set_font('Armenian', '', 8)
+        # Լրացնում ենք ժամերը - Բարձրությունը 8մմ
+        pdf.set_font('Armenian', '', 9)
         
         class_lessons = [item for item in schedule_data if item['Դասարան'] == class_name]
         if class_lessons:
@@ -644,7 +644,7 @@ def generate_pdf(schedule_data):
                 if not has_any_lesson:
                     continue
                     
-                pdf.cell(10, 6.5, str(hour), 1, 0, 'C')
+                pdf.cell(12, 8, str(hour), 1, 0, 'C')
                 
                 for day in days:
                     subject = ""
@@ -652,10 +652,10 @@ def generate_pdf(schedule_data):
                         if item['Օր'] == day and int(item['Ժամ']) == hour:
                             subject = item['Առարկա']
                             break
-                    pdf.cell(45, 6.5, subject, 1, 0, 'C')
+                    pdf.cell(48, 8, subject, 1, 0, 'C')
                 pdf.ln()
         
-        pdf.ln(6) # Շատ փոքր բացատ հաջորդ դասարանի համար
+        pdf.ln(8) # Փոքրացրած բացատ դասարանների միջև
 
     return bytes(pdf.output())
 
