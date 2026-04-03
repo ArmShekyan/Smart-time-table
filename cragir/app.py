@@ -600,21 +600,23 @@ def generate_pdf(schedule_data):
     pdf = FPDF(orientation='L', unit='mm', format='A4')
     
     font_path = "cragir/arial.ttf"
+    # unicode=True-ն կարևոր է հայերենի համար
     pdf.add_font('Armenian', '', font_path, unicode=True)
     
     classes = sorted(list(set(item['Դասարան'] for item in schedule_data)))
     days = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
-    # Ավելացնում ենք հաշվիչ (counter)՝ էջերը կառավարելու համար
     for i, class_name in enumerate(classes):
-        # Ամեն 2 դասարանը մեկ կամ առաջին դասարանի դեպքում ավելացնում ենք նոր էջ
+        # Ամեն 2 դասարանը մեկ ավելացնում ենք նոր էջ
         if i % 2 == 0:
             pdf.add_page()
-            # Գլխավոր Վերնագիրը դնում ենք միայն էջի սկզբում
             pdf.set_font('Armenian', '', 20)
             pdf.set_text_color(0, 0, 0)
             pdf.cell(0, 15, txt="Դպրոցական Դասացուցակ", ln=True, align='C')
             pdf.ln(5)
+        else:
+            # Եթե էջի երկրորդ դասարանն է, ուղղակի մի փոքր բացատ ենք թողնում նախորդից
+            pdf.ln(10)
 
         # Դասարանի վերնագիր
         pdf.set_font('Armenian', '', 14)
@@ -624,7 +626,7 @@ def generate_pdf(schedule_data):
         # Աղյուսակի գլխամաս (Օրերը)
         pdf.set_font('Armenian', '', 10)
         pdf.set_text_color(0, 0, 0)
-        pdf.set_fill_color(230, 230, 230) # Մոխրագույն ֆոն
+        pdf.set_fill_color(230, 230, 230) 
         
         pdf.cell(15, 10, "Ժամ", 1, 0, 'C', True)
         for day in days:
@@ -634,13 +636,13 @@ def generate_pdf(schedule_data):
         # Լրացնում ենք ժամերը
         pdf.set_font('Armenian', '', 10)
         
-        # Գտնում ենք տվյալ դասարանի առավելագույն ժամը, որ դատարկ տողեր չլինեն
-        class_hours = [int(item['Ժամ']) for item in schedule_data if item['Դասարան'] == class_name]
-        max_hour = max(class_hours) if class_hours else 0
+        # Գտնում ենք տվյալ դասարանի վերջին ժամը
+        class_lessons = [item for item in schedule_data if item['Դասարան'] == class_name]
+        max_hour = max([int(item['Ժամ']) for item in class_lessons]) if class_lessons else 0
 
         for hour in range(1, max_hour + 1):
             # Ստուգում ենք՝ արդյոք այս ժամին որևէ օր դաս կա
-            has_any_lesson = any(item['Դասարան'] == class_name and int(item['Ժամ']) == hour for item in schedule_data)
+            has_any_lesson = any(int(item['Ժամ']) == hour for item in class_lessons)
             if not has_any_lesson:
                 continue
                 
@@ -648,16 +650,12 @@ def generate_pdf(schedule_data):
             
             for day in days:
                 subject = ""
-                for item in schedule_data:
-                    if item['Դասարան'] == class_name and item['Օր'] == day and int(item['Ժամ']) == hour:
+                for item in class_lessons:
+                    if item['Օր'] == day and int(item['Ժամ']) == hour:
                         subject = item['Առարկա']
                         break
                 pdf.cell(50, 10, subject, 1, 0, 'C')
             pdf.ln()
-        
-        # Եթե սա էջի առաջին դասարանն է, ավելացնում ենք մեծ բացատ հաջորդի համար
-        if i % 2 == 0:
-            pdf.ln(20)
 
     return bytes(pdf.output())
 
