@@ -580,6 +580,23 @@ def get_subj_name(sid):
 def get_subj_complexity(sid):
     return next((s.complexity for s in st.session_state.subjects if s.id == sid), 3)
 
+def pdf_shorten_name(name):
+    name = str(name).strip()
+    
+    # 1. Եթե անվան մեջ կա AI կամ Python, ուղղակի հանում ենք փակագծերը
+    if "AI" in name.upper() or "PYTHON" in name.upper():
+        return name.split(" (")[0]
+    
+    # 2. Եթե անվան երկարությունը 15 տառից ավել է (օրինակ՝ "Մասնագիտական կողմնորոշում")
+    if len(name) > 15:
+        words = name.split()
+        if len(words) >= 2:
+            # Սարքում ենք առաջին տառերով (օրինակ՝ "Մ.Կ.")
+            return ".".join([w[0].upper() for w in words]) + "."
+    
+    # 3. Եթե կարճ է (օրինակ՝ "Հայոց պատմություն" կամ "Ֆիզիկա"), թողնում ենք նույնությամբ
+    return name
+
 
 def generate_pdf(schedule_data):
     # Էջը դնում ենք լայնակի (Landscape)
@@ -1467,13 +1484,22 @@ elif st.session_state.active_page == "normal":
             else:
                 st.info("💡 Աղյուսակները թաքցված են։")
 
-            # 📥 PDF ՆԵՐԲԵՌՆՈՒՄ
+           # 2. Քո PDF ներբեռնման հատվածը փոխիր այսպես.
             st.divider()
             try:
-                pdf_data = generate_pdf(st.session_state.schedule)
+                # ✨ Ստեղծում ենք ժամանակավոր ցուցակ PDF-ի համար
+                pdf_schedule = []
+                for item in st.session_state.schedule:
+                    new_item = item.copy() # Պատճենում ենք, որ բնօրինակը չփոխվի
+                    new_item['Առարկա'] = pdf_shorten_name(new_item['Առարկա'])
+                    pdf_schedule.append(new_item)
+
+                # Գեներացնում ենք PDF-ը կրճատված տարբերակով
+                pdf_data = generate_pdf(pdf_schedule) 
+                
                 st.download_button(
-                    label="📥 Ներբեռնել PDF",
-                    data=pdf_data, # Այստեղ արդեն մաքուր bytes են
+                    label="📥 Ներբեռնել PDF (Կոմպակտ)",
+                    data=pdf_data, 
                     file_name="School_Timetable.pdf",
                     mime="application/pdf",
                     use_container_width=True
