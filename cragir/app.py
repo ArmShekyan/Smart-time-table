@@ -1459,10 +1459,17 @@ elif st.session_state.active_page == "normal":
 
                         # Մանրամասները պահում ենք Popover-ի մեջ
                         with st.popover(f"🔍 {c_name} դասարանի մանրամասներ"):
-                            details = cls_df[['Առարկա', 'Ուսուցիչ', 'Սենյակ']].drop_duplicates()
-                            for _, row in details.iterrows():
+                            # Խմբավորում ենք ըստ առարկայի, որպեսզի ստանանք բոլոր ժամերը
+                            subjects_grouped = cls_df.groupby(['Առարկա', 'Ուսուցիչ', 'Սենյակ'])['Ժամ'].apply(lambda x: sorted(list(set(x)))).reset_index()
+
+                            for _, row in subjects_grouped.iterrows():
                                 st.markdown(f"📖 **{row['Առարկա']}**")
+                                
+                                # Ժամերը սարքում ենք գեղեցիկ տեքստ (օրինակ՝ 1, 3, 5)
+                                hours_text = ", ".join([f"{h}-րդ" for h in row['Ժամ']])
+                                
                                 st.write(f"👨‍🏫 {row['Ուսուցիչ']} | 📍 {row['Սենյակ']}")
+                                st.caption(f"⏰ Դասաժամեր՝ {hours_text}") # ✨ Ավելացվեց այս տողը
                                 st.write("---")
             else:
                 st.info("💡 Աղյուսակները թաքցված են։")
