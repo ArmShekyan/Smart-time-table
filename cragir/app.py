@@ -484,6 +484,7 @@ if "subjects" not in st.session_state:
         "teachers": [], 
         "classes": [], 
         "rooms": [],  # ✨ Ավելացրու այս տողը կաբինետների համար
+        "room_occupancy": {}, # 🛡️ ԱՅՍ ՏՈՂԸ՝ սենյակների զբաղվածությունը ստուգելու համար
         "assignments": [], 
         "schedule": None, 
         "subj_pool": [], 
@@ -1326,6 +1327,9 @@ elif st.session_state.active_page == "normal":
                     for attempt in range(100):
                         teacher_occupancy = {d: {h: set() for h in range(1, 9)} for d in DAYS_AM}
                         class_occupancy = {d: {h: set() for h in range(1, 9)} for d in DAYS_AM}
+                        # ✨ Սենյակների զբաղվածության բազա ամեն փորձի համար
+                        room_occupancy = {d: {h: set() for h in range(1, 9)} for d in DAYS_AM}
+                        
                         class_daily_subjects = {cls.id: {d: [] for d in DAYS_AM} for cls in st.session_state.classes}
                         
                         current_attempt_schedule = []
@@ -1360,11 +1364,12 @@ elif st.session_state.active_page == "normal":
                                 for idx, candidate in enumerate(class_fund):
                                     subj_name = get_subj_name(candidate.subject_id)
                                     subj_name_low = subj_name.lower()
+                                    
+                                    # Նախապես որոշում ենք սենյակը ստուգման համար
+                                    room_to_check = get_auto_room(subj_name, class_label)
 
-                                    # ✨ ՆՈՐ ՏՐԱՄԱԲԱՆՈՒԹՅՈՒՆ
                                     subj_count_today = class_daily_subjects[cls.id][best_day].count(subj_name)
                                     
-                                    # Ստուգում ենք՝ արդյո՞ք թույլատրվում է օրական 2 ժամ
                                     is_double_allowed = (
                                         "python" in subj_name_low or 
                                         "ai" in subj_name_low or 
@@ -1372,15 +1377,15 @@ elif st.session_state.active_page == "normal":
                                     )
 
                                     if is_double_allowed:
-                                        if subj_count_today >= 2:
-                                            continue
+                                        if subj_count_today >= 2: continue
                                     else:
-                                        if subj_count_today >= 1:
-                                            continue
+                                        if subj_count_today >= 1: continue
 
-                                    # Ստուգում ենք ուսուցչի և դասարանի ազատ լինելը
+                                    # ✨ Ավելացված է սենյակի (room_to_check) ազատ լինելու ստուգումը
                                     if (candidate.teacher_id not in teacher_occupancy[best_day][next_hour] and 
-                                        class_label not in class_occupancy[best_day][next_hour]):
+                                        class_label not in class_occupancy[best_day][next_hour] and
+                                        room_to_check not in room_occupancy[best_day][next_hour]):
+                                        
                                         chosen_candidate_idx = idx
                                         break 
 
@@ -1397,6 +1402,9 @@ elif st.session_state.active_page == "normal":
                                     
                                     teacher_occupancy[best_day][next_hour].add(target.teacher_id)
                                     class_occupancy[best_day][next_hour].add(class_label)
+                                    # ✨ Գրանցում ենք, որ սենյակն արդեն զբաղված է այս ժամին
+                                    room_occupancy[best_day][next_hour].add(room_to_assign)
+                                    
                                     class_daily_subjects[cls.id][best_day].append(subj_full_name)
                                     class_day_counts[best_day] += 1
 
