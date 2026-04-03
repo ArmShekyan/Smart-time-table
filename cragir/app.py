@@ -583,38 +583,39 @@ def get_subj_complexity(sid):
 def pdf_shorten_name(name):
     name = str(name).strip()
     
-    # 1. Եթե անվան մեջ կա AI կամ Python, ուղղակի հանում ենք փակագծերը
     if "AI" in name.upper() or "PYTHON" in name.upper():
         return name.split(" (")[0]
     
-    # 2. Եթե անվան երկարությունը 15 տառից ավել է (օրինակ՝ "Մասնագիտական կողմնորոշում")
-    if len(name) > 15:
+    # Շեմը բարձրացրինք 20, որպեսզի Հայոց պատմությունը չկրճատվի
+    if len(name) > 20: 
         words = name.split()
         if len(words) >= 2:
-            # Սարքում ենք առաջին տառերով (օրինակ՝ "Մ.Կ.")
             return ".".join([w[0].upper() for w in words]) + "."
-    
-    # 3. Եթե կարճ է (օրինակ՝ "Հայոց պատմություն" կամ "Ֆիզիկա"), թողնում ենք նույնությամբ
+            
     return name
 
 
 def generate_pdf(schedule_data):
     # Էջը դնում ենք լայնակի (Landscape)
-    pdf = FPDF(orientation='L', unit='mm', format='A4') 
-    pdf.add_page()
+    pdf = FPDF(orientation='L', unit='mm', format='A4')
     
     font_path = "cragir/arial.ttf"
-    pdf.add_font('Armenian', '', font_path)
+    pdf.add_font('Armenian', '', font_path, unicode=True)
     
-    # 1. Գլխավոր Վերնագիր
-    pdf.set_font('Armenian', '', 20)
-    pdf.cell(0, 15, txt="Դպրոցական Դասացուցակ", ln=True, align='C')
-    pdf.ln(5)
-
     classes = sorted(list(set(item['Դասարան'] for item in schedule_data)))
     days = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
 
-    for class_name in classes:
+    # Ավելացնում ենք հաշվիչ (counter)՝ էջերը կառավարելու համար
+    for i, class_name in enumerate(classes):
+        # Ամեն 2 դասարանը մեկ կամ առաջին դասարանի դեպքում ավելացնում ենք նոր էջ
+        if i % 2 == 0:
+            pdf.add_page()
+            # Գլխավոր Վերնագիրը դնում ենք միայն էջի սկզբում
+            pdf.set_font('Armenian', '', 20)
+            pdf.set_text_color(0, 0, 0)
+            pdf.cell(0, 15, txt="Դպրոցական Դասացուցակ", ln=True, align='C')
+            pdf.ln(5)
+
         # Դասարանի վերնագիր
         pdf.set_font('Armenian', '', 14)
         pdf.set_text_color(50, 50, 50)
@@ -632,10 +633,15 @@ def generate_pdf(schedule_data):
 
         # Լրացնում ենք ժամերը
         pdf.set_font('Armenian', '', 10)
-        for hour in range(1, 9):
-            # Ստուգում ենք՝ արդյոք այս ժամին դաս կա
-            has_lesson = any(item['Դասարան'] == class_name and int(item['Ժամ']) == hour for item in schedule_data)
-            if not has_lesson:
+        
+        # Գտնում ենք տվյալ դասարանի առավելագույն ժամը, որ դատարկ տողեր չլինեն
+        class_hours = [int(item['Ժամ']) for item in schedule_data if item['Դասարան'] == class_name]
+        max_hour = max(class_hours) if class_hours else 0
+
+        for hour in range(1, max_hour + 1):
+            # Ստուգում ենք՝ արդյոք այս ժամին որևէ օր դաս կա
+            has_any_lesson = any(item['Դասարան'] == class_name and int(item['Ժամ']) == hour for item in schedule_data)
+            if not has_any_lesson:
                 continue
                 
             pdf.cell(15, 10, str(hour), 1, 0, 'C')
@@ -649,7 +655,9 @@ def generate_pdf(schedule_data):
                 pdf.cell(50, 10, subject, 1, 0, 'C')
             pdf.ln()
         
-        pdf.ln(10) # Բացատ հաջորդ դասարանից առաջ
+        # Եթե սա էջի առաջին դասարանն է, ավելացնում ենք մեծ բացատ հաջորդի համար
+        if i % 2 == 0:
+            pdf.ln(20)
 
     return bytes(pdf.output())
 
