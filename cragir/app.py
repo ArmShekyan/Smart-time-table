@@ -1712,7 +1712,7 @@ elif st.session_state.active_page == "normal":
                             
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
-                                model='gemini-3-flash', # Քո ուզած նոր մոդելը
+                                model='gemini-2.5-flash', # Քո ուզած նոր մոդելը
                                 contents=f"{context}\nData:\n{compact_sch}"
                             )
                             
@@ -1753,7 +1753,7 @@ elif st.session_state.active_page == "normal":
 
                         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                         response = client.models.generate_content(
-                            model='gemini-3-flash', # Քո ուզած նոր մոդելը
+                            model='gemini-2.5-flash', # Քո ուզած նոր մոդելը
                             contents=full_prompt,
                             config={'max_output_tokens': 30000}
                         )
