@@ -1679,102 +1679,126 @@ elif st.session_state.active_page == "normal":
             st.session_state.pending_proposal = None
         if "last_ai_response" not in st.session_state:
             st.session_state.last_ai_response = None
+        if "confirmed_class" not in st.session_state:
+            st.session_state.confirmed_class = None
 
-        # --- Դասարանի ընտրություն ---
+        # --- ԴԱՍԱՐԱՆԻ ԸՆՏՐՈՒԹՅԱՆ ՏՐԱՄԱԲԱՆՈՒԹՅՈՒՆ ---
         classes = list(set([i['Դասարան'] for i in st.session_state.schedule])) if st.session_state.schedule else []
-        
-        if classes:
-            selected_class = st.selectbox("🎯 Ընտրեք դասարանը", classes)
-            filtered_data = [i for i in st.session_state.schedule if i['Դասարան'] == selected_class]
+
+        if not st.session_state.confirmed_class:
+            if classes:
+                # 1. Վերցնում ենք միայն թվերը (օրինակ՝ 10)
+                grade_levels = sorted(list(set([''.join(filter(str.isdigit, c)) for c in classes])))
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    selected_level = st.selectbox("📅 Ընտրեք հոսքը", grade_levels)
+                
+                # 2. Ֆիլտրում ենք այդ թվին համապատասխան դասարանները (օրինակ՝ 10Աբ1)
+                filtered_sub_classes = sorted([c for c in classes if c.startswith(selected_level)])
+                
+                with col2:
+                    target_class = st.selectbox("🎯 Ընտրեք կոնկրետ դասարանը", filtered_sub_classes)
+                
+                # 3. Հաստատման բլոկ
+                st.warning(f"⚠️ Վստա՞հ եք, որ ուզում եք ընտրել **{target_class}** դասարանը: Հաստատելուց հետո այն հնարավոր չի լինի փոխել այս զրույցի ընթացքում:")
+                if st.button("✅ Հաստատել և սկսել", use_container_width=True):
+                    st.session_state.confirmed_class = target_class
+                    st.rerun()
+            else:
+                st.info("Դեռ գեներացված դասացուցակ չկա:")
+                st.stop()
         else:
-            st.info("Դեռ գեներացված դասացուցակ չկա:")
-            filtered_data = []
+            # Եթե դասարանն արդեն ընտրված է
+            selected_class = st.session_state.confirmed_class
+            col_header, col_reset = st.columns([4, 1])
+            col_header.success(f"Ակտիվ դասարան՝ **{selected_class}**")
+            if col_reset.button("🔄 Reset", help="Փոխել դասարանը"):
+                st.session_state.confirmed_class = None
+                st.session_state.chat_histories[current_user] = [] # Մաքրում ենք պատմությունը նոր դասարանի համար
+                st.rerun()
 
-        # 1. Չաթի պատմության ցուցադրում
-        for message in st.session_state.chat_histories[current_user]:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+            filtered_data = [i for i in st.session_state.schedule if i['Դասարան'] == selected_class]
 
-        # 2. ԱՌԱՋԱՐԿԻ ՄՇԱԿՈՒՄ (Եթե AI-ն ինչ-որ բան է առաջարկել)
-        if st.session_state.pending_proposal:
-            with st.chat_message("assistant"):
-                st.info(st.session_state.last_ai_response)
-                st.warning(f"💡 Կիրառե՞նք այս փոփոխությունը {selected_class} դասարանի համար։")
+            # 1. Չաթի պատմության ցուցադրում
+            for message in st.session_state.chat_histories[current_user]:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+
+            # 2. ԱՌԱՋԱՐԿԻ ՄՇԱԿՈՒՄ
+            if st.session_state.pending_proposal:
+                with st.chat_message("assistant"):
+                    st.info(st.session_state.last_ai_response)
+                    st.warning(f"💡 Կիրառե՞նք այս փոփոխությունը {selected_class} դասարանի համար։")
+                    
+                    col_yes, col_no = st.columns(2)
+                    
+                    if col_yes.button("✅ Այո, կիրառել", use_container_width=True):
+                        with st.spinner("🧠 Փոփոխվում է..."):
+                            try:
+                                context = f"Apply these changes for {selected_class}: {st.session_state.pending_proposal}. Output ONLY the new schedule as a Markdown table."
+                                compact_sch = "\n".join([f"{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in filtered_data])
+                                
+                                client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+                                response = client.models.generate_content(
+                                    model='gemini-2.5-flash',
+                                    contents=f"{context}\nData:\n{compact_sch}"
+                                )
+                                
+                                st.session_state.chat_histories[current_user].append({"role": "assistant", "content": f"✅ Փոփոխությունը կատարված է:\n\n{response.text}"})
+                                st.session_state.pending_proposal = None
+                                st.session_state.last_ai_response = None
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Սխալ: {e}")
+
+                    if col_no.button("❌ Ոչ, չեղարկել", use_container_width=True):
+                        st.session_state.chat_histories[current_user].append({"role": "assistant", "content": "Փոփոխությունը չեղարկվեց։"})
+                        st.session_state.pending_proposal = None
+                        st.session_state.last_ai_response = None
+                        st.rerun()
+
+            # 3. Նոր հարցում
+            if prompt := st.chat_input("Հարցրու դասացուցակի մասին...", disabled=st.session_state.pending_proposal is not None):
+                st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
                 
-                col_yes, col_no = st.columns(2)
-                
-                if col_yes.button("✅ Այո, կիրառել", use_container_width=True):
-                    with st.spinner("🧠 Փոփոխվում է բուն դասացուցակը..."):
+                with st.chat_message("user"):
+                    st.markdown(prompt)
+
+                with st.chat_message("assistant"):
+                    with st.spinner("🧠 Մտածում եմ..."):
                         try:
-                            # Այստեղ կանչում ենք AI-ին՝ վերջնական Markdown աղյուսակը ստանալու համար
-                            context = f"Apply these changes for {selected_class}: {st.session_state.pending_proposal}. Output ONLY the new schedule as a Markdown table."
-                            compact_sch = "\n".join([f"{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in filtered_data])
-                            
-                            client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-                            response = client.models.generate_content(
-                                model='gemini-2.5-flash', # Քո ուզած նոր մոդելը
-                                contents=f"{context}\nData:\n{compact_sch}"
+                            system_prompt = (
+                                f"Դու 'Smart Time Table' օգնականն ես {selected_class} դասարանի համար: "
+                                "1. Պատասխանիր հակիրճ հայերենով: "
+                                "2. Եթե ցույց ես տալիս դասացուցակը, ԱՆՊԱՅՄԱՆ օգտագործիր Markdown աղյուսակ հետևյալ ձևաչափով.\n"
+                                "| Ժամ | Երկուշաբթի | Երեքշաբթի | Չորեքշաբթի | Հինգշաբթի | Ուրբաթ |\n"
+                                "| :--- | :--- | :--- | :--- | :--- | :--- |\n"
+                                "| 1 | ... | ... | ... | ... | ... |\n"
+                                "| 2 | ... | ... | ... | ... | ... |\n"
+                                "3. Եթե առաջարկում ես փոփոխություն, պատասխանիդ վերջում ավելացրու '[PROPOSAL]':"
                             )
                             
-                            # Ավելացնում ենք պատմության մեջ
-                            st.session_state.chat_histories[current_user].append({"role": "assistant", "content": f"✅ Փոփոխությունը կատարված է:\n\n{response.text}"})
+                            compact_sch = "\n".join([f"{i['Օր']} {i['Ժամ']}-րդ ժամ: {i['Առարկա']}" for i in filtered_data])
+                            full_prompt = f"{system_prompt}\n\nՏվյալներ:\n{compact_sch}\n\nՕգտատեր: {prompt}"
+
+                            client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+                            response = client.models.generate_content(
+                                model='gemini-2.5-flash', 
+                                contents=full_prompt
+                            )
                             
-                            # Մաքրում ենք ժամանակավոր վիճակները
-                            st.session_state.pending_proposal = None
-                            st.session_state.last_ai_response = None
-                            st.rerun()
+                            response_text = response.text
+
+                            if "[PROPOSAL]" in response_text:
+                                clean_text = response_text.replace("[PROPOSAL]", "").strip()
+                                st.session_state.pending_proposal = clean_text
+                                st.session_state.last_ai_response = clean_text
+                                st.rerun()
+                            else:
+                                st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
+                                st.markdown(response_text)
                         except Exception as e:
-                            st.error(f"Սխալ կիրառելիս: {e}")
+                            st.error(f"API Error: {e}")
 
-                if col_no.button("❌ Ոչ, չեղարկել", use_container_width=True):
-                    st.session_state.chat_histories[current_user].append({"role": "assistant", "content": "Փոփոխությունը չեղարկվեց։"})
-                    st.session_state.pending_proposal = None
-                    st.session_state.last_ai_response = None
-                    st.rerun()
 
-        # 3. Նոր հարցում (Chat Input)
-        if prompt := st.chat_input("Հարցրու դասացուցակի մասին...", disabled=st.session_state.pending_proposal is not None):
-            st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
-            
-            with st.chat_message("user"):
-                st.markdown(prompt)
-
-            with st.chat_message("assistant"):
-                with st.spinner("🧠 Մտածում եմ..."):
-                    try:
-                        # Հստակ հրահանգ հորիզոնական աղյուսակի համար
-                        system_prompt = (
-                            f"Դու 'Smart Time Table' օգնականն ես {selected_class} դասարանի համար: "
-                            "1. Պատասխանիր հակիրճ հայերենով: "
-                            "2. Եթե ցույց ես տալիս դասացուցակը, ԱՆՊԱՅՄԱՆ օգտագործիր Markdown աղյուսակ հետևյալ ձևաչափով.\n"
-                            "| Ժամ | Երկուշաբթի | Երեքշաբթի | Չորեքշաբթի | Հինգշաբթի | Ուրբաթ |\n"
-                            "| :--- | :--- | :--- | :--- | :--- | :--- |\n"
-                            "| 1 | ... | ... | ... | ... | ... |\n"
-                            "| 2 | ... | ... | ... | ... | ... |\n"
-                            "3. Եթե առաջարկում ես փոփոխություն, պատասխանիդ վերջում ավելացրու '[PROPOSAL]':"
-                        )
-                        
-                        # Տվյալները տալիս ենք այնպես, որ AI-ն հեշտությամբ լրացնի աղյուսակը
-                        compact_sch = "\n".join([f"{i['Օր']} {i['Ժամ']}-րդ ժամ: {i['Առարկա']}" for i in filtered_data])
-                        full_prompt = f"{system_prompt}\n\nՏվյալներ:\n{compact_sch}\n\nՕգտատեր: {prompt}"
-
-                        client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-                        response = client.models.generate_content(
-                            model='gemini-2.5-flash', 
-                            contents=full_prompt
-                        )
-                        
-                        response_text = response.text
-
-                        if "[PROPOSAL]" in response_text:
-                            clean_text = response_text.replace("[PROPOSAL]", "").strip()
-                            st.session_state.pending_proposal = clean_text
-                            st.session_state.last_ai_response = clean_text
-                            st.rerun()
-                        else:
-                            st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
-                            st.markdown(response_text)
-                    except Exception as e:
-                        st.error(f"API Error: {e}")
-
- 
