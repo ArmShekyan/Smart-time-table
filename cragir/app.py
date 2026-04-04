@@ -1742,7 +1742,11 @@ elif st.session_state.active_page == "normal":
                                 client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                                 response = client.models.generate_content(
                                     model='gemini-2.5-flash',
-                                    contents=f"{context}\nData:\n{compact_sch}"
+                                    contents=f"{context}\nData:\n{compact_sch}",
+                                    config={
+                                        'max_output_tokens': 30000,
+                                        'temperature': 0.1
+                                    }
                                 )
                                 
                                 st.session_state.chat_histories[current_user].append({"role": "assistant", "content": f"✅ Փոփոխությունը կատարված է:\n\n{response.text}"})
@@ -1785,7 +1789,11 @@ elif st.session_state.active_page == "normal":
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
                                 model='gemini-2.5-flash', 
-                                contents=full_prompt
+                                contents=full_prompt,
+                                config={
+                                    'max_output_tokens': 30000,
+                                    'temperature': 0.7
+                                }
                             )
                             
                             response_text = response.text
@@ -1800,5 +1808,4 @@ elif st.session_state.active_page == "normal":
                                 st.markdown(response_text)
                         except Exception as e:
                             st.error(f"API Error: {e}")
-
 
