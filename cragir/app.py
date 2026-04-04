@@ -1711,7 +1711,7 @@ elif st.session_state.active_page == "normal":
                             response = client.models.generate_content(
                                 model='gemini-2.5-flash',
                                 contents=context,
-                                config={'max_output_tokens': 3000}
+                                config={'max_output_tokens': 30000}
                             )
                             st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response.text})
                             st.rerun()
@@ -1747,7 +1747,7 @@ elif st.session_state.active_page == "normal":
                         response = client.models.generate_content(
                             model='gemini-2.5-flash', 
                             contents=full_prompt,
-                            config={'max_output_tokens': 1500} # Բարձրացված լիմիտ տեքստը չկտրելու համար
+                            config={'max_output_tokens': 20000} # Բարձրացված լիմիտ տեքստը չկտրելու համար
                         )
                         response_text = response.text
 
