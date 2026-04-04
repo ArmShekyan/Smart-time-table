@@ -41,9 +41,4 @@
 ## 👥 Authors & Contributors
 
 * **Arman Shekyan (ArmShekyan)** — Lead Developer 💻
-
-
-
-1. Կլոնավորեք ռեպոզիտորիան․
-   ```bash
-   git clone [https://github.com/ArmShekyan/Smart_Time_Table.git](https://github.com/ArmShekyan/Smart_Time_Table.git)
+ 
