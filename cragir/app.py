@@ -1742,21 +1742,25 @@ elif st.session_state.active_page == "normal":
             with st.chat_message("assistant"):
                 with st.spinner("🧠 Մտածում եմ..."):
                     try:
-                        # Հստակ հրահանգներ Markdown աղյուսակի համար
+                        # Հստակ հրահանգ հորիզոնական աղյուսակի համար
                         system_prompt = (
                             f"Դու 'Smart Time Table' օգնականն ես {selected_class} դասարանի համար: "
                             "1. Պատասխանիր հակիրճ հայերենով: "
-                            "2. Եթե քեզնից խնդրում են ցույց տալ դասացուցակը կամ կիրառել փոփոխություն, "
-                            "ԱՆՊԱՅՄԱՆ օգտագործիր Markdown աղյուսակ (Columns: Օր, 1, 2, 3, 4, 5, 6, 7): "
+                            "2. Եթե ցույց ես տալիս դասացուցակը, ԱՆՊԱՅՄԱՆ օգտագործիր Markdown աղյուսակ հետևյալ ձևաչափով.\n"
+                            "| Ժամ | Երկուշաբթի | Երեքշաբթի | Չորեքշաբթի | Հինգշաբթի | Ուրբաթ |\n"
+                            "| :--- | :--- | :--- | :--- | :--- | :--- |\n"
+                            "| 1 | ... | ... | ... | ... | ... |\n"
+                            "| 2 | ... | ... | ... | ... | ... |\n"
                             "3. Եթե առաջարկում ես փոփոխություն, պատասխանիդ վերջում ավելացրու '[PROPOSAL]':"
                         )
                         
-                        compact_sch = "\n".join([f"{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in filtered_data])
-                        full_prompt = f"{system_prompt}\n\nCurrent Schedule:\n{compact_sch}\nUser: {prompt}"
+                        # Տվյալները տալիս ենք այնպես, որ AI-ն հեշտությամբ լրացնի աղյուսակը
+                        compact_sch = "\n".join([f"{i['Օր']} {i['Ժամ']}-րդ ժամ: {i['Առարկա']}" for i in filtered_data])
+                        full_prompt = f"{system_prompt}\n\nՏվյալներ:\n{compact_sch}\n\nՕգտատեր: {prompt}"
 
                         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                         response = client.models.generate_content(
-                            model='gemini-2.5-flash', # Քո ընտրած նոր մոդելը
+                            model='gemini-2.5-flash', 
                             contents=full_prompt
                         )
                         
@@ -1769,7 +1773,7 @@ elif st.session_state.active_page == "normal":
                             st.rerun()
                         else:
                             st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
-                            st.markdown(response_text) # Այստեղ Streamlit-ը ավտոմատ կսարքի աղյուսակը
+                            st.markdown(response_text)
                     except Exception as e:
                         st.error(f"API Error: {e}")
 
