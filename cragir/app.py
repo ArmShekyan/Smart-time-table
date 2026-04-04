@@ -431,7 +431,6 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* --- Քո նախկին հիմնական դիզայնը --- */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
         border-right: 1px solid #343a40;
@@ -439,38 +438,14 @@ st.markdown("""
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {
         color: #f8f9fa;
     }
-    
-    /* --- Գրադիենտ կոճակներ և Hover էֆեկտներ (Sidebar) --- */
     [data-testid="stSidebar"] .stButton>button {
-        background: linear-gradient(135deg, #00b4db, #0083b0); /* Գրադիենտ */
-        color: white;
-        border: none;
         border-radius: 20px;
-        width: 100%;
         transition: all 0.3s ease-in-out;
-        font-weight: 600;
     }
     [data-testid="stSidebar"] .stButton>button:hover {
         transform: scale(1.05);
-        box-shadow: 0 4px 15px rgba(0, 180, 219, 0.3);
-        background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
     }
-
-    /* --- Glassmorphism էֆեկտ Metric-ների համար --- */
-    [data-testid="stMetric"] {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        padding: 15px;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    }
-    [data-testid="stMetricValue"] {
-        color: #00b4db !important;
-        font-weight: bold;
-    }
-
-    /* --- Աղյուսակների (Dataframe) դիզայնը --- */
     [data-testid="stDataFrameDataframe"] div table {
         border-radius: 10px;
         overflow: hidden;
@@ -480,42 +455,15 @@ st.markdown("""
         background-color: #343a40 !important;
         color: white !important;
     }
-
-    /* --- Expander-ների դիզայնը --- */
+    [data-testid="stMetricValue"] {
+        color: #0d6efd;
+        font-weight: bold;
+    }
     .streamlit-expanderHeader {
-        background-color: rgba(255, 255, 255, 0.05);
+        background-color: #e9ecef;
         border-radius: 8px;
         font-weight: bold;
-        transition: 0.3s;
     }
-    .streamlit-expanderHeader:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-    }
-
-    /* --- Սիրուն Scrollbar --- */
-    ::-webkit-scrollbar {
-        width: 6px;
-    }
-    ::-webkit-scrollbar-track {
-        background: #1a1c24;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #343a40;
-        border-radius: 10px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-        background: #00b4db;
-    }
-
-    /* --- Գրաֆիկների (Charts) համար սիրուն շրջանակ --- */
-    [data-testid="stPlotlyChart"] {
-        background: rgba(255, 255, 255, 0.02);
-        padding: 10px;
-        border-radius: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    /* --- fadeIn Անիմացիան ամբողջ էջի համար --- */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
