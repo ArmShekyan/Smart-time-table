@@ -40,5 +40,5 @@
 
 ## 👥 Authors & Contributors
 
-* **Arman Shekyan (ArmShekyan)** — Lead Developer 💻
+* **Arman Shekyan (armshekyan)** — Lead Developer 💻
  
