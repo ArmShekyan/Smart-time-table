@@ -1742,32 +1742,34 @@ elif st.session_state.active_page == "normal":
             with st.chat_message("assistant"):
                 with st.spinner("🧠 Մտածում եմ..."):
                     try:
+                        # Հստակ հրահանգներ Markdown աղյուսակի համար
                         system_prompt = (
                             f"Դու 'Smart Time Table' օգնականն ես {selected_class} դասարանի համար: "
                             "1. Պատասխանիր հակիրճ հայերենով: "
-                            "2. Եթե առաջարկում ես փոփոխություն (օրինակ՝ տեղափոխել դասը), պատասխանիդ վերջում ԱՆՊԱՅՄԱՆ ավելացրու '[PROPOSAL]':"
+                            "2. Եթե քեզնից խնդրում են ցույց տալ դասացուցակը կամ կիրառել փոփոխություն, "
+                            "ԱՆՊԱՅՄԱՆ օգտագործիր Markdown աղյուսակ (Columns: Օր, 1, 2, 3, 4, 5, 6, 7): "
+                            "3. Եթե առաջարկում ես փոփոխություն, պատասխանիդ վերջում ավելացրու '[PROPOSAL]':"
                         )
                         
                         compact_sch = "\n".join([f"{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in filtered_data])
-                        full_prompt = f"{system_prompt}\nSchedule:\n{compact_sch}\nUser: {prompt}"
+                        full_prompt = f"{system_prompt}\n\nCurrent Schedule:\n{compact_sch}\nUser: {prompt}"
 
                         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                         response = client.models.generate_content(
-                            model='gemini-2.5-flash', # Քո ուզած նոր մոդելը
-                            contents=full_prompt,
-                            config={'max_output_tokens': 30000}
+                            model='gemini-2.5-flash', # Քո ընտրած նոր մոդելը
+                            contents=full_prompt
                         )
                         
                         response_text = response.text
 
                         if "[PROPOSAL]" in response_text:
                             clean_text = response_text.replace("[PROPOSAL]", "").strip()
-                            st.session_state.pending_proposal = clean_text # Պահում ենք բուն առաջարկը
-                            st.session_state.last_ai_response = clean_text # Ցուցադրվող տեքստը
-                            st.rerun() # Թարմացնում ենք, որ կոճակները հայտնվեն
+                            st.session_state.pending_proposal = clean_text
+                            st.session_state.last_ai_response = clean_text
+                            st.rerun()
                         else:
                             st.session_state.chat_histories[current_user].append({"role": "assistant", "content": response_text})
-                            st.markdown(response_text)
+                            st.markdown(response_text) # Այստեղ Streamlit-ը ավտոմատ կսարքի աղյուսակը
                     except Exception as e:
                         st.error(f"API Error: {e}")
 
