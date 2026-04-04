@@ -1688,7 +1688,7 @@ elif st.session_state.active_page == "normal":
         if not st.session_state.confirmed_class:
             if classes:
                 # 1. Վերցնում ենք միայն թվերը (օրինակ՝ 10)
-                grade_levels = sorted(list(set([''.join(filter(str.isdigit, c)) for c in classes])))
+                grade_levels = sorted(list(set([c.split()[0].strip('ԱբԳդ ') for c in classes if c])))
                 
                 col1, col2 = st.columns(2)
                 with col1:
