@@ -1721,18 +1721,15 @@ elif st.session_state.active_page == "normal":
                 st.session_state.chat_histories[current_user] = [] 
                 st.rerun()
 
-            # --- ԱՅՍՏԵՂ ԱՎԵԼԱՑՆՈՒՄ ԵՆՔ ՔՈ ՄՏԱԾԱԾ ԿՈՃԱԿԸ ---
             with st.expander(f"📊 Ցուցադրել {selected_class} դասարանի դասացուցակը"):
-                # Ֆիլտրում ենք տվյալ դասարանի տվյալները
                 class_schedule = [i for i in st.session_state.schedule if i['Դասարան'] == selected_class]
                 if class_schedule:
-                    # Սարքում ենք աղյուսակ (Markdown format)
                     days = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
                     table_header = "| Ժամ | " + " | ".join(days) + " |"
                     table_divider = "| :--- | " + " | ".join([":---"] * 5) + " |"
                     
                     rows = []
-                    for h in range(1, 8): # 1-ից 7-րդ ժամերը
+                    for h in range(1, 8): 
                         row = f"| {h} |"
                         for day in days:
                             subject = next((item['Առարկա'] for item in class_schedule if item['Օր'] == day and int(item['Ժամ']) == h), "-")
@@ -1743,9 +1740,10 @@ elif st.session_state.active_page == "normal":
                     st.markdown(full_table)
                 else:
                     st.write("Այս դասարանի համար տվյալներ չեն գտնվել:")
-            # -----------------------------------------------
 
             filtered_data = [i for i in st.session_state.schedule if i['Դասարան'] == selected_class]
+            # Ամբողջական տվյալները՝ որպեսզի AI-ը տեսնի այլ դասարանների զբաղվածությունը
+            full_schedule_context = "\n".join([f"{i['Դասարան']}|{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in st.session_state.schedule])
 
             for message in st.session_state.chat_histories[current_user]:
                 with st.chat_message(message["role"]):
@@ -1761,17 +1759,15 @@ elif st.session_state.active_page == "normal":
                     if col_yes.button("✅ Այո, կիրառել", use_container_width=True):
                         with st.spinner("🧠 Փոփոխվում է..."):
                             try:
-                                context = f"Apply these changes for {selected_class}: {st.session_state.pending_proposal}. Output ONLY the new schedule as a Markdown table."
-                                compact_sch = "\n".join([f"{i['Օր']}|{i['Ժամ']}|{i['Առարկա']}" for i in filtered_data])
-                                
+                                context = f"Apply these changes ONLY for {selected_class}. Use full schedule to avoid teacher conflicts. Output ONLY the new schedule for {selected_class} as Markdown table."
                                 client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                                 response = client.models.generate_content(
                                     model='gemini-2.5-flash',
-                                    contents=f"{context}\nData:\n{compact_sch}",
+                                    contents=f"{context}\nFull Data:\n{full_schedule_context}\nProposal: {st.session_state.pending_proposal}",
                                     config={'max_output_tokens': 30000, 'temperature': 0.1}
                                 )
                                 
-                                st.session_state.chat_histories[current_user].append({"role": "assistant", "content": f"✅ Փոփոխությունը կատարված է:\n\n{response.text}"})
+                                st.session_state.chat_histories[current_user].append({"role": "assistant", "content": f"✅ Փոփոխությունը կատարված է {selected_class} համար:\n\n{response.text}"})
                                 st.session_state.pending_proposal = None
                                 st.session_state.last_ai_response = None
                                 st.rerun()
@@ -1794,14 +1790,14 @@ elif st.session_state.active_page == "normal":
                     with st.spinner("🧠 Մտածում եմ..."):
                         try:
                             system_prompt = (
-                                f"Դու 'Smart Time Table' օգնականն ես {selected_class} դասարանի համար: "
+                                f"Դու 'Smart Time Table' օգնականն ես: Աշխատում ես {selected_class} դասարանի հետ: "
                                 "1. Պատասխանիր հակիրճ հայերենով: "
-                                "2. Եթե ցույց ես տալիս դասացուցակը, ԱՆՊԱՅՄԱՆ օգտագործիր Markdown աղյուսակ:\n"
-                                "3. Եթե առաջարկում ես փոփոխություն, պատասխանիդ վերջում ավելացրու '[PROPOSAL]':"
+                                "2. Հաշվի առ ամբողջ դպրոցի զբաղվածությունը (Full Data), որպեսզի նույն ուսուցիչը նույն ժամին երկու տեղ չլինի: "
+                                "3. Եթե ցույց ես տալիս դասացուցակը, օգտագործիր Markdown աղյուսակ: "
+                                "4. Եթե առաջարկում ես փոփոխություն, վերջում ավելացրու '[PROPOSAL]':"
                             )
                             
-                            compact_sch = "\n".join([f"{i['Օր']} {i['Ժամ']}-րդ ժամ: {i['Առարկա']}" for i in filtered_data])
-                            full_prompt = f"{system_prompt}\n\nՏվյալներ:\n{compact_sch}\n\nՕգտատեր: {prompt}"
+                            full_prompt = f"{system_prompt}\n\nFull Schedule Data:\n{full_schedule_context}\n\nTarget Class: {selected_class}\nUser: {prompt}"
 
                             client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             response = client.models.generate_content(
