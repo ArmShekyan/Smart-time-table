@@ -1334,7 +1334,7 @@ elif st.session_state.active_page == "normal":
             s_name = str(subj_name).lower()
             if "python" in s_name or "ai" in s_name:
                 return "Fast"
-            elif "տհտ" in s_name or "tghg" in s_name:
+            elif "թգհգ" in s_name or "tghg" in s_name:
                 return "Ինֆորմատիկայի սենյակ"
             else:
                 return f"{class_label} class"
@@ -1685,7 +1685,6 @@ elif st.session_state.active_page == "normal":
         if current_user not in st.session_state.chat_histories:
             st.session_state.chat_histories[current_user] = []
         
-        # Ապահովում ենք վիճակների առկայությունը
         if "pending_proposal" not in st.session_state:
             st.session_state.pending_proposal = None
         if "last_ai_response" not in st.session_state:
@@ -1693,25 +1692,18 @@ elif st.session_state.active_page == "normal":
         if "confirmed_class" not in st.session_state:
             st.session_state.confirmed_class = None
 
-        # --- ԴԱՍԱՐԱՆԻ ԸՆՏՐՈՒԹՅԱՆ ՏՐԱՄԱԲԱՆՈՒԹՅՈՒՆ ---
         classes = list(set([i['Դասարան'] for i in st.session_state.schedule])) if st.session_state.schedule else []
 
         if not st.session_state.confirmed_class:
             if classes:
-                # 1. Վերցնում ենք միայն թվերը (օրինակ՝ 10)
                 grade_levels = sorted(list(set([c.split()[0].strip('ԱբԳդ ') for c in classes if c])))
-                
                 col1, col2 = st.columns(2)
                 with col1:
                     selected_level = st.selectbox("📅 Ընտրեք հոսքը", grade_levels)
-                
-                # 2. Ֆիլտրում ենք այդ թվին համապատասխան դասարանները (օրինակ՝ 10Աբ1)
                 filtered_sub_classes = sorted([c for c in classes if c.startswith(selected_level)])
-                
                 with col2:
                     target_class = st.selectbox("🎯 Ընտրեք կոնկրետ դասարանը", filtered_sub_classes)
                 
-                # 3. Հաստատման բլոկ
                 st.warning(f"⚠️ Վստա՞հ եք, որ ուզում եք ընտրել **{target_class}** դասարանը: Հաստատելուց հետո այն հնարավոր չի լինի փոխել այս զրույցի ընթացքում:")
                 if st.button("✅ Հաստատել և սկսել", use_container_width=True):
                     st.session_state.confirmed_class = target_class
@@ -1720,23 +1712,45 @@ elif st.session_state.active_page == "normal":
                 st.info("Դեռ գեներացված դասացուցակ չկա:")
                 st.stop()
         else:
-            # Եթե դասարանն արդեն ընտրված է
             selected_class = st.session_state.confirmed_class
             col_header, col_reset = st.columns([4, 1])
             col_header.success(f"Ակտիվ դասարան՝ **{selected_class}**")
+            
             if col_reset.button("🔄 Reset", help="Փոխել դասարանը"):
                 st.session_state.confirmed_class = None
-                st.session_state.chat_histories[current_user] = [] # Մաքրում ենք պատմությունը նոր դասարանի համար
+                st.session_state.chat_histories[current_user] = [] 
                 st.rerun()
+
+            # --- ԱՅՍՏԵՂ ԱՎԵԼԱՑՆՈՒՄ ԵՆՔ ՔՈ ՄՏԱԾԱԾ ԿՈՃԱԿԸ ---
+            with st.expander(f"📊 Ցուցադրել {selected_class} դասարանի դասացուցակը"):
+                # Ֆիլտրում ենք տվյալ դասարանի տվյալները
+                class_schedule = [i for i in st.session_state.schedule if i['Դասարան'] == selected_class]
+                if class_schedule:
+                    # Սարքում ենք աղյուսակ (Markdown format)
+                    days = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
+                    table_header = "| Ժամ | " + " | ".join(days) + " |"
+                    table_divider = "| :--- | " + " | ".join([":---"] * 5) + " |"
+                    
+                    rows = []
+                    for h in range(1, 9): # 1-ից 8-րդ ժամերը
+                        row = f"| {h} |"
+                        for day in days:
+                            subject = next((item['Առարկա'] for item in class_schedule if item['Օր'] == day and int(item['Ժամ']) == h), "-")
+                            row += f" {subject} |"
+                        rows.append(row)
+                    
+                    full_table = table_header + "\n" + table_divider + "\n" + "\n".join(rows)
+                    st.markdown(full_table)
+                else:
+                    st.write("Այս դասարանի համար տվյալներ չեն գտնվել:")
+            # -----------------------------------------------
 
             filtered_data = [i for i in st.session_state.schedule if i['Դասարան'] == selected_class]
 
-            # 1. Չաթի պատմության ցուցադրում
             for message in st.session_state.chat_histories[current_user]:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
 
-            # 2. ԱՌԱՋԱՐԿԻ ՄՇԱԿՈՒՄ
             if st.session_state.pending_proposal:
                 with st.chat_message("assistant"):
                     st.info(st.session_state.last_ai_response)
@@ -1754,10 +1768,7 @@ elif st.session_state.active_page == "normal":
                                 response = client.models.generate_content(
                                     model='gemini-2.5-flash',
                                     contents=f"{context}\nData:\n{compact_sch}",
-                                    config={
-                                        'max_output_tokens': 30000,
-                                        'temperature': 0.1
-                                    }
+                                    config={'max_output_tokens': 30000, 'temperature': 0.1}
                                 )
                                 
                                 st.session_state.chat_histories[current_user].append({"role": "assistant", "content": f"✅ Փոփոխությունը կատարված է:\n\n{response.text}"})
@@ -1773,7 +1784,6 @@ elif st.session_state.active_page == "normal":
                         st.session_state.last_ai_response = None
                         st.rerun()
 
-            # 3. Նոր հարցում
             if prompt := st.chat_input("Հարցրու դասացուցակի մասին...", disabled=st.session_state.pending_proposal is not None):
                 st.session_state.chat_histories[current_user].append({"role": "user", "content": prompt})
                 
@@ -1786,11 +1796,7 @@ elif st.session_state.active_page == "normal":
                             system_prompt = (
                                 f"Դու 'Smart Time Table' օգնականն ես {selected_class} դասարանի համար: "
                                 "1. Պատասխանիր հակիրճ հայերենով: "
-                                "2. Եթե ցույց ես տալիս դասացուցակը, ԱՆՊԱՅՄԱՆ օգտագործիր Markdown աղյուսակ հետևյալ ձևաչափով.\n"
-                                "| Ժամ | Երկուշաբթի | Երեքշաբթի | Չորեքշաբթի | Հինգշաբթի | Ուրբաթ |\n"
-                                "| :--- | :--- | :--- | :--- | :--- | :--- |\n"
-                                "| 1 | ... | ... | ... | ... | ... |\n"
-                                "| 2 | ... | ... | ... | ... | ... |\n"
+                                "2. Եթե ցույց ես տալիս դասացուցակը, ԱՆՊԱՅՄԱՆ օգտագործիր Markdown աղյուսակ:\n"
                                 "3. Եթե առաջարկում ես փոփոխություն, պատասխանիդ վերջում ավելացրու '[PROPOSAL]':"
                             )
                             
@@ -1801,14 +1807,10 @@ elif st.session_state.active_page == "normal":
                             response = client.models.generate_content(
                                 model='gemini-2.5-flash', 
                                 contents=full_prompt,
-                                config={
-                                    'max_output_tokens': 30000,
-                                    'temperature': 0.7
-                                }
+                                config={'max_output_tokens': 30000, 'temperature': 0.7}
                             )
                             
                             response_text = response.text
-
                             if "[PROPOSAL]" in response_text:
                                 clean_text = response_text.replace("[PROPOSAL]", "").strip()
                                 st.session_state.pending_proposal = clean_text
