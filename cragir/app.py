@@ -721,8 +721,9 @@ if st.sidebar.button("💾 Պահպանել Բոլորը", use_container_width=T
         "Prefer": "return=minimal"
     }
     
-    # Հայաստանի ժամը (UTC+4)
-    arm_time = (datetime.utcnow() + timedelta(hours=4)).strftime("%H:%M")
+    # Հայաստանի ժամը և ամսաթիվը (UTC+4)
+    arm_time = (datetime.utcnow() + timedelta(hours=4)).strftime("%d.%m.%Y | %H:%M")
+
     data = {
         "last_update": arm_time,
         "updated_by": st.session_state.get('username', 'Unknown')
@@ -1818,4 +1819,3 @@ elif st.session_state.active_page == "normal":
                                 st.markdown(response_text)
                         except Exception as e:
                             st.error(f"API Error: {e}")
-
