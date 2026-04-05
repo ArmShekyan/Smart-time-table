@@ -1523,10 +1523,17 @@ elif st.session_state.active_page == "normal":
                 "Authorization": f"Bearer {st.secrets['supabase_key']}"
             }
             resp = requests.get(read_url, headers=headers).json()
-            db_time = resp[0]['last_update']
+            raw_time = resp[0]['last_update']  # Սա բերում է "05.04.2026 | 18:24" տիպի տեքստ
+            
+            # Բաժանում ենք ամսաթիվը և ժամը, եթե կա " | " նշանը
+            if " | " in raw_time:
+                db_date, db_hour = raw_time.split(" | ")
+            else:
+                db_date, db_hour = "", raw_time
+                
             db_user = resp[0]['updated_by']
         except Exception as e:
-            db_time, db_user = "--:--", "Անհայտ"
+            db_date, db_hour, db_user = "", "--:--", "Անհայտ"
 
         # 2. Դասավորում ենք Վերնագիրը և Ժամը
         col_title, col_time = st.columns([1.3, 1.2]) 
@@ -1554,8 +1561,11 @@ elif st.session_state.active_page == "normal":
                         </p>
                     </div>
                     <div style="display: flex; align-items: center; border-left: 2px solid rgba(88,166,255,0.3); padding-left: 15px;">
-                        <span style="font-size: 22px; margin-right: 8px;">🕒</span>
-                        <h2 style="margin:0; color:#58a6ff; font-family: 'Courier New', monospace; font-size: 32px; line-height: 1;">{db_time}</h2>
+                        <span style="font-size: 24px; margin-right: 10px;">🕒</span>
+                        <div style="display: flex; flex-direction: column; justify-content: center;">
+                            <span style="margin:0; color:#58a6ff; font-size: 13px; font-weight: bold; opacity: 0.8; line-height: 1;">{db_date}</span>
+                            <h2 style="margin:0; color:#58a6ff; font-family: 'Courier New', monospace; font-size: 30px; line-height: 1.1;">{db_hour}</h2>
+                        </div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
