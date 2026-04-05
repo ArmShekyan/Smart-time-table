@@ -1732,7 +1732,7 @@ elif st.session_state.active_page == "normal":
                     table_divider = "| :--- | " + " | ".join([":---"] * 5) + " |"
                     
                     rows = []
-                    for h in range(1, 9): # 1-ից 8-րդ ժամերը
+                    for h in range(1, 8): # 1-ից 7-րդ ժամերը
                         row = f"| {h} |"
                         for day in days:
                             subject = next((item['Առարկա'] for item in class_schedule if item['Օր'] == day and int(item['Ժամ']) == h), "-")
