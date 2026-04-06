@@ -431,7 +431,7 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* --- ՀԻՄՆԱԿԱՆ ԴԻԶԱՅՆ (DARK-Ի ՀԱՄԱՐ ԵՎ ԸՆԴՀԱՆՈՒՐ) --- */
+    /* 1. ՔՈ ՆԱԽԿԻՆ ԴԻԶԱՅՆԸ (ՀԻՄՆԱԿԱՆՈՒՄ DARK-Ի ՀԱՄԱՐ) */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
         border-right: 1px solid #343a40;
@@ -464,38 +464,43 @@ st.markdown("""
         background-color: #e9ecef;
         border-radius: 8px;
         font-weight: bold;
-        color: #343a40; /* Expander-ի տեքստը Light-ում */
+        color: #1a1c24; /* Որպեսզի միշտ երևա */
     }
 
-    /* --- LIGHT ԹԵՄԱՅԻ ՀԱՏՈՒԿ ՀԱՐՄԱՐԵՑՈՒՄՆԵՐ --- */
+    /* 2. ԱՎԵԼԱՑՎԱԾ ԼԱՎԱԳՈՒՅՆ ԳՈՒՅՆԵՐԸ LIGHT ԹԵՄԱՅԻ ՀԱՄԱՐ */
     @media (prefers-color-scheme: light) {
-        /* Վերնագրերի գույնը սպիտակ ֆոնի վրա */
-        h1, h2, h3, h4, h5, h6, p, label {
-            color: #1a1c24 !important;
+        .stApp {
+            background-color: #ffffff;
+        }
+        /* Բոլոր տեքստերը և վերնագրերը դարձնում ենք տեսանելի */
+        h1, h2, h3, h4, h5, h6, .stMarkdown p, label {
+            color: #0f172a !important; /* Մուգ ածխագույն */
         }
         
-        /* Վահանակի (Dashboard) ստատիստիկայի տեքստերը */
-        [data-testid="stMarkdownContainer"] p {
-            color: #1a1c24 !important;
+        /* Վահանակի ստատիստիկայի թվերը */
+        [data-testid="stMetricValue"] {
+            color: #2563eb !important; /* Վառ կապույտ */
         }
-
-        /* Մետրիկաների պիտակները (Labels) */
         [data-testid="stMetricLabel"] {
-            color: #495057 !important;
+            color: #475569 !important;
         }
 
-        /* Sidebar-ի տեքստերը Light թեմայի ժամանակ (եթե Sidebar-ը չի փոխվում) */
-        /* Եթե ուզում ես Sidebar-ը սպիտակ լինի Light-ի ժամանակ, ապա օգտագործիր սա. */
+        /* Sidebar-ի տեքստերը Light-ի ժամանակ */
         [data-testid="stSidebar"] {
-            background-color: #f8f9fa;
-            border-right: 1px solid #dee2e6;
+            background-color: #f1f5f9 !important; /* Բաց մոխրագույն sidebar */
+            border-right: 1px solid #e2e8f0 !important;
         }
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p {
-            color: #1a1c24 !important;
+            color: #0f172a !important;
+        }
+        
+        /* Կոճակների տեքստը sidebar-ում */
+        [data-testid="stSidebar"] button p {
+            color: inherit;
         }
     }
 
-    /* Անիմացիա */
+    /* 3. ՔՈ ԱՆԻՄԱՑԻԱՆ */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
