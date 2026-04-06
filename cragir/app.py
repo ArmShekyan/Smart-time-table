@@ -431,6 +431,7 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
+    /* --- ՀԻՄՆԱԿԱՆ ԴԻԶԱՅՆ (DARK-Ի ՀԱՄԱՐ ԵՎ ԸՆԴՀԱՆՈՒՐ) --- */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
         border-right: 1px solid #343a40;
@@ -463,7 +464,38 @@ st.markdown("""
         background-color: #e9ecef;
         border-radius: 8px;
         font-weight: bold;
+        color: #343a40; /* Expander-ի տեքստը Light-ում */
     }
+
+    /* --- LIGHT ԹԵՄԱՅԻ ՀԱՏՈՒԿ ՀԱՐՄԱՐԵՑՈՒՄՆԵՐ --- */
+    @media (prefers-color-scheme: light) {
+        /* Վերնագրերի գույնը սպիտակ ֆոնի վրա */
+        h1, h2, h3, h4, h5, h6, p, label {
+            color: #1a1c24 !important;
+        }
+        
+        /* Վահանակի (Dashboard) ստատիստիկայի տեքստերը */
+        [data-testid="stMarkdownContainer"] p {
+            color: #1a1c24 !important;
+        }
+
+        /* Մետրիկաների պիտակները (Labels) */
+        [data-testid="stMetricLabel"] {
+            color: #495057 !important;
+        }
+
+        /* Sidebar-ի տեքստերը Light թեմայի ժամանակ (եթե Sidebar-ը չի փոխվում) */
+        /* Եթե ուզում ես Sidebar-ը սպիտակ լինի Light-ի ժամանակ, ապա օգտագործիր սա. */
+        [data-testid="stSidebar"] {
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+        }
+        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p {
+            color: #1a1c24 !important;
+        }
+    }
+
+    /* Անիմացիա */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
