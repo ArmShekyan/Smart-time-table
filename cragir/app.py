@@ -431,7 +431,7 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* 1. ՔՈ ՍԿԶԲՆԱԿԱՆ DARK ԴԻԶԱՅՆԸ (ԲԱՑԱՐՁԱԿ ԱՆՓՈՓՈԽ) */
+    /* 1. ՔՈ ՍԿԶԲՆԱԿԱՆ DARK ԴԻԶԱՅՆԸ (ԱՆՓՈՓՈԽ) */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
         border-right: 1px solid #343a40;
@@ -443,58 +443,40 @@ st.markdown("""
         border-radius: 20px;
         transition: all 0.3s ease-in-out;
     }
-    [data-testid="stSidebar"] .stButton>button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
-    }
-    [data-testid="stDataFrameDataframe"] div table {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-    [data-testid="stDataFrameDataframe"] div table thead tr th {
-        background-color: #343a40 !important;
-        color: white !important;
-    }
     [data-testid="stMetricValue"] {
         color: #0d6efd;
         font-weight: bold;
     }
-    .streamlit-expanderHeader {
-        background-color: #e9ecef;
-        border-radius: 8px;
-        font-weight: bold;
+
+    /* 2. LIGHT ԹԵՄԱՅԻ ՀԱՄԱՐ - ՍՏԻՊՈՂԱԲԱՐ ՍՊԻՏԱԿ ՏԵՔՍՏԵՐ */
+    @media (prefers-color-scheme: light) {
+        /* Սա թիրախավորում է հենց նավիգացիայի (radio) տեքստերը */
+        [data-testid="stSidebar"] label div[data-testid="stMarkdownContainer"] p {
+            color: white !important;
+        }
+        
+        /* Sidebar-ի բոլոր մյուս տեքստերը (անուն, պաշտոն, checkbox) */
+        [data-testid="stSidebar"] p, 
+        [data-testid="stSidebar"] span, 
+        [data-testid="stSidebar"] label, 
+        [data-testid="stSidebar"] h1, 
+        [data-testid="stSidebar"] h3 {
+            color: white !important;
+        }
+
+        /* Սա հատուկ նավիգացիայի կլորակների կողքի տեքստի համար է */
+        .st-emotion-cache-6qob1r { 
+            color: white !important; 
+        }
     }
+
+    /* 3. ԱՆԻՄԱՑԻԱ */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
     .stApp {
         animation: fadeIn 0.8s ease-in-out;
-    }
-
-    /* 2. LIGHT ԹԵՄԱՅԻ ՀԱՄԱՐ - ԲՈԼՈՐ ՏԵՔՍՏԵՐԸ ՍՏԻՊՈՂԱԲԱՐ ՍՊԻՏԱԿ */
-    @media (prefers-color-scheme: light) {
-        /* Sidebar-ի նավիգացիայի տեքստերը (Վահանակ, Առարկաներ...) */
-        [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
-        [data-testid="stSidebar"] [data-testid="stRadio"] label div div,
-        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
-        [data-testid="stSidebar"] span,
-        [data-testid="stSidebar"] label {
-            color: #ffffff !important;
-        }
-
-        /* Sidebar-ի վերնագրերը */
-        [data-testid="stSidebar"] h1, 
-        [data-testid="stSidebar"] h2, 
-        [data-testid="stSidebar"] h3 {
-            color: #ffffff !important;
-        }
-
-        /* Գլխավոր էկրանի տեքստերը (եթե դրանք էլ ես ուզում սպիտակ) */
-        .stApp h1, .stApp h2, .stApp h3, .stApp p, .stApp span {
-            color: #ffffff !important;
-        }
     }
 </style>
 """, unsafe_allow_html=True)
