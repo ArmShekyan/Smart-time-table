@@ -473,25 +473,26 @@ st.markdown("""
         animation: fadeIn 0.8s ease-in-out;
     }
 
-    /* 2. LIGHT ԹԵՄԱՅԻ ՀԱՄԱՐ - ԲՈԼՈՐ ՏԵՔՍՏԵՐԸ ՍՊԻՏԱԿ */
+    /* 2. LIGHT ԹԵՄԱՅԻ ՀԱՄԱՐ - ԲՈԼՈՐ ՏԵՔՍՏԵՐԸ ՍՏԻՊՈՂԱԲԱՐ ՍՊԻՏԱԿ */
     @media (prefers-color-scheme: light) {
-        /* Ստիպում ենք Sidebar-ի նավիգացիային և տեքստերին լինել սպիտակ */
+        /* Sidebar-ի նավիգացիայի տեքստերը (Վահանակ, Առարկաներ...) */
         [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
+        [data-testid="stSidebar"] [data-testid="stRadio"] label div div,
         [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
         [data-testid="stSidebar"] span,
-        [data-testid="stSidebar"] label,
-        [data-testid="stSidebar"] h1,
+        [data-testid="stSidebar"] label {
+            color: #ffffff !important;
+        }
+
+        /* Sidebar-ի վերնագրերը */
+        [data-testid="stSidebar"] h1, 
+        [data-testid="stSidebar"] h2, 
         [data-testid="stSidebar"] h3 {
             color: #ffffff !important;
         }
 
-        /* Եթե ուզում ես հիմնական էկրանի տեքստերն էլ լինեն սպիտակ Light-ի ժամանակ */
+        /* Գլխավոր էկրանի տեքստերը (եթե դրանք էլ ես ուզում սպիտակ) */
         .stApp h1, .stApp h2, .stApp h3, .stApp p, .stApp span {
-            color: #ffffff !important;
-        }
-        
-        /* Վտանգավոր գոտու տեքստը սպիտակ */
-        [data-testid="stSidebar"] [data-testid="stCheckbox"] label span {
             color: #ffffff !important;
         }
     }
