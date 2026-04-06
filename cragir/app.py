@@ -431,7 +431,7 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* 1. ՔՈ ՆԱԽԿԻՆ ԴԻԶԱՅՆԸ (ՀԻՄՆԱԿԱՆՈՒՄ DARK-Ի ՀԱՄԱՐ) */
+    /* 1. ՔՈ ԳՈՅՈՒԹՅՈՒՆ ՈՒՆԵՑՈՂ ԴԻԶԱՅՆԸ (DARK) */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
         border-right: 1px solid #343a40;
@@ -443,64 +443,57 @@ st.markdown("""
         border-radius: 20px;
         transition: all 0.3s ease-in-out;
     }
-    [data-testid="stSidebar"] .stButton>button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
-    }
-    [data-testid="stDataFrameDataframe"] div table {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-    [data-testid="stDataFrameDataframe"] div table thead tr th {
-        background-color: #343a40 !important;
-        color: white !important;
-    }
     [data-testid="stMetricValue"] {
         color: #0d6efd;
         font-weight: bold;
     }
-    .streamlit-expanderHeader {
-        background-color: #e9ecef;
-        border-radius: 8px;
-        font-weight: bold;
-        color: #1a1c24; /* Որպեսզի միշտ երևա */
-    }
 
-    /* 2. ԱՎԵԼԱՑՎԱԾ ԼԱՎԱԳՈՒՅՆ ԳՈՒՅՆԵՐԸ LIGHT ԹԵՄԱՅԻ ՀԱՄԱՐ */
+    /* 2. LIGHT ԹԵՄԱՅԻ ԼՐԱՄՇԱԿՎԱԾ ՈՒՂՂՈՒՄՆԵՐ */
     @media (prefers-color-scheme: light) {
         .stApp {
             background-color: #ffffff;
         }
-        /* Բոլոր տեքստերը և վերնագրերը դարձնում ենք տեսանելի */
-        h1, h2, h3, h4, h5, h6, .stMarkdown p, label {
-            color: #0f172a !important; /* Մուգ ածխագույն */
-        }
-        
-        /* Վահանակի ստատիստիկայի թվերը */
-        [data-testid="stMetricValue"] {
-            color: #2563eb !important; /* Վառ կապույտ */
-        }
-        [data-testid="stMetricLabel"] {
-            color: #475569 !important;
-        }
 
-        /* Sidebar-ի տեքստերը Light-ի ժամանակ */
+        /* Sidebar-ի ընդհանուր տեսքը */
         [data-testid="stSidebar"] {
-            background-color: #f1f5f9 !important; /* Բաց մոխրագույն sidebar */
+            background-color: #f8fafc !important;
             border-right: 1px solid #e2e8f0 !important;
         }
-        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p {
-            color: #0f172a !important;
+
+        /* ՆԱՎԻԳԱՑԻԱՅԻ ՏԵՔՍՏԵՐԸ (st.radio) */
+        [data-testid="stSidebar"] .stRadio label p {
+            color: #0f172a !important; /* Մուգ ածխագույն */
+            font-weight: 500 !important;
+        }
+
+        /* Sidebar-ի մյուս բոլոր տեքստերը (արմշեկյան, պաշտոն և այլն) */
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p, 
+        [data-testid="stSidebar"] span {
+            color: #1e293b !important;
+        }
+
+        /* ՎՏԱՆԳԱՎՈՐ ԳՈՏԻ (Checkbox և տեքստ) */
+        [data-testid="stSidebar"] .stCheckbox label p {
+            color: #1e293b !important;
         }
         
-        /* Կոճակների տեքստը sidebar-ում */
-        [data-testid="stSidebar"] button p {
-            color: inherit;
+        /* Վտանգավոր գոտու վերնագիրը (եթե markdown է) */
+        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] h2 {
+            color: #e11d48 !important; /* Կարմիրը պահում ենք վտանգի համար */
+        }
+
+        /* Հիմնական էկրանի վերնագրերն ու տեքստերը */
+        h1, h2, h3, h4, h5, h6, .stMarkdown p {
+            color: #0f172a !important;
+        }
+
+        /* Աղյուսակների (Expander) վերնագրերը */
+        .streamlit-expanderHeader p {
+            color: #1e293b !important;
         }
     }
 
-    /* 3. ՔՈ ԱՆԻՄԱՑԻԱՆ */
+    /* 3. ԱՆԻՄԱՑԻԱ */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
