@@ -1,3 +1,4 @@
+
 import streamlit as st
 import uuid
 import random
@@ -431,17 +432,6 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* --- ՍԱ ԻՄ ԱՎԵԼԱՑՐԱԾՆ Է (ՊԱՇՏՊԱՆՈՒԹՅՈՒՆ) --- */
-    .stApp {
-        background-color: #1a1c24 !important;
-        color: #f8f9fa !important;
-    }
-    header { visibility: hidden !important; }
-    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] span {
-        color: white !important;
-    }
-
-    /* --- ՍԱ ՔՈ ԲՆՕՐԻՆԱԿ ԿՈԴՆ Է (ԱՆՓՈՓՈԽ) --- */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
         border-right: 1px solid #343a40;
@@ -689,7 +679,7 @@ if st.sidebar.button("🚪 Ելք համակարգից", use_container_width=Tru
     st.rerun()
 
 
-if st.sidebar.button("🔄 Թարմացնել Տվյալները", use_container_width=True):
+if st.sidebar.button("🔄 Թարմացնել Cloud-ից", use_container_width=True):
     manual_refresh()
 
 st.sidebar.divider()
@@ -704,9 +694,9 @@ available_pages = []
 if st.session_state.user_role in ['owner', 'admin']:
     available_pages = ["📊 Վահանակ", "📚 Առարկաներ", "👩‍🏫 Ուսուցիչներ", "🏫 Դասարաններ", "🚀 Գեներացում", "📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական", "🤖 AI Օգնական"]
 elif st.session_state.user_role == 'subject_editor':
-    available_pages = ["📊 Վահանակ", "📚 Առարկաներ", "📂 Վերջին պահպանվածը", "🤖 AI Օգնական"]
+    available_pages = ["📊 Վահանակ", "📚 Առարկաներ", "📂 Վերջին պահպանվածը"]
 elif st.session_state.user_role == 'teacher_editor':
-    available_pages = ["📊 Վահանակ", "👩‍🏫 Ուսուցիչներ", "📂 Վերջին պահպանվածը", "🤖 AI Օգնական"]
+    available_pages = ["📊 Վահանակ", "👩‍🏫 Ուսուցիչներ", "📂 Վերջին պահպանվածը"]
 else:
     available_pages = ["📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական"]
 
@@ -859,7 +849,7 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
 
     st.divider()
     
-    if st.button("🔄 Թարմացնել Ցուցակը", use_container_width=True):
+    if st.button("🔄 Թարմացնել Ցուցակը (Կարդալ SQL բազայից)", use_container_width=True):
         refresh_users_only()
 
     st.subheader("📋 Գրանցված Օգտատերեր")
