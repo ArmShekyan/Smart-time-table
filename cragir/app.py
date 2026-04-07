@@ -689,7 +689,7 @@ if st.sidebar.button("🚪 Ելք համակարգից", use_container_width=Tru
     st.rerun()
 
 
-if st.sidebar.button("🔄 Թարմացնել Cloud-ից", use_container_width=True):
+if st.sidebar.button("🔄 Թարմացնել Տվյալները", use_container_width=True):
     manual_refresh()
 
 st.sidebar.divider()
@@ -859,7 +859,7 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
 
     st.divider()
     
-    if st.button("🔄 Թարմացնել Ցուցակը (Կարդալ SQL բազայից)", use_container_width=True):
+    if st.button("🔄 Թարմացնել Ցուցակը", use_container_width=True):
         refresh_users_only()
 
     st.subheader("📋 Գրանցված Օգտատերեր")
