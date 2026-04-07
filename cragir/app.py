@@ -1,4 +1,3 @@
-
 import streamlit as st
 import uuid
 import random
@@ -709,7 +708,7 @@ elif st.session_state.user_role == 'subject_editor':
 elif st.session_state.user_role == 'teacher_editor':
     available_pages = ["📊 Վահանակ", "👩‍🏫 Ուսուցիչներ", "📂 Վերջին պահպանվածը", "🤖 AI Օգնական"]
 else:
-    available_pages = ["📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական", "🤖 AI Օգնական"]
+    available_pages = ["📂 Վերջին պահպանվածը", "👤 Ուսուցչի Անձնական"]
 
 default_index = 0
 if st.session_state.active_tab in available_pages:
