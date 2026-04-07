@@ -431,6 +431,17 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
+    /* --- ՍԱ ԻՄ ԱՎԵԼԱՑՐԱԾՆ Է (ՊԱՇՏՊԱՆՈՒԹՅՈՒՆ) --- */
+    .stApp {
+        background-color: #1a1c24 !important;
+        color: #f8f9fa !important;
+    }
+    header { visibility: hidden !important; }
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] span {
+        color: white !important;
+    }
+
+    /* --- ՍԱ ՔՈ ԲՆՕՐԻՆԱԿ ԿՈԴՆ Է (ԱՆՓՈՓՈԽ) --- */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
         border-right: 1px solid #343a40;
