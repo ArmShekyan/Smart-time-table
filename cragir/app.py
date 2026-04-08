@@ -431,34 +431,12 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* 1. ՀԵՌԱԽՈՍԻ ՀԱՄԱՐ */
+    /* Ավելացված է միայն այս հատվածը հեռախոսի համար */
     .main .block-container {
         padding-bottom: 300px !important;
     }
 
-    /* 2. ՎՏԱՆԳԱՎՈՐ ԿՈՃԱԿԻ ԿԱՐՄԻՐ ԳՈՒՅՆԸ (SIDEBAR) */
-    /* Սա թիրախավորում է կոճակը բոլոր հնարավոր ձևերով */
-    div[data-testid="stSidebar"] div[data-testid="stButton"] button[key="danger-button"],
-    div[data-testid="stSidebar"] button[key="danger-button"] {
-        background-color: rgb(255, 75, 75) !important;
-        background: rgb(255, 75, 75) !important;
-        color: white !important;
-        border: 1px solid rgb(255, 75, 75) !important;
-    }
-
-    /* Տեքստի գույնը ստիպողաբար սպիտակ */
-    div[data-testid="stSidebar"] button[key="danger-button"] p,
-    div[data-testid="stSidebar"] button[key="danger-button"] div {
-        color: white !important;
-    }
-
-    /* Hover վիճակը */
-    div[data-testid="stSidebar"] button[key="danger-button"]:hover {
-        background-color: rgb(255, 51, 51) !important;
-        border-color: rgb(255, 51, 51) !important;
-    }
-
-    /* ՔՈ ԲՆՕՐԻՆԱԿ ԴԻԶԱՅՆԸ (ԱՆՓՈՓՈԽ) */
+    /* ՔՈ ԿՈԴԸ՝ ԱՌԱՆՑ ՈՐԵՎԷ ՓՈՓՈԽՈՒԹՅԱՆ */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
         border-right: 1px solid #343a40;
@@ -783,7 +761,7 @@ if st.session_state.user_role == 'owner':
     st.sidebar.markdown("<h3 style='color: #dc3545;'>⚠️ Վտանգավոր Գոտի</h3>", unsafe_allow_html=True)
     confirm_reset = st.sidebar.checkbox("Հաստատում եմ ամբողջական ջնջումը")
     
-    if st.sidebar.button("🚨 Զրոյացնել Ամբողջ Բազան", type="primary", use_container_width=True, disabled=not confirm_reset, key="danger-button"):
+    if st.sidebar.button("🚨 Զրոյացնել Ամբողջ Բազան", type="primary", use_container_width=True, disabled=not confirm_reset):
         reset_all_data()
         st.rerun()
 
