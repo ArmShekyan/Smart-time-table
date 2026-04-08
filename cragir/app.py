@@ -1034,7 +1034,7 @@ elif st.session_state.active_page == "normal":
             with st.container(border=True):
                 if st.session_state.subj_pool:
                     # Ստեղծում ենք վերնագրի և մատիտի սյունակները
-                    header_col, edit_col = st.columns([0.9, 0.1])
+                    header_col, edit_col = st.columns([0.85, 0.15])
                     
                     with header_col:
                         st.markdown("### 📋 Գրանցել Առարկան")
@@ -1136,7 +1136,7 @@ elif st.session_state.active_page == "normal":
             with st.container(border=True):
                 if st.session_state.teacher_pool and st.session_state.subjects:
                     # Ստեղծում ենք վերնագրի և մատիտի սյունակները
-                    header_col, edit_col = st.columns([0.9, 0.1])
+                    header_col, edit_col = st.columns([0.85, 0.15])
                     
                     with header_col:
                         st.markdown("### 📋 Գրանցել Ուսուցչին")
