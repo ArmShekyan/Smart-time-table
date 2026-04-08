@@ -431,23 +431,35 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* 1. ՀԻՄՆԱԿԱՆ ՖՈՆ ԵՎ ՏԵՔՍՏ - Սառեցնում ենք ամբողջ էջը */
+    /* 1. ԱՐՄԱՏԱԿԱՆ ԳՈՒՅՆԵՐԻ ՍԱՌԵՑՈՒՄ (Root) */
+    :root {
+        --primary-color: #0d6efd;
+        --background-color: #0e1117;
+        --secondary-background-color: #1a1c24;
+        --text-color: #f8f9fa;
+    }
+
+    /* 2. ՀԻՄՆԱԿԱՆ ՖՈՆ ԵՎ ՏԵՔՍՏ */
     .stApp, [data-testid="stHeader"], .main, [data-testid="stAppViewContainer"] {
         background-color: #0e1117 !important;
         color: #f8f9fa !important;
     }
 
-    /* Էջի տակը ազատ տարածություն հեռախոսի selectbox-ի համար */
+    /* Էջի տակը ազատ տարածություն հեռախոսի համար */
     .main .block-container {
-        padding-bottom: 300px !important;
+        padding-bottom: 400px !important;
     }
 
-    /* 2. ԱՂՅՈՒՍԱԿՆԵՐ (DataFrame) - Սա թույլ չի տա սպիտակել */
-    [data-testid="stDataFrameDataframe"], [data-testid="stTable"], .stTable {
+    /* 3. ԱՂՅՈՒՍԱԿՆԵՐ ԵՎ ԳՐԱՖԻԿՆԵՐ (Ամենակարևոր հատվածը) */
+    /* Սա թիրախավորում է նաև iframe-ների ներսի սպիտակ ֆոնը */
+    [data-testid="stDataFrameDataframe"], [data-testid="stTable"], .stTable, 
+    iframe, .stPlotlyChart, div[id^="plotly-"] {
         background-color: #1a1c24 !important;
+        border: 1px solid #343a40 !important;
+        border-radius: 10px !important;
     }
 
-    /* Աղյուսակի բջիջների և տեքստի գույնը */
+    /* Աղյուսակի բջիջներն ու տեքստը */
     div[data-testid="stDataFrameDataframe"] td, 
     div[data-testid="stDataFrameDataframe"] th,
     .stTable td, .stTable th {
@@ -456,18 +468,19 @@ st.markdown("""
         border: 1px solid #343a40 !important;
     }
 
-    [data-testid="stDataFrameDataframe"] div table thead tr th {
+    thead tr th {
         background-color: #343a40 !important;
         color: white !important;
     }
 
-    /* 3. SIDEBAR */
+    /* 4. SIDEBAR */
     [data-testid="stSidebar"] {
         background-color: #1a1c24 !important;
         border-right: 1px solid #343a40;
     }
     
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] span {
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, 
+    [data-testid="stSidebar"] label, [data-testid="stSidebar"] span {
         color: #f8f9fa !important;
     }
 
@@ -481,11 +494,23 @@ st.markdown("""
 
     [data-testid="stSidebar"] .stButton>button:hover {
         transform: scale(1.05);
-        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
         border-color: #0d6efd;
     }
 
-    /* 4. ՄԵՏՐԻԿԱՆԵՐ ԵՎ ԷՔՍՊԱՆԴԵՐՆԵՐ */
+    /* 5. INPUT-ՆԵՐ, MULTISELECT ԵՎ POPOVER */
+    input, select, textarea, div[role="combobox"], [data-baseweb="select"] > div, 
+    div[data-baseweb="popover"], [data-testid="stPopover"] {
+        background-color: #1a1c24 !important;
+        color: white !important;
+        border-color: #343a40 !important;
+    }
+    
+    [data-baseweb="tag"] {
+        background-color: #343a40 !important;
+        color: white !important;
+    }
+
+    /* 6. ՄԵՏՐԻԿԱՆԵՐ ԵՎ ԷՔՍՊԱՆԴԵՐՆԵՐ */
     [data-testid="stMetricValue"] {
         color: #0d6efd !important;
         font-weight: bold;
@@ -495,33 +520,13 @@ st.markdown("""
         background-color: #262730 !important;
         color: #f8f9fa !important;
         border-radius: 8px;
-        font-weight: bold;
-    }
-
-    /* 5. INPUT-ՆԵՐ ԵՎ MULTISELECT (Ուսուցիչների բաժնի համար) */
-    input, select, textarea, div[role="combobox"], [data-baseweb="select"] > div {
-        background-color: #1a1c24 !important;
-        color: white !important;
-        border-color: #343a40 !important;
-    }
-    
-    /* Multiselect-ի ներսի ընտրված տարրերը */
-    [data-baseweb="tag"] {
-        background-color: #343a40 !important;
-        color: white !important;
-    }
-
-    /* 6. Հեռախոսի Selectbox-ի բացվող մենյուի լուծումը */
-    div[data-baseweb="popover"] {
-        background-color: #1a1c24 !important;
-        max-height: 250px !important;
-        border: 1px solid #343a40 !important;
     }
 
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
+    .stApp { animation: fadeIn 0.8s ease-in-out; }
 </style>
 """, unsafe_allow_html=True)
 
