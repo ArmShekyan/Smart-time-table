@@ -431,31 +431,43 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* 1. ՀԻՄՆԱԿԱՆ ՖՈՆ ԵՎ ՏԵՔՍՏ */
-    .stApp {
+    /* 1. ՀԻՄՆԱԿԱՆ ՖՈՆ ԵՎ ՏԵՔՍՏ - Սառեցնում ենք ամբողջ էջը */
+    .stApp, [data-testid="stHeader"], .main, [data-testid="stAppViewContainer"] {
         background-color: #0e1117 !important;
         color: #f8f9fa !important;
-        animation: fadeIn 0.8s ease-in-out;
     }
 
-    /* Էջի ամենաներքևում ավելացնում ենք ազատ տարածություն (300px), 
-       որ հեռախոսով Selectbox-ը ներքև բացվելու տեղ ունենա */
+    /* Էջի տակը ազատ տարածություն հեռախոսի selectbox-ի համար */
     .main .block-container {
         padding-bottom: 300px !important;
     }
 
-    /* Header-ի գույնը */
-    header[data-testid="stHeader"] {
-        background-color: #0e1117 !important;
+    /* 2. ԱՂՅՈՒՍԱԿՆԵՐ (DataFrame) - Սա թույլ չի տա սպիտակել */
+    [data-testid="stDataFrameDataframe"], [data-testid="stTable"], .stTable {
+        background-color: #1a1c24 !important;
     }
 
-    /* 2. SIDEBAR */
+    /* Աղյուսակի բջիջների և տեքստի գույնը */
+    div[data-testid="stDataFrameDataframe"] td, 
+    div[data-testid="stDataFrameDataframe"] th,
+    .stTable td, .stTable th {
+        background-color: #1a1c24 !important;
+        color: white !important;
+        border: 1px solid #343a40 !important;
+    }
+
+    [data-testid="stDataFrameDataframe"] div table thead tr th {
+        background-color: #343a40 !important;
+        color: white !important;
+    }
+
+    /* 3. SIDEBAR */
     [data-testid="stSidebar"] {
         background-color: #1a1c24 !important;
         border-right: 1px solid #343a40;
     }
     
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] span {
         color: #f8f9fa !important;
     }
 
@@ -473,21 +485,9 @@ st.markdown("""
         border-color: #0d6efd;
     }
 
-    /* 3. ԱՂՅՈՒՍԱԿՆԵՐ */
-    [data-testid="stDataFrameDataframe"] div table {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    [data-testid="stDataFrameDataframe"] div table thead tr th {
-        background-color: #343a40 !important;
-        color: white !important;
-    }
-
     /* 4. ՄԵՏՐԻԿԱՆԵՐ ԵՎ ԷՔՍՊԱՆԴԵՐՆԵՐ */
     [data-testid="stMetricValue"] {
-        color: #0d6efd;
+        color: #0d6efd !important;
         font-weight: bold;
     }
 
@@ -498,17 +498,24 @@ st.markdown("""
         font-weight: bold;
     }
 
-    /* 5. INPUT-ՆԵՐ (Selectbox, Number Input և այլն) */
-    input, select, textarea, div[role="combobox"] {
+    /* 5. INPUT-ՆԵՐ ԵՎ MULTISELECT (Ուսուցիչների բաժնի համար) */
+    input, select, textarea, div[role="combobox"], [data-baseweb="select"] > div {
         background-color: #1a1c24 !important;
         color: white !important;
-        border: 1px solid #343a40 !important;
+        border-color: #343a40 !important;
+    }
+    
+    /* Multiselect-ի ներսի ընտրված տարրերը */
+    [data-baseweb="tag"] {
+        background-color: #343a40 !important;
+        color: white !important;
     }
 
-    /* Հեռախոսի Selectbox-ի բացվող մենյուի լուծումը */
+    /* 6. Հեռախոսի Selectbox-ի բացվող մենյուի լուծումը */
     div[data-baseweb="popover"] {
         background-color: #1a1c24 !important;
         max-height: 250px !important;
+        border: 1px solid #343a40 !important;
     }
 
     @keyframes fadeIn {
@@ -1163,8 +1170,30 @@ elif st.session_state.active_page == "normal":
         # --- ԱՋ ՍՅՈՒՆ: Գրանցել Ուսուցչին (Առարկաների հետ) ---
         with col_r:
             if st.session_state.teacher_pool and st.session_state.subjects:
-                with st.form("register_teacher", clear_on_submit=True):
+                # Ստեղծում ենք վերնագրի և մատիտի սյունակները
+                header_col, edit_col = st.columns([0.88, 0.12])
+                
+                with header_col:
                     st.markdown("### 📋 Գրանցել Ուսուցչին")
+                    
+                with edit_col:
+                    # Մատիտի կոճակը popover-ով՝ ուսուցիչների ցանկը (pool) խմբագրելու համար
+                    with st.popover("✏️", help="Կառավարել ուսուցիչների ցանկը"):
+                        st.write("🗑️ Ջնջել ուսուցչին ցանկից")
+                        teacher_to_del = st.selectbox(
+                            "Ընտրեք ջնջվողին", 
+                            options=st.session_state.teacher_pool, 
+                            key="del_teacher_from_pool_key"
+                        )
+                        if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="btn_del_teacher"):
+                            if teacher_to_del in st.session_state.teacher_pool:
+                                st.session_state.teacher_pool.remove(teacher_to_del)
+                                save_to_disk()
+                                st.toast(f"🗑️ {teacher_to_del}-ը հեռացվեց ցանկից")
+                                st.rerun()
+
+                # Քո բնօրինակ ֆորման
+                with st.form("register_teacher", clear_on_submit=True):
                     sel_t = st.selectbox("Ընտրեք ուսուցչին", st.session_state.teacher_pool)
                     sel_subjs = st.multiselect("Ընտրեք առարկաները", st.session_state.subjects, format_func=lambda x: x.name)
                     
@@ -1177,7 +1206,7 @@ elif st.session_state.active_page == "normal":
                         else:
                             new_teacher = Teacher(id=str(uuid.uuid4()), name=sel_t, subject_ids=[s.id for s in sel_subjs])
                             st.session_state.teachers.append(new_teacher)
-                            save_to_disk()  # Պահպանում ենք գրանցումը
+                            save_to_disk()
                             st.toast(f"✅ Ուսուցիչը գրանցվեց", icon="👩‍🏫")
                             st.rerun()
 
