@@ -1262,61 +1262,56 @@ elif st.session_state.active_page == "normal":
 
         with col2:
             if st.session_state.teachers and st.session_state.classes:
-                st.markdown("### 🔗 Կապել Դասարանին")
+                # Օգտագործում ենք container, որպեսզի ձախ կողմի պես border ունենա
+                with st.container(border=True):
+                    st.markdown("### 🔗 Կապել Դասարանին")
+                    
+                    # 1. Հաշվարկի համար վերցնում ենք ընթացիկ դասարանը
+                    temp_c = st.session_state.get("c_sel_main", st.session_state.classes[0])
+                    current_total = sum(a.lessons_per_week for a in st.session_state.assignments if a.class_id == temp_c.id)
+                    max_allowed = 35
+                    left = max_allowed - current_total
+                    
+                    st.info(f"📊 {temp_c.grade}{temp_c.section} դասարանում լրացված է՝ {current_total} / {max_allowed} ժամ")
 
-                # 1. Նախապես վերցնում ենք ընտրված դասարանը session_state-ից հաշվարկի համար
-                # Եթե դեռ ընտրված չէ, վերցնում ենք ցուցակի առաջինը
-                temp_c = st.session_state.get("c_sel_main", st.session_state.classes[0])
-                
-                # --- ԺԱՄԵՐԻ ՀԱՇՎԱՐԿ (Այս հատվածը բարձրացրինք վերև) ---
-                current_total = sum(a.lessons_per_week for a in st.session_state.assignments if a.class_id == temp_c.id)
-                max_allowed = 35
-                left = max_allowed - current_total
-                
-                # Ցուցադրում ենք ինֆորմացիան ամենավերևում
-                st.info(f"📊 {temp_c.grade}{temp_c.section} դասարանում լրացված է՝ {current_total} / {max_allowed} ժամ")
+                    sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", 
+                                         st.session_state.teachers, 
+                                         format_func=lambda x: x.name, 
+                                         key="t_sel_main")
+                    
+                    sel_c = st.selectbox("🏫 Ընտրեք Դասարանը", 
+                                         st.session_state.classes, 
+                                         format_func=lambda x: f"{x.grade}{x.section}",
+                                         key="c_sel_main")
 
-                # 2. Ուսուցչի ընտրություն (Քո հերթականությամբ)
-                sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", 
-                                     st.session_state.teachers, 
-                                     format_func=lambda x: x.name, 
-                                     key="t_sel_main")
-                
-                # 3. Դասարանի ընտրություն (Քո հերթականությամբ)
-                sel_c = st.selectbox("🏫 Ընտրեք Դասարանը", 
-                                     st.session_state.classes, 
-                                     format_func=lambda x: f"{x.grade}{x.section}",
-                                     key="c_sel_main")
+                    all_teacher_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
+                    assigned_subject_ids = [a.subject_id for a in st.session_state.assignments if a.class_id == sel_c.id]
+                    available_subjs = [s for s in all_teacher_subjs if s.id not in assigned_subject_ids]
 
-                # Մնացած կոդը մնում է նույնությամբ
-                all_teacher_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
-                assigned_subject_ids = [a.subject_id for a in st.session_state.assignments if a.class_id == sel_c.id]
-                available_subjs = [s for s in all_teacher_subjs if s.id not in assigned_subject_ids]
-
-                if available_subjs:
-                    if left <= 0:
-                        st.error(f"🚫 {max_allowed} ժամը լրացել է: Ավելացնելու համար ջնջեք հին կապերից:")
+                    if available_subjs:
+                        if left <= 0:
+                            st.error(f"🚫 {max_allowed} ժամը լրացել է:")
+                        else:
+                            with st.form("as_form", clear_on_submit=True):
+                                sel_s = st.selectbox("📚 Առարկա", available_subjs, format_func=lambda x: x.name)
+                                hrs = st.number_input("📅 Շաբաթական ժամեր", 1, max(1, left), min(2, max(1, left)))
+                                
+                                if st.form_submit_button("Հաստատել Կապը", use_container_width=True, type="primary"):
+                                    import uuid
+                                    new_ass = Assignment(
+                                        id=str(uuid.uuid4()), 
+                                        teacher_id=sel_t.id, 
+                                        subject_id=sel_s.id, 
+                                        class_id=sel_c.id, 
+                                        lessons_per_week=hrs,
+                                        room_type="Ավտոմատ"
+                                    )
+                                    st.session_state.assignments.append(new_ass)
+                                    save_to_disk()
+                                    st.success(f"✅ {sel_s.name}-ը կապվեց {sel_c.grade}{sel_c.section}-ին")
+                                    st.rerun()
                     else:
-                        with st.form("as_form", clear_on_submit=True):
-                            sel_s = st.selectbox("📚 Առարկա", available_subjs, format_func=lambda x: x.name)
-                            hrs = st.number_input("📅 Շաբաթական ժամեր", 1, max(1, left), min(2, max(1, left)))
-                            
-                            if st.form_submit_button("Հաստատել Կապը", use_container_width=True, type="primary"):
-                                import uuid
-                                new_ass = Assignment(
-                                    id=str(uuid.uuid4()), 
-                                    teacher_id=sel_t.id, 
-                                    subject_id=sel_s.id, 
-                                    class_id=sel_c.id, 
-                                    lessons_per_week=hrs,
-                                    room_type="Ավտոմատ"
-                                )
-                                st.session_state.assignments.append(new_ass)
-                                save_to_disk()
-                                st.success(f"✅ {sel_s.name}-ը կապվեց {sel_c.grade}{sel_c.section}-ին")
-                                st.rerun()
-                else:
-                    st.warning(f"⚠️ {sel_t.name}-ի բոլոր առարկաներն արդեն նշանակված են {sel_c.grade}{sel_c.section} դասարանում:")
+                        st.warning(f"⚠️ {sel_t.name}-ի բոլոր առարկաներն արդեն նշանակված են {sel_c.grade}{sel_c.section} դասարանում:")
             else:
                 st.info("💡 Կապեր ստեղծելու համար նախ ավելացրեք ուսուցիչներ և դասարաններ:")
 
