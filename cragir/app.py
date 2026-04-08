@@ -1040,18 +1040,24 @@ elif st.session_state.active_page == "normal":
                         st.markdown("### 📋 Գրանցել Առարկան")
                         
                     with edit_col:
-                        # Մատիտի կոճակը (Popover-ը հիանալի է այստեղ, որ էջը չծանրաբեռնի)
+                        # Մատիտի կոճակը popover-ով
                         with st.popover("✏️", help="Կառավարել ցանկի առարկաները"):
                             st.write("🗑️ Ջնջել առարկան ցանկից")
                             subject_to_del = st.selectbox(
                                 "Ընտրեք ջնջվողը", 
                                 options=st.session_state.subj_pool, 
-                                key="del_from_pool"
+                                key="del_from_pool_key" # Ավելացրու եզակի key
                             )
-                            if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True):
+                            
+                            # ԿԱՐԵՎՈՐ ՓՈՓՈԽՈՒԹՅՈՒՆՆԵՐԸ ԱՅՍՏԵՂ
+                            if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="confirm_del_subj_btn"):
                                 if subject_to_del in st.session_state.subj_pool:
+                                    # 1. Հեռացնում ենք Local-ից
                                     st.session_state.subj_pool.remove(subject_to_del)
-                                    save_to_disk() # Պահպանում ենք փոփոխությունը
+                                    
+                                    # 2. Պահպանում ենք force_overwrite=True-ով, որ Cloud-ը հետ չբերի հինը
+                                    save_to_disk(force_overwrite=True) 
+                                    
                                     st.toast(f"🗑️ {subject_to_del}-ը հեռացվեց ցանկից")
                                     st.rerun()
 
@@ -1143,16 +1149,20 @@ elif st.session_state.active_page == "normal":
                             teacher_to_del = st.selectbox(
                                 "Ընտրեք ջնջվողին", 
                                 options=st.session_state.teacher_pool, 
-                                key="del_teacher_from_pool_select" # Փոխված է եզակի լինելու համար
+                                key="del_teacher_from_pool_select" 
                             )
                             
-                            # Ավելացնում ենք հաստատման կոճակը
+                            # Ավելացնում ենք հաստատման կոճակը և կանչում save_to_disk(force_overwrite=True)
                             if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="unique_del_t_btn"):
                                 if teacher_to_del in st.session_state.teacher_pool:
+                                    # 1. Հեռացնում ենք Local վիճակից
                                     st.session_state.teacher_pool.remove(teacher_to_del)
-                                    save_to_disk() # Պահպանում ենք ֆայլի մեջ
+                                    
+                                    # 2. Պահպանում ենք FORCE_OVERWRITE-ով
+                                    save_to_disk(force_overwrite=True) 
+                                    
                                     st.toast(f"🗑️ {teacher_to_del}-ը հեռացվեց")
-                                    st.rerun() # Թարմացնում ենք էջը, որ ցանկից անհետանա
+                                    st.rerun()
 
                     # Քո բնօրինակ ֆորման
                     with st.form("register_teacher", clear_on_submit=True):
