@@ -1264,22 +1264,24 @@ elif st.session_state.active_page == "normal":
             if st.session_state.teachers and st.session_state.classes:
                 st.markdown("### 🔗 Կապել Դասարանին")
                 
-                sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", 
-                                     st.session_state.teachers, 
-                                     format_func=lambda x: x.name, 
-                                     key="t_sel_main")
-                
+                # Նախ ընտրում ենք դասարանը, որպեսզի հաշվարկը ճիշտ լինի
                 sel_c = st.selectbox("🏫 Ընտրեք Դասարանը", 
                                      st.session_state.classes, 
                                      format_func=lambda x: f"{x.grade}{x.section}",
                                      key="c_sel_main")
 
-                # --- ԺԱՄԵՐԻ ՀԱՇՎԱՐԿ ---
+                # --- ՀԱՇՎԱՐԿԸ ԵՎ ՑՈՒՑԱԴՐՈՒՄԸ ԴՆՈՒՄ ԵՆՔ ԱՅՍՏԵՂ (ԱՄԵՆԱՎԵՐԵՎՈՒՄ) ---
                 current_total = sum(a.lessons_per_week for a in st.session_state.assignments if a.class_id == sel_c.id)
                 max_allowed = 35
                 left = max_allowed - current_total
                 
                 st.info(f"📊 Լրացված է՝ {current_total} / {max_allowed} ժամ")
+                # -----------------------------------------------------------
+
+                sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", 
+                                     st.session_state.teachers, 
+                                     format_func=lambda x: x.name, 
+                                     key="t_sel_main")
 
                 all_teacher_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
                 assigned_subject_ids = [a.subject_id for a in st.session_state.assignments if a.class_id == sel_c.id]
@@ -1291,7 +1293,6 @@ elif st.session_state.active_page == "normal":
                     else:
                         with st.form("as_form", clear_on_submit=True):
                             sel_s = st.selectbox("📚 Առարկա", available_subjs, format_func=lambda x: x.name)
-                            # Առավելագույնը թույլ է տալիս այնքան, ինչքան մնացել է մինչև 35-ը
                             hrs = st.number_input("📅 Շաբաթական ժամեր", 1, max(1, left), min(2, max(1, left)))
                             
                             if st.form_submit_button("Հաստատել Կապը", use_container_width=True, type="primary"):
