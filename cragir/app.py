@@ -436,21 +436,21 @@ st.markdown("""
         padding-bottom: 300px !important;
     }
 
-    /* 2. ՎՏԱՆԳԱՎՈՐ ԿՈՃԱԿԻ ԿԱՐՄԻՐ ԳՈՒՅՆԸ (Sidebar-ի համար) */
-    /* Սա թիրախավորում է կոնկրետ Sidebar-ի մեջի key="danger-button"-ով կոճակը */
-    [data-testid="stSidebar"] button[key="danger-button"] {
+    /* 2. ՎՏԱՆԳԱՎՈՐ ԿՈՃԱԿԻ ԿԱՐՄԻՐ ԳՈՒՅՆԸ */
+    /* Օգտագործում ենք div-ից սկսվող սելեկտոր, որպեսզի Sidebar-ում հաստատ աշխատի */
+    div[data-testid="stSidebar"] div[data-testid="stButton"] button[key="danger-button"] {
         background-color: #ff4b4b !important;
         color: white !important;
-        border: none !important;
-    }
-    
-    [data-testid="stSidebar"] button[key="danger-button"]:hover {
-        background-color: #ff3333 !important;
-        transform: scale(1.02);
-        box-shadow: 0 4px 15px rgba(255, 75, 75, 0.4) !important;
+        border: 1px solid #ff4b4b !important;
     }
 
-    /* ՔՈ ՄՆԱՑԱԾ ԿՈԴԸ՝ ԱՌԱՆՑ ՈՐԵՎԷ ՓՈՓՈԽՈՒԹՅԱՆ */
+    div[data-testid="stSidebar"] div[data-testid="stButton"] button[key="danger-button"]:hover {
+        background-color: #ff3333 !important;
+        border-color: #ff3333 !important;
+        transform: scale(1.02);
+    }
+
+    /* ՔՈ ԲՆՕՐԻՆԱԿ ԴԻԶԱՅՆԸ (ԱՆՓՈՓՈԽ) */
     [data-testid="stSidebar"] {
         background-color: #1a1c24;
         border-right: 1px solid #343a40;
