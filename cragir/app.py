@@ -431,9 +431,21 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* Ավելացված է միայն այս հատվածը հեռախոսի համար */
+    /* 1. ՀԵՌԱԽՈՍԻ ՀԱՄԱՐ */
     .main .block-container {
         padding-bottom: 300px !important;
+    }
+
+    /* 2. ՎՏԱՆԳԱՎՈՐ ԿՈՃԱԿԻ ԿԱՐՄԻՐ ԳՈՒՅՆԸ */
+    /* Սա կաշխատի միայն այն կոճակի համար, որին կտաս key="danger-button" */
+    div[data-testid="stButton"] button[key="danger-button"] {
+        background-color: #ff4b4b !important;
+        color: white !important;
+        border: none !important;
+    }
+    div[data-testid="stButton"] button[key="danger-button"]:hover {
+        background-color: #ff3333 !important;
+        transform: scale(1.02);
     }
 
     /* ՔՈ ԿՈԴԸ՝ ԱՌԱՆՑ ՈՐԵՎԷ ՓՈՓՈԽՈՒԹՅԱՆ */
@@ -761,7 +773,7 @@ if st.session_state.user_role == 'owner':
     st.sidebar.markdown("<h3 style='color: #dc3545;'>⚠️ Վտանգավոր Գոտի</h3>", unsafe_allow_html=True)
     confirm_reset = st.sidebar.checkbox("Հաստատում եմ ամբողջական ջնջումը")
     
-    if st.sidebar.button("🚨 Զրոյացնել Ամբողջ Բազան", type="primary", use_container_width=True, disabled=not confirm_reset):
+    if st.sidebar.button("🚨 Զրոյացնել Ամբողջ Բազան", type="primary", use_container_width=True, disabled=not confirm_reset, key="danger-button"):
         reset_all_data()
         st.rerun()
 
