@@ -431,102 +431,52 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* 1. ԱՐՄԱՏԱԿԱՆ ԳՈՒՅՆԵՐԻ ՍԱՌԵՑՈՒՄ (Root) */
-    :root {
-        --primary-color: #0d6efd;
-        --background-color: #0e1117;
-        --secondary-background-color: #1a1c24;
-        --text-color: #f8f9fa;
-    }
-
-    /* 2. ՀԻՄՆԱԿԱՆ ՖՈՆ ԵՎ ՏԵՔՍՏ */
-    .stApp, [data-testid="stHeader"], .main, [data-testid="stAppViewContainer"] {
-        background-color: #0e1117 !important;
-        color: #f8f9fa !important;
-    }
-
-    /* Էջի տակը ազատ տարածություն հեռախոսի համար */
+    /* Ավելացված է միայն այս հատվածը հեռախոսի համար */
     .main .block-container {
-        padding-bottom: 400px !important;
+        padding-bottom: 300px !important;
     }
 
-    /* 3. ԱՂՅՈՒՍԱԿՆԵՐ ԵՎ ԳՐԱՖԻԿՆԵՐ (Ամենակարևոր հատվածը) */
-    /* Սա թիրախավորում է նաև iframe-ների ներսի սպիտակ ֆոնը */
-    [data-testid="stDataFrameDataframe"], [data-testid="stTable"], .stTable, 
-    iframe, .stPlotlyChart, div[id^="plotly-"] {
-        background-color: #1a1c24 !important;
-        border: 1px solid #343a40 !important;
-        border-radius: 10px !important;
-    }
-
-    /* Աղյուսակի բջիջներն ու տեքստը */
-    div[data-testid="stDataFrameDataframe"] td, 
-    div[data-testid="stDataFrameDataframe"] th,
-    .stTable td, .stTable th {
-        background-color: #1a1c24 !important;
-        color: white !important;
-        border: 1px solid #343a40 !important;
-    }
-
-    thead tr th {
-        background-color: #343a40 !important;
-        color: white !important;
-    }
-
-    /* 4. SIDEBAR */
+    /* ՔՈ ԿՈԴԸ՝ ԱՌԱՆՑ ՈՐԵՎԷ ՓՈՓՈԽՈՒԹՅԱՆ */
     [data-testid="stSidebar"] {
-        background-color: #1a1c24 !important;
+        background-color: #1a1c24;
         border-right: 1px solid #343a40;
     }
-    
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, 
-    [data-testid="stSidebar"] label, [data-testid="stSidebar"] span {
-        color: #f8f9fa !important;
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {
+        color: #f8f9fa;
     }
-
     [data-testid="stSidebar"] .stButton>button {
         border-radius: 20px;
-        background-color: #262730;
-        color: white;
-        border: 1px solid #444;
         transition: all 0.3s ease-in-out;
     }
-
     [data-testid="stSidebar"] .stButton>button:hover {
         transform: scale(1.05);
-        border-color: #0d6efd;
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
     }
-
-    /* 5. INPUT-ՆԵՐ, MULTISELECT ԵՎ POPOVER */
-    input, select, textarea, div[role="combobox"], [data-baseweb="select"] > div, 
-    div[data-baseweb="popover"], [data-testid="stPopover"] {
-        background-color: #1a1c24 !important;
-        color: white !important;
-        border-color: #343a40 !important;
+    [data-testid="stDataFrameDataframe"] div table {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
-    
-    [data-baseweb="tag"] {
+    [data-testid="stDataFrameDataframe"] div table thead tr th {
         background-color: #343a40 !important;
         color: white !important;
     }
-
-    /* 6. ՄԵՏՐԻԿԱՆԵՐ ԵՎ ԷՔՍՊԱՆԴԵՐՆԵՐ */
     [data-testid="stMetricValue"] {
-        color: #0d6efd !important;
+        color: #0d6efd;
         font-weight: bold;
     }
-
     .streamlit-expanderHeader {
-        background-color: #262730 !important;
-        color: #f8f9fa !important;
+        background-color: #e9ecef;
         border-radius: 8px;
+        font-weight: bold;
     }
-
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    .stApp { animation: fadeIn 0.8s ease-in-out; }
+    .stApp {
+        animation: fadeIn 0.8s ease-in-out;
+    }
 </style>
 """, unsafe_allow_html=True)
 
