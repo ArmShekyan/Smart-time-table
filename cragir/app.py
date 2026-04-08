@@ -1678,7 +1678,8 @@ elif st.session_state.active_page == "normal":
                 missing_classes = [c for c in full_classes_in_grade if c not in filled_classes]
 
                 if missing_classes:
-                    st.warning(f"⚠️ Դեռևս {', '.join(missing_classes)} դասարանների համար դասացուցակ կազմված չէ")
+                    # Այստեղ missing_classes-ի փոխարեն դնում ենք sel_grade
+                    st.warning(f"⚠️ Դեռևս {sel_grade}-րդ դասարանների համար դասացուցակ կազմված չէ")
 
                 # Ցուցադրման տրամաբանությունը
                 for cls in full_classes_in_grade:
