@@ -436,24 +436,26 @@ st.markdown("""
         padding-bottom: 300px !important;
     }
 
-    /* 2. ՎՏԱՆԳԱՎՈՐ ԿՈՃԱԿԻ ԿԱՐՄԻՐ ԳՈՒՅՆԸ (Sidebar) */
-    /* Ֆոնը դարձնում ենք կարմիր, տեքստը՝ սպիտակ */
-    [data-testid="stSidebar"] div[data-testid="stButton"] button[key="danger-button"] {
-        background-color: #ff4b4b !important;
+    /* 2. ՎՏԱՆԳԱՎՈՐ ԿՈՃԱԿԻ ԿԱՐՄԻՐ ԳՈՒՅՆԸ (SIDEBAR) */
+    /* Սա թիրախավորում է կոճակը բոլոր հնարավոր ձևերով */
+    div[data-testid="stSidebar"] div[data-testid="stButton"] button[key="danger-button"],
+    div[data-testid="stSidebar"] button[key="danger-button"] {
+        background-color: rgb(255, 75, 75) !important;
+        background: rgb(255, 75, 75) !important;
         color: white !important;
-        border: 1px solid #ff4b4b !important;
+        border: 1px solid rgb(255, 75, 75) !important;
     }
 
-    /* Տեքստի գույնը կոճակի ներսում */
-    [data-testid="stSidebar"] div[data-testid="stButton"] button[key="danger-button"] p {
+    /* Տեքստի գույնը ստիպողաբար սպիտակ */
+    div[data-testid="stSidebar"] button[key="danger-button"] p,
+    div[data-testid="stSidebar"] button[key="danger-button"] div {
         color: white !important;
     }
 
-    /* Hover վիճակը (երբ մատիտը պահում ես վրան) */
-    [data-testid="stSidebar"] div[data-testid="stButton"] button[key="danger-button"]:hover {
-        background-color: #ff3333 !important;
-        border-color: #ff3333 !important;
-        transform: scale(1.02);
+    /* Hover վիճակը */
+    div[data-testid="stSidebar"] button[key="danger-button"]:hover {
+        background-color: rgb(255, 51, 51) !important;
+        border-color: rgb(255, 51, 51) !important;
     }
 
     /* ՔՈ ԲՆՕՐԻՆԱԿ ԴԻԶԱՅՆԸ (ԱՆՓՈՓՈԽ) */
