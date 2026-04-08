@@ -1672,8 +1672,16 @@ elif st.session_state.active_page == "normal":
                 # Թարմացնում ենք հիշողությունը
                 st.session_state.selected_view_grade = sel_grade
 
+                # --- Ստուգում ենք չլրացված դասարանները տվյալ թվի (grade) համար ---
+                full_classes_in_grade = [f"{c.grade}{c.section}" for c in st.session_state.classes if c.grade == sel_grade]
+                filled_classes = df['Դասարան'].unique()
+                missing_classes = [c for c in full_classes_in_grade if c not in filled_classes]
+
+                if missing_classes:
+                    st.warning(f"⚠️ Դեռևս {', '.join(missing_classes)} դասարանների համար դասացուցակ կազմված չէ")
+
                 # Ցուցադրման տրամաբանությունը
-                for cls in [f"{c.grade}{c.section}" for c in st.session_state.classes if c.grade == sel_grade]:
+                for cls in full_classes_in_grade:
                     cls_data = df[df['Դասարան'] == cls]
                     if not cls_data.empty:
                         with st.expander(f"🏫 Դասարան՝ {cls}", expanded=True):
