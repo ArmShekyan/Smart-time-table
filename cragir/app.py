@@ -38,9 +38,9 @@ class ClassGroup:
 @dataclass
 class Room:
     id: str
-    name: str  # Օրինակ՝ "201", "Ֆիզիկայի լաբորատորիա"
-    type: str  # "Ընդհանուր", "Լաբորատոր", "Մարզադահլիճ", "Համակարգչային"
-    assigned_class_id: str = None  # Եթե կաբինետը հատուկ դասարանի համար է, այստեղ նշվում է այդ դասարանի ID-ն
+    name: str   
+    type: str   
+    assigned_class_id: str = None  
 
 @dataclass
 class Assignment:
@@ -431,45 +431,89 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
+    /* 1. ՀԻՄՆԱԿԱՆ ՖՈՆ ԵՎ ՏԵՔՍՏ */
+    .stApp {
+        background-color: #0e1117 !important;
+        color: #f8f9fa !important;
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    /* Էջի ամենաներքևում ավելացնում ենք ազատ տարածություն (300px), 
+       որ հեռախոսով Selectbox-ը ներքև բացվելու տեղ ունենա */
+    .main .block-container {
+        padding-bottom: 300px !important;
+    }
+
+    /* Header-ի գույնը */
+    header[data-testid="stHeader"] {
+        background-color: #0e1117 !important;
+    }
+
+    /* 2. SIDEBAR */
     [data-testid="stSidebar"] {
-        background-color: #1a1c24;
+        background-color: #1a1c24 !important;
         border-right: 1px solid #343a40;
     }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {
-        color: #f8f9fa;
+    
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {
+        color: #f8f9fa !important;
     }
+
     [data-testid="stSidebar"] .stButton>button {
         border-radius: 20px;
+        background-color: #262730;
+        color: white;
+        border: 1px solid #444;
         transition: all 0.3s ease-in-out;
     }
+
     [data-testid="stSidebar"] .stButton>button:hover {
         transform: scale(1.05);
         box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+        border-color: #0d6efd;
     }
+
+    /* 3. ԱՂՅՈՒՍԱԿՆԵՐ */
     [data-testid="stDataFrameDataframe"] div table {
         border-radius: 10px;
         overflow: hidden;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
+    
     [data-testid="stDataFrameDataframe"] div table thead tr th {
         background-color: #343a40 !important;
         color: white !important;
     }
+
+    /* 4. ՄԵՏՐԻԿԱՆԵՐ ԵՎ ԷՔՍՊԱՆԴԵՐՆԵՐ */
     [data-testid="stMetricValue"] {
         color: #0d6efd;
         font-weight: bold;
     }
+
     .streamlit-expanderHeader {
-        background-color: #e9ecef;
+        background-color: #262730 !important;
+        color: #f8f9fa !important;
         border-radius: 8px;
         font-weight: bold;
     }
+
+    /* 5. INPUT-ՆԵՐ (Selectbox, Number Input և այլն) */
+    input, select, textarea, div[role="combobox"] {
+        background-color: #1a1c24 !important;
+        color: white !important;
+        border: 1px solid #343a40 !important;
+    }
+
+    /* Հեռախոսի Selectbox-ի բացվող մենյուի լուծումը */
+    div[data-baseweb="popover"] {
+        background-color: #1a1c24 !important;
+        max-height: 250px !important;
+    }
+
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
-    }
-    .stApp {
-        animation: fadeIn 0.8s ease-in-out;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1025,19 +1069,40 @@ elif st.session_state.active_page == "normal":
         # --- ԱՋ ՍՅՈՒՆ: Գրանցել Առարկան (Բարդության հետ) ---
         with col_r:
             if st.session_state.subj_pool:
-                with st.form("register_subj", clear_on_submit=True):
+                # Ստեղծում ենք վերնագրի և մատիտի սյունակները
+                header_col, edit_col = st.columns([0.85, 0.15])
+                
+                with header_col:
                     st.markdown("### 📋 Գրանցել Առարկան")
+                    
+                with edit_col:
+                    # Մատիտի կոճակը (Popover-ը հիանալի է այստեղ, որ էջը չծանրաբեռնի)
+                    with st.popover("✏️", help="Կառավարել ցանկի առարկաները"):
+                        st.write("🗑️ Ջնջել առարկան ցանկից")
+                        subject_to_del = st.selectbox(
+                            "Ընտրեք ջնջվողը", 
+                            options=st.session_state.subj_pool, 
+                            key="del_from_pool"
+                        )
+                        if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True):
+                            if subject_to_del in st.session_state.subj_pool:
+                                st.session_state.subj_pool.remove(subject_to_del)
+                                save_to_disk() # Պահպանում ենք փոփոխությունը
+                                st.toast(f"🗑️ {subject_to_del}-ը հեռացվեց ցանկից")
+                                st.rerun()
+
+                # Հիմնական ֆորման
+                with st.form("register_subj", clear_on_submit=True):
                     selected = st.selectbox("Ընտրեք ցանկից", st.session_state.subj_pool)
                     comp = st.select_slider("Բարդություն (1-5)", options=[1, 2, 3, 4, 5], value=3)
                     
                     if st.form_submit_button("Գրանցել", use_container_width=True):
-                        # Ստուգում ենք կրկնությունը արդեն գրանցված առարկաների մեջ
                         if any(s.name.lower() == selected.lower() for s in st.session_state.subjects):
                             st.error(f"❌ {selected} առարկան արդեն գրանցված է:")
                         else:
                             new_subject = Subject(id=str(uuid.uuid4()), name=selected, complexity=comp)
                             st.session_state.subjects.append(new_subject)
-                            save_to_disk()  # Սինքրոնացնում ենք Cloud-ի և Local-ի հետ
+                            save_to_disk()
                             st.toast(f"✅ Առարկան գրանցվեց:", icon="📚")
                             st.rerun()
 
