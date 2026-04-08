@@ -1030,43 +1030,45 @@ elif st.session_state.active_page == "normal":
 
         # --- ԱՋ ՍՅՈՒՆ: Գրանցել Առարկան (Բարդության հետ) ---
         with col_r:
-            if st.session_state.subj_pool:
-                # Ստեղծում ենք վերնագրի և մատիտի սյունակները
-                header_col, edit_col = st.columns([0.85, 0.15])
-                
-                with header_col:
-                    st.markdown("### 📋 Գրանցել Առարկան")
+            # Ավելացնում եմ միայն սա՝ եզրագծի և հավասարության համար
+            with st.container(border=True):
+                if st.session_state.subj_pool:
+                    # Ստեղծում ենք վերնագրի և մատիտի սյունակները
+                    header_col, edit_col = st.columns([0.85, 0.15])
                     
-                with edit_col:
-                    # Մատիտի կոճակը (Popover-ը հիանալի է այստեղ, որ էջը չծանրաբեռնի)
-                    with st.popover("✏️", help="Կառավարել ցանկի առարկաները"):
-                        st.write("🗑️ Ջնջել առարկան ցանկից")
-                        subject_to_del = st.selectbox(
-                            "Ընտրեք ջնջվողը", 
-                            options=st.session_state.subj_pool, 
-                            key="del_from_pool"
-                        )
-                        if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True):
-                            if subject_to_del in st.session_state.subj_pool:
-                                st.session_state.subj_pool.remove(subject_to_del)
-                                save_to_disk() # Պահպանում ենք փոփոխությունը
-                                st.toast(f"🗑️ {subject_to_del}-ը հեռացվեց ցանկից")
-                                st.rerun()
+                    with header_col:
+                        st.markdown("### 📋 Գրանցել Առարկան")
+                        
+                    with edit_col:
+                        # Մատիտի կոճակը (Popover-ը հիանալի է այստեղ, որ էջը չծանրաբեռնի)
+                        with st.popover("✏️", help="Կառավարել ցանկի առարկաները"):
+                            st.write("🗑️ Ջնջել առարկան ցանկից")
+                            subject_to_del = st.selectbox(
+                                "Ընտրեք ջնջվողը", 
+                                options=st.session_state.subj_pool, 
+                                key="del_from_pool"
+                            )
+                            if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True):
+                                if subject_to_del in st.session_state.subj_pool:
+                                    st.session_state.subj_pool.remove(subject_to_del)
+                                    save_to_disk() # Պահպանում ենք փոփոխությունը
+                                    st.toast(f"🗑️ {subject_to_del}-ը հեռացվեց ցանկից")
+                                    st.rerun()
 
-                # Հիմնական ֆորման
-                with st.form("register_subj", clear_on_submit=True):
-                    selected = st.selectbox("Ընտրեք ցանկից", st.session_state.subj_pool)
-                    comp = st.select_slider("Բարդություն (1-5)", options=[1, 2, 3, 4, 5], value=3)
-                    
-                    if st.form_submit_button("Գրանցել", use_container_width=True):
-                        if any(s.name.lower() == selected.lower() for s in st.session_state.subjects):
-                            st.error(f"❌ {selected} առարկան արդեն գրանցված է:")
-                        else:
-                            new_subject = Subject(id=str(uuid.uuid4()), name=selected, complexity=comp)
-                            st.session_state.subjects.append(new_subject)
-                            save_to_disk()
-                            st.toast(f"✅ Առարկան գրանցվեց:", icon="📚")
-                            st.rerun()
+                    # Հիմնական ֆորման
+                    with st.form("register_subj", clear_on_submit=True):
+                        selected = st.selectbox("Ընտրեք ցանկից", st.session_state.subj_pool)
+                        comp = st.select_slider("Բարդություն (1-5)", options=[1, 2, 3, 4, 5], value=3)
+                        
+                        if st.form_submit_button("Գրանցել", use_container_width=True):
+                            if any(s.name.lower() == selected.lower() for s in st.session_state.subjects):
+                                st.error(f"❌ {selected} առարկան արդեն գրանցված է:")
+                            else:
+                                new_subject = Subject(id=str(uuid.uuid4()), name=selected, complexity=comp)
+                                st.session_state.subjects.append(new_subject)
+                                save_to_disk()
+                                st.toast(f"✅ Առարկան գրանցվեց:", icon="📚")
+                                st.rerun()
 
         st.divider()
         st.subheader("✅ Գրանցված Առարկաներ")
