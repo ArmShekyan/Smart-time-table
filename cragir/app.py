@@ -1137,19 +1137,22 @@ elif st.session_state.active_page == "normal":
                         
                     with edit_col:
                         # Մատիտի կոճակը popover-ով
-                        with st.popover("✏️", help="Կառավարել ուսուցիչների ցանկը"):
-                            st.write("🗑️ Ջնջել ուսուցչին ցանկից")
+                        with st.popover("✏️", help="Կառավարել ցանկը"):
+                            st.write("🗑️ Ջնջել ցանկից")
+                            
                             teacher_to_del = st.selectbox(
                                 "Ընտրեք ջնջվողին", 
                                 options=st.session_state.teacher_pool, 
-                                key="del_teacher_from_pool_key"
+                                key="del_teacher_from_pool_select" # Փոխված է եզակի լինելու համար
                             )
-                            if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="btn_del_teacher"):
+                            
+                            # Ավելացնում ենք հաստատման կոճակը
+                            if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="unique_del_t_btn"):
                                 if teacher_to_del in st.session_state.teacher_pool:
                                     st.session_state.teacher_pool.remove(teacher_to_del)
-                                    save_to_disk()
-                                    st.toast(f"🗑️ {teacher_to_del}-ը հեռացվեց ցանկից")
-                                    st.rerun()
+                                    save_to_disk() # Պահպանում ենք ֆայլի մեջ
+                                    st.toast(f"🗑️ {teacher_to_del}-ը հեռացվեց")
+                                    st.rerun() # Թարմացնում ենք էջը, որ ցանկից անհետանա
 
                     # Քո բնօրինակ ֆորման
                     with st.form("register_teacher", clear_on_submit=True):
