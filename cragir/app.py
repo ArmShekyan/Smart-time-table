@@ -1126,46 +1126,48 @@ elif st.session_state.active_page == "normal":
 
         # --- ԱՋ ՍՅՈՒՆ: Գրանցել Ուսուցչին (Առարկաների հետ) ---
         with col_r:
-            if st.session_state.teacher_pool and st.session_state.subjects:
-                # Ստեղծում ենք վերնագրի և մատիտի սյունակները
-                header_col, edit_col = st.columns([0.88, 0.12])
-                
-                with header_col:
-                    st.markdown("### 📋 Գրանցել Ուսուցչին")
+            # Ավելացնում եմ միայն սա՝ եզրագծի և հավասարության համար
+            with st.container(border=True):
+                if st.session_state.teacher_pool and st.session_state.subjects:
+                    # Ստեղծում ենք վերնագրի և մատիտի սյունակները
+                    header_col, edit_col = st.columns([0.88, 0.12])
                     
-                with edit_col:
-                    # Մատիտի կոճակը popover-ով՝ ուսուցիչների ցանկը (pool) խմբագրելու համար
-                    with st.popover("✏️", help="Կառավարել ուսուցիչների ցանկը"):
-                        st.write("🗑️ Ջնջել ուսուցչին ցանկից")
-                        teacher_to_del = st.selectbox(
-                            "Ընտրեք ջնջվողին", 
-                            options=st.session_state.teacher_pool, 
-                            key="del_teacher_from_pool_key"
-                        )
-                        if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="btn_del_teacher"):
-                            if teacher_to_del in st.session_state.teacher_pool:
-                                st.session_state.teacher_pool.remove(teacher_to_del)
-                                save_to_disk()
-                                st.toast(f"🗑️ {teacher_to_del}-ը հեռացվեց ցանկից")
-                                st.rerun()
+                    with header_col:
+                        st.markdown("### 📋 Գրանցել Ուսուցչին")
+                        
+                    with edit_col:
+                        # Մատիտի կոճակը popover-ով
+                        with st.popover("✏️", help="Կառավարել ուսուցիչների ցանկը"):
+                            st.write("🗑️ Ջնջել ուսուցչին ցանկից")
+                            teacher_to_del = st.selectbox(
+                                "Ընտրեք ջնջվողին", 
+                                options=st.session_state.teacher_pool, 
+                                key="del_teacher_from_pool_key"
+                            )
+                            if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="btn_del_teacher"):
+                                if teacher_to_del in st.session_state.teacher_pool:
+                                    st.session_state.teacher_pool.remove(teacher_to_del)
+                                    save_to_disk()
+                                    st.toast(f"🗑️ {teacher_to_del}-ը հեռացվեց ցանկից")
+                                    st.rerun()
 
-                # Քո բնօրինակ ֆորման
-                with st.form("register_teacher", clear_on_submit=True):
-                    sel_t = st.selectbox("Ընտրեք ուսուցչին", st.session_state.teacher_pool)
-                    sel_subjs = st.multiselect("Ընտրեք առարկաները", st.session_state.subjects, format_func=lambda x: x.name)
-                    
-                    if st.form_submit_button("Գրանցել", use_container_width=True):
-                        # Ստուգում ենք կրկնությունը հիմնական Teachers ցուցակում
-                        if any(t.name.lower() == sel_t.lower() for t in st.session_state.teachers):
-                            st.error(f"❌ {sel_t}-ն արդեն գրանցված է որպես ուսուցիչ:")
-                        elif not sel_subjs:
-                            st.warning("⚠️ Ընտրեք առնվազն մեկ առարկա:")
-                        else:
-                            new_teacher = Teacher(id=str(uuid.uuid4()), name=sel_t, subject_ids=[s.id for s in sel_subjs])
-                            st.session_state.teachers.append(new_teacher)
-                            save_to_disk()
-                            st.toast(f"✅ Ուսուցիչը գրանցվեց", icon="👩‍🏫")
-                            st.rerun()
+                    # Քո բնօրինակ ֆորման
+                    with st.form("register_teacher", clear_on_submit=True):
+                        sel_t = st.selectbox("Ընտրեք ուսուցչին", st.session_state.teacher_pool)
+                        sel_subjs = st.multiselect("Ընտրեք առարկաները", st.session_state.subjects, format_func=lambda x: x.name)
+                        
+                        if st.form_submit_button("Գրանցել", use_container_width=True):
+                            # Ստուգում ենք կրկնությունը հիմնական Teachers ցուցակում
+                            if any(t.name.lower() == sel_t.lower() for t in st.session_state.teachers):
+                                st.error(f"❌ {sel_t}-ն արդեն գրանցված է որպես ուսուցիչ:")
+                            elif not sel_subjs:
+                                st.warning("⚠️ Ընտրեք առնվազն մեկ առարկա:")
+                            else:
+                                new_teacher = Teacher(id=str(uuid.uuid4()), name=sel_t, subject_ids=[s.id for s in sel_subjs])
+                                st.session_state.teachers.append(new_teacher)
+                                save_to_disk()
+                                st.toast(f"✅ Ուսուցիչը գրանցվեց", icon="👩‍🏫")
+                                st.rerun()
 
         st.divider()
         st.subheader("📋 Դիտել Ուսուցիչներն ըստ Առարկաների")
