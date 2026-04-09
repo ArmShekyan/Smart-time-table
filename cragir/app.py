@@ -431,99 +431,103 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* 1. Հեռախոսի համար նախատեսված հատվածը (ՊԱՀՊԱՆՎԱԾ) */
-    .main .block-container {
-        padding-bottom: 300px !important;
-    }
-
-    /* 2. Sidebar-ի էլեգանտ մուգ դիզայն */
+    /* --- ՀԻՄՆԱԿԱՆ ԲԼՈԿՆԵՐ (ԱՆՓՈՓՈԽ) --- */
+    .main .block-container { padding-bottom: 300px !important; }
     [data-testid="stSidebar"] {
         background-color: #050a12 !important;
         border-right: 1px solid rgba(0, 119, 255, 0.1);
     }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {
-        color: #ffffff;
-        font-weight: 200;
-        letter-spacing: 1px;
-    }
     
-    /* 3. Սայդբարի և բոլոր սովորական կոճակների ոճը */
-    div.stButton > button, [data-testid="stSidebar"] .stButton>button {
-        border-radius: 12px;
-        background-color: rgba(255, 255, 255, 0.03) !important;
-        color: #e0e6ed !important;
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
-        transition: all 0.3s ease-in-out !important;
-    }
-    div.stButton > button:hover {
-        border: 1px solid #0077ff !important;
-        color: #0077ff !important;
-        box-shadow: 0 0 15px rgba(0, 119, 255, 0.15) !important;
-    }
-
-    /* 4. ԳԼԽԱՎՈՐ ԿՈՃԱԿԸ ԵՎ FORM SUBMIT (Enter-ի համար) - Glow Effect */
-    div.stButton > button[kind="primary"], 
-    div.stFormSubmitButton > button {
+    /* --- 4. ԿՈՃԱԿՆԵՐԻ ԹԱՐՄԱՑՎԱԾ ՈՃԸ --- */
+    /* text-transform: none և letter-spacing-ի նվազեցում՝ էլեգանտության համար */
+    div.stButton > button, div.stFormSubmitButton > button {
         background-color: #0a121e !important;
         color: #ffffff !important;
         border: 1px solid rgba(0, 119, 255, 0.2) !important;
-        border-radius: 14px !important;
-        padding: 12px 28px !important;
-        font-weight: 200 !important;
-        letter-spacing: 1.5px !important;
-        text-transform: uppercase;
+        border-radius: 12px !important;
+        padding: 10px 20px !important;
+        font-weight: 300 !important;
+        
+        /* Ուղղումներ տեքստի համար */
+        text-transform: none !important; /* Վերացնում ենք բոլորը մեծատառ գրելը */
+        letter-spacing: 0.5px !important; /* Նվազեցնում ենք տարածությունը */
+        font-size: 14px !important; /* Իդեալական չափ */
+        
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
         width: 100%;
+        line-height: 1.2 !important; /* Որ emoji-ն և տեքստը լինեն նույն գծի վրա */
     }
     
-    div.stButton > button[kind="primary"]:hover, 
-    div.stFormSubmitButton > button:hover {
+    div.stButton > button:hover, div.stFormSubmitButton > button:hover {
         border: 1px solid #0077ff !important;
         color: #0077ff !important;
-        box-shadow: 0 0 25px rgba(0, 119, 255, 0.35) !important;
+        box-shadow: 0 0 20px rgba(0, 119, 255, 0.2) !important;
         transform: translateY(-2px);
     }
 
-    /* 5. Աղյուսակների (Dataframe) թանկարժեք տեսք */
-    [data-testid="stDataFrameDataframe"] {
+    /* --- ԱԼՅՈՒՍԱԿՆԵՐ, Expander-ներ (ԱՆՓՈՓՈԽ) --- */
+    [data-testid="stDataFrameDataframe"] { border-radius: 15px; overflow: hidden; }
+    [data-testid="stDataFrameDataframe"] table thead tr th {
+        background-color: #0d1624 !important; color: #0077ff !important;
+    }
+    .streamlit-expanderHeader { background-color: #0a121e !important; border-radius: 12px !important; }
+    [data-testid="stMetricValue"] { color: #0077ff !important; font-weight: 200 !important; }
+
+    /* --- 9. ԺԱՄԱՑՈՒՅՑԻ ԱՄԲՈՂՋԱԿԱՆ ՈւՂՂՈՒՄ --- */
+    /* Ներբեռնում ենք էլեգանտ ֆոնտ միայն ժամերի համար */
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100&display=swap');
+
+    .clock-block {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+        padding: 20px;
+        background-color: #0a121e;
         border-radius: 15px;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(0, 119, 255, 0.1);
+        color: #8b949e;
+        width: 100%;
+        font-family: 'Segoe UI', sans-serif;
     }
-    [data-testid="stDataFrameDataframe"] div table thead tr th {
-        background-color: #0d1624 !important;
-        color: #0077ff !important;
-        font-weight: 400 !important;
-        text-transform: uppercase;
+    
+    .clock-left-side { text-align: right; line-height: 1.3; }
+    .clock-title { color: #0077ff; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; }
+    .clock-author { font-size: 14px; color: #e0e6ed; }
+    .author-name { color: #ffffff; font-weight: 600; }
+
+    .clock-divider { width: 1px; height: 50px; background-color: rgba(255, 255, 255, 0.05); }
+
+    /* Ժամանակի հատվածի կատարյալ սիմետրիա */
+    .clock-time-side {
+        display: flex;
+        flex-direction: column; /* Ամսաթիվը ժամի վերևում */
+        align-items: center;
+        justify-content: center;
+        min-width: 120px;
+    }
+    
+    .clock-date {
         font-size: 12px;
+        color: #8b949e; /* Մեղմ գույն */
         letter-spacing: 1px;
+        margin-bottom: -5px; /* Մոտեցնում ենք ժամին */
+    }
+    
+    .clock-time {
+        font-size: 40px; /* Մեծ և ակնառու */
+        font-weight: 100; /* Շատ բարակ */
+        color: #ffffff; /* Սպիտակ, բայց տակը կա Glow */
+        line-height: 1;
+        /* Էլեգանտ մուգ կապույտ glow էֆեկտ */
+        text-shadow: 0 0 15px rgba(0, 119, 255, 0.4);
+        font-family: 'JetBrains Mono', monospace !important; /* Էլեգանտ թվեր */
+        letter-spacing: -1.5px;
     }
 
-    /* 6. Expander-ների մաքուր դիզայն */
-    .streamlit-expanderHeader {
-        background-color: #0a121e !important;
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
-        border-radius: 12px !important;
-        color: #ffffff !important;
-        font-weight: 300 !important;
-    }
-
-    /* 7. Metric-ների գույնը */
-    [data-testid="stMetricValue"] {
-        color: #0077ff !important;
-        font-weight: 200 !important;
-        letter-spacing: -1px;
-    }
-
-    /* 8. Fade-in Անիմացիան (ՊԱՀՊԱՆՎԱԾ) */
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .stApp {
-        animation: fadeIn 0.8s ease-in-out;
-        background-color: #02060c;
-    }
+    /* Անիմացիան (ԱՆՓՈՓՈԽ) */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .stApp { animation: fadeIn 0.8s ease-in-out; background-color: #02060c; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1682,25 +1686,35 @@ elif st.session_state.active_page == "normal":
                     display: flex; 
                     justify-content: center; 
                     align-items: center; 
-                    margin-top: 10px; 
-                    padding: 15px 25px; 
+                    padding: 15px 30px; 
                     border-radius: 20px; 
-                    background: linear-gradient(145deg, #0a121e, #030811); 
-                    border: 1px solid rgba(0, 242, 255, 0.15);
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+                    background: #0a121e; 
+                    border: 1px solid rgba(0, 119, 255, 0.15);
                     width: 100%;
                 ">
-                    <div style="text-align: right; margin-right: 20px;">
-                        <p style="margin:0; font-size:11px; color:#00f2ff; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8;">Վերջին պահպանում</p>
-                        <p style="margin:0; font-size:16px; color:#ffffff; font-weight: 300;">
-                            <span style="opacity: 0.6;">հեղինակ՝</span> <span style="font-weight: 600; color:#ffffff;">{db_user}</span>
+                    <div style="text-align: right; margin-right: 25px; line-height: 1.4;">
+                        <p style="margin:0; font-size:11px; color:#0077ff; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">Վերջին պահպանում</p>
+                        <p style="margin:0; font-size:15px; color:#ffffff; font-weight: 300;">
+                            <span style="opacity: 0.6;">հեղինակ՝</span> <span style="font-weight: 600;">{db_user}</span>
                         </p>
                     </div>
-                    <div style="display: flex; align-items: center; border-left: 1px solid rgba(255, 255, 255, 0.1); padding-left: 20px;">
-                        <div style="display: flex; flex-direction: column; justify-content: center;">
-                            <span style="margin:0; color:#00f2ff; font-size: 12px; font-weight: 500; opacity: 0.7;">{db_date}</span>
-                            <h2 style="margin:0; color:#ffffff; font-family: 'Inter', -apple-system, sans-serif; font-size: 32px; font-weight: 200; letter-spacing: -1px; line-height: 1;">{db_hour}</h2>
-                        </div>
+
+                    <div style="height: 45px; width: 1px; background: rgba(255, 255, 255, 0.1);"></div>
+
+                    <div style="display: flex; flex-direction: column; align-items: center; padding-left: 25px; min-width: 100px;">
+                        <span style="margin-bottom: -2px; color:#8b949e; font-size: 12px; font-weight: 400; letter-spacing: 1px;">{db_date}</span>
+                        <h2 style="
+                            margin: 0; 
+                            color: #ffffff; 
+                            font-family: 'JetBrains Mono', monospace; 
+                            font-size: 38px; 
+                            font-weight: 100; 
+                            line-height: 1;
+                            text-shadow: 0 0 15px rgba(0, 119, 255, 0.4);
+                            letter-spacing: -1px;
+                        ">
+                            {db_hour}
+                        </h2>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
