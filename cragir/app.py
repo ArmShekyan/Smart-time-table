@@ -583,21 +583,21 @@ if not st.session_state.get('logged_in', False):
                 
                 submit_login = st.form_submit_button("ՀԱՍՏԱՏԵԼ ՄՈՒՏՔԸ", use_container_width=True)
 
-            # --- ՔՈ ՏՐԱՄԱԲԱՆՈՒԹՅՈՒՆԸ (ԱՆՓՈՓՈԽ) ---
+            # --- ՔՈ ՏՐԱՄԱԲԱՆՈՒԹՅՈՒՆԸ (ԱՊԱՀՈՎՎԱԾ) ---
             if submit_login:
                 if not username_input or not password_input:
                     st.error("⚠️ Խնդրում ենք լրացնել բոլոր դաշտերը:")
                 else:
                     user = check_user(username_input, password_input)
                     if user:
+                        # 1. Նախ պահպանում ենք Cookie-ները
+                        cookies.set("saved_username", user['username'], key="cookie_user")
+                        cookies.set("saved_role", user['role'], key="cookie_role")
+                        
+                        # 2. Թարմացնում ենք session_state-ը
                         st.session_state.logged_in = True
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
-                        
-                        # Cookies պահպանում
-                        cookies.set("saved_username", user['username'])
-                        cookies.set("saved_role", user['role'])
-                        
                         st.session_state.show_readme = True 
                         
                         if user['role'] in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
@@ -605,9 +605,12 @@ if not st.session_state.get('logged_in', False):
                         else:
                             st.session_state.active_tab = "📂 Վերջին պահպանվածը"
 
-                        st.toast(f"🎉 Բարի վերադարձ, {username_input}!", icon="🚀")
+                        # 3. Վիզուալ էֆեկտներ
+                        st.toast(f"🎉 Բարի վերադարձ, {user['username']}!", icon="🚀")
                         st.snow() 
-                        time.sleep(0.5)
+                        
+                        # 4. Սպասում ենք 1 վայրկյան, որ Cookie-ն հաստատ գրանցվի բրաուզերում
+                        time.sleep(1.0)
                         st.rerun()
                     else:
                         st.error("❌ Տվյալները սխալ են")
