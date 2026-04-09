@@ -431,51 +431,95 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* Ավելացված է միայն այս հատվածը հեռախոսի համար */
+    /* 1. Հեռախոսի համար նախատեսված հատվածը (ՊԱՀՊԱՆՎԱԾ) */
     .main .block-container {
         padding-bottom: 300px !important;
     }
 
-    /* ՔՈ ԿՈԴԸ՝ ԱՌԱՆՑ ՈՐԵՎԷ ՓՈՓՈԽՈՒԹՅԱՆ */
+    /* 2. Sidebar-ի էլեգանտ մուգ դիզայն */
     [data-testid="stSidebar"] {
-        background-color: #1a1c24;
-        border-right: 1px solid #343a40;
+        background-color: #050a12 !important;
+        border-right: 1px solid rgba(0, 242, 255, 0.1);
     }
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {
-        color: #f8f9fa;
+        color: #ffffff;
+        font-weight: 200;
+        letter-spacing: 1px;
     }
+    
+    /* 3. Սայդբարի կոճակների նուրբ ոճը */
     [data-testid="stSidebar"] .stButton>button {
-        border-radius: 20px;
+        border-radius: 12px;
+        background-color: rgba(255, 255, 255, 0.03);
+        color: #e0e6ed;
+        border: 1px solid rgba(255, 255, 255, 0.05);
         transition: all 0.3s ease-in-out;
     }
     [data-testid="stSidebar"] .stButton>button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+        border: 1px solid #00f2ff;
+        color: #00f2ff;
+        box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
     }
-    [data-testid="stDataFrameDataframe"] div table {
-        border-radius: 10px;
+
+    /* 4. ԳԼԽԱՎՈՐ ԷԼԵԳԱՆՏ ԿՈՃԱԿԸ (Glow Effect) */
+    div.stButton > button[kind="primary"] {
+        background-color: #0a121e !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(0, 242, 255, 0.1) !important;
+        border-radius: 14px !important;
+        padding: 12px 28px !important;
+        font-weight: 200 !important;
+        letter-spacing: 1.5px !important;
+        text-transform: uppercase;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        width: 100%;
+    }
+    div.stButton > button[kind="primary"]:hover {
+        border: 1px solid #00f2ff !important;
+        color: #00f2ff !important;
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.3) !important;
+        transform: translateY(-2px);
+    }
+
+    /* 5. Աղյուսակների (Dataframe) թանկարժեք տեսք */
+    [data-testid="stDataFrameDataframe"] {
+        border-radius: 15px;
         overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.05);
     }
     [data-testid="stDataFrameDataframe"] div table thead tr th {
-        background-color: #343a40 !important;
-        color: white !important;
+        background-color: #0d1624 !important;
+        color: #00f2ff !important;
+        font-weight: 400 !important;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 1px;
     }
-    [data-testid="stMetricValue"] {
-        color: #0d6efd;
-        font-weight: bold;
-    }
+
+    /* 6. Expander-ների մաքուր դիզայն */
     .streamlit-expanderHeader {
-        background-color: #e9ecef;
-        border-radius: 8px;
-        font-weight: bold;
+        background-color: #0a121e !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 12px !important;
+        color: #ffffff !important;
+        font-weight: 300 !important;
     }
+
+    /* 7. Metric-ների գույնը (Ice Cyan) */
+    [data-testid="stMetricValue"] {
+        color: #00f2ff !important;
+        font-weight: 200 !important;
+        letter-spacing: -1px;
+    }
+
+    /* 8. Fade-in Անիմացիան (ՊԱՀՊԱՆՎԱԾ) */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
     .stApp {
         animation: fadeIn 0.8s ease-in-out;
+        background-color: #02060c;
     }
 </style>
 """, unsafe_allow_html=True)
