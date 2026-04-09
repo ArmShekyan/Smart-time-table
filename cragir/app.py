@@ -431,51 +431,69 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* Ավելացված է միայն այս հատվածը հեռախոսի համար */
-    .main .block-container {
-        padding-bottom: 300px !important;
-    }
-
-    /* ՔՈ ԿՈԴԸ՝ ԱՌԱՆՑ ՈՐԵՎԷ ՓՈՓՈԽՈՒԹՅԱՆ */
-    [data-testid="stSidebar"] {
-        background-color: #1a1c24;
-        border-right: 1px solid #343a40;
-    }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {
-        color: #f8f9fa;
-    }
-    [data-testid="stSidebar"] .stButton>button {
-        border-radius: 20px;
-        transition: all 0.3s ease-in-out;
-    }
-    [data-testid="stSidebar"] .stButton>button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
-    }
-    [data-testid="stDataFrameDataframe"] div table {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-    [data-testid="stDataFrameDataframe"] div table thead tr th {
-        background-color: #343a40 !important;
-        color: white !important;
-    }
-    [data-testid="stMetricValue"] {
-        color: #0d6efd;
-        font-weight: bold;
-    }
-    .streamlit-expanderHeader {
-        background-color: #e9ecef;
-        border-radius: 8px;
-        font-weight: bold;
+    /* 1. ԷՋԻ ԸՆԴՀԱՆՈՒՐ ՏԵՍՔԸ ԵՎ ՖՈՆԸ */
+    .stApp {
+        background-color: #02060c !important;
+        animation: fadeIn 0.8s ease-in-out;
     }
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
+        from { opacity: 0; transform: translateY(5px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    .stApp {
-        animation: fadeIn 0.8s ease-in-out;
+
+    /* 2. ՍԱՅԴԲԱՐԻ (SIDEBAR) ԴԻԶԱՅՆԸ */
+    [data-testid="stSidebar"] {
+        background-color: #050a12 !important;
+        border-right: 1px solid rgba(0, 119, 255, 0.1) !important;
+    }
+    [data-testid="stSidebarNav"] { background-color: transparent !important; }
+    
+    /* 3. ՄԵՏՐԻԿԱՆԵՐԻ ԹՎԵՐԸ (STATISTICS) - ԿԱՊՈՒՅՏ ԵՎ ԲԱՐԱԿ */
+    [data-testid="stMetricValue"] {
+        color: #0077ff !important;
+        font-weight: 300 !important;
+        font-size: 32px !important;
+    }
+
+    /* 4. ԿՈՃԱԿՆԵՐԻ ՀԻՄՆԱԿԱՆ ՈՃԸ (Օրինակ՝ Պահպանել բոլորը) */
+    div.stButton > button {
+        border-radius: 12px !important;
+        border: 1px solid rgba(0, 119, 255, 0.3) !important;
+        background-color: #0a121e !important;
+        color: white !important;
+        padding: 10px 20px !important;
+        transition: all 0.3s ease !important;
+        font-weight: 500 !important;
+    }
+    div.stButton > button:hover {
+        border: 1px solid #0077ff !important;
+        box-shadow: 0 0 15px rgba(0, 119, 255, 0.2) !important;
+        transform: scale(1.02);
+    }
+
+    /* 5. ՎՏԱՆԳԱՎՈՐ ԳՈՏՈՒ ԿՈՃԱԿԸ (DISABLED ՎԻՃԱԿՈՒՄ) */
+    /* Երբ checkbox-ը դրված չէ, կոճակը կլինի մոխրագույն ու անջատված */
+    div.stButton > button:disabled {
+        background-color: #161b22 !important;
+        color: #484f58 !important;
+        border: 1px solid #30363d !important;
+        cursor: not-allowed !important;
+        opacity: 0.6 !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    /* 6. ԼՐԱՑՈՒՑԻՉ ՀԱՐՄԱՐՈՒԹՅՈՒՆ ՀԵՌԱԽՈՍՆԵՐԻ ՀԱՄԱՐ */
+    .main .block-container {
+        padding-bottom: 200px !important;
+    }
+
+    /* 7. ԷՔՍՊԱՆԴԵՐՆԵՐԻ (EXPANDER) ՈՃԸ */
+    .streamlit-expanderHeader {
+        background-color: #0a121e !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 10px !important;
+        color: white !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -507,7 +525,7 @@ if "subjects" not in st.session_state:
     load_from_disk()
 
 # 🔥 --- COOKIE-Ի ՍՏՈՒԳՈՒՄ ՍԿԶԲՆԱՄԱՍՈՒՄ (Refresh-ի համար) --- 🔥
-if not st.session_state.logged_in:
+if not st.session_state.get('logged_in', False):
     saved_user = cookies.get("saved_username")
     saved_role = cookies.get("saved_role")
     
@@ -520,19 +538,30 @@ if not st.session_state.logged_in:
             st.session_state.active_tab = "📊 Վահանակ"
         else:
             st.session_state.active_tab = "📂 Վերջին պահպանվածը"
-
+        st.rerun()
 
 # --- 🚪 ԼՈԳԻՆԻ ԷՋ ---
-if not st.session_state.logged_in:
-    left_col, center_col, right_col = st.columns([1, 1.5, 1])
+if not st.session_state.get('logged_in', False):
+    # Պահպանում ենք սյունակների քո [1, 2, 1] հարաբերակցությունը
+    _, center_col, _ = st.columns([1, 2, 1])
 
     with center_col:
         st.markdown("<br><br>", unsafe_allow_html=True)
         
         with st.container(border=True):
+            # Դիզայնը՝ ճիշտ նկարի պես
             st.markdown(
-                "<h2 style='text-align: center; color: #0d6efd; font-weight: 800; margin-bottom: 5px;'>Smart Time Table</h2>"
-                "<p style='text-align: center; color: #6c757d; font-size: 14px;'>Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար</p>", 
+                """
+                <div style='text-align: center; padding-bottom: 20px;'>
+                    <h1 style='color: #0077ff; font-weight: 800; letter-spacing: 5px; font-size: 30px; margin-bottom: 10px;'>
+                        SMART TIME TABLE
+                    </h1>
+                    <p style='color: #8b949e; font-size: 14px; font-weight: 300;'>
+                        Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար
+                    </p>
+                    <div style='width: 50px; height: 2px; background: #0077ff; margin: 20px auto; box-shadow: 0 0 10px #0077ff;'></div>
+                </div>
+                """, 
                 unsafe_allow_html=True
             )
             
@@ -542,8 +571,9 @@ if not st.session_state.logged_in:
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
-                submit_login = st.form_submit_button("Մուտք գործել", use_container_width=True, type="primary")
+                submit_login = st.form_submit_button("ՀԱՍՏԱՏԵԼ ՄՈՒՏՔԸ", use_container_width=True)
 
+            # --- ՔՈ ՏՐԱՄԱԲԱՆՈՒԹՅՈՒՆԸ (ԱՆՓՈՓՈԽ) ---
             if submit_login:
                 if not username_input or not password_input:
                     st.error("⚠️ Խնդրում ենք լրացնել բոլոր դաշտերը:")
@@ -554,7 +584,7 @@ if not st.session_state.logged_in:
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
                         
-                        # 🔥 ՊԱՀՈՒՄ ԵՆՔ ՏՎՅԱԼՆԵՐԸ COOKIE-ՈՒՄ 🔥
+                        # Cookies պահպանում
                         cookies.set("saved_username", user['username'])
                         cookies.set("saved_role", user['role'])
                         
@@ -567,10 +597,10 @@ if not st.session_state.logged_in:
 
                         st.toast(f"🎉 Բարի վերադարձ, {username_input}!", icon="🚀")
                         st.snow() 
-                        time.sleep(1)
+                        time.sleep(0.5)
                         st.rerun()
                     else:
-                        st.error("❌ Սխալ օգտանուն կամ գաղտնաբառ:")
+                        st.error("❌ Տվյալները սխալ են")
                 
     st.stop()
 
