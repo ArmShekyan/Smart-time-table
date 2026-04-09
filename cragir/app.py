@@ -607,7 +607,7 @@ if not st.session_state.get('logged_in', False):
 
                         st.toast(f"🎉 Բարի վերադարձ, {username_input}!", icon="🚀")
                         st.snow() 
-                        time.sleep(1)
+                        time.sleep(1.3)
                         st.rerun()
                     else:
                         st.error("❌ Տվյալները սխալ են")
