@@ -439,7 +439,7 @@ st.markdown("""
     /* 2. Sidebar-ի էլեգանտ մուգ դիզայն */
     [data-testid="stSidebar"] {
         background-color: #050a12 !important;
-        border-right: 1px solid rgba(0, 242, 255, 0.1);
+        border-right: 1px solid rgba(0, 119, 255, 0.1);
     }
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {
         color: #ffffff;
@@ -447,25 +447,26 @@ st.markdown("""
         letter-spacing: 1px;
     }
     
-    /* 3. Սայդբարի կոճակների նուրբ ոճը */
-    [data-testid="stSidebar"] .stButton>button {
+    /* 3. Սայդբարի և բոլոր սովորական կոճակների ոճը */
+    div.stButton > button, [data-testid="stSidebar"] .stButton>button {
         border-radius: 12px;
-        background-color: rgba(255, 255, 255, 0.03);
-        color: #e0e6ed;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.3s ease-in-out;
+        background-color: rgba(255, 255, 255, 0.03) !important;
+        color: #e0e6ed !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        transition: all 0.3s ease-in-out !important;
     }
-    [data-testid="stSidebar"] .stButton>button:hover {
-        border: 1px solid #00f2ff;
-        color: #00f2ff;
-        box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+    div.stButton > button:hover {
+        border: 1px solid #0077ff !important;
+        color: #0077ff !important;
+        box-shadow: 0 0 15px rgba(0, 119, 255, 0.15) !important;
     }
 
-    /* 4. ԳԼԽԱՎՈՐ ԷԼԵԳԱՆՏ ԿՈՃԱԿԸ (Glow Effect) */
-    div.stButton > button[kind="primary"] {
+    /* 4. ԳԼԽԱՎՈՐ ԿՈՃԱԿԸ ԵՎ FORM SUBMIT (Enter-ի համար) - Glow Effect */
+    div.stButton > button[kind="primary"], 
+    div.stFormSubmitButton > button {
         background-color: #0a121e !important;
         color: #ffffff !important;
-        border: 1px solid rgba(0, 242, 255, 0.1) !important;
+        border: 1px solid rgba(0, 119, 255, 0.2) !important;
         border-radius: 14px !important;
         padding: 12px 28px !important;
         font-weight: 200 !important;
@@ -474,10 +475,12 @@ st.markdown("""
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
         width: 100%;
     }
-    div.stButton > button[kind="primary"]:hover {
-        border: 1px solid #00f2ff !important;
-        color: #00f2ff !important;
-        box-shadow: 0 0 20px rgba(0, 242, 255, 0.3) !important;
+    
+    div.stButton > button[kind="primary"]:hover, 
+    div.stFormSubmitButton > button:hover {
+        border: 1px solid #0077ff !important;
+        color: #0077ff !important;
+        box-shadow: 0 0 25px rgba(0, 119, 255, 0.35) !important;
         transform: translateY(-2px);
     }
 
@@ -489,7 +492,7 @@ st.markdown("""
     }
     [data-testid="stDataFrameDataframe"] div table thead tr th {
         background-color: #0d1624 !important;
-        color: #00f2ff !important;
+        color: #0077ff !important;
         font-weight: 400 !important;
         text-transform: uppercase;
         font-size: 12px;
@@ -505,9 +508,9 @@ st.markdown("""
         font-weight: 300 !important;
     }
 
-    /* 7. Metric-ների գույնը (Ice Cyan) */
+    /* 7. Metric-ների գույնը */
     [data-testid="stMetricValue"] {
-        color: #00f2ff !important;
+        color: #0077ff !important;
         font-weight: 200 !important;
         letter-spacing: -1px;
     }
