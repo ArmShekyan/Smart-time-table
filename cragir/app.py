@@ -431,69 +431,74 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* 1. ԷՋԻ ԸՆԴՀԱՆՈՒՐ ՏԵՍՔԸ ԵՎ ՖՈՆԸ */
-    .stApp {
-        background-color: #02060c !important;
-        animation: fadeIn 0.8s ease-in-out;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(5px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* 2. ՍԱՅԴԲԱՐԻ (SIDEBAR) ԴԻԶԱՅՆԸ */
+    /* 1. ՖՈՆ ԵՎ ՍԱՅԴԲԱՐ (ԱՌԱՆՑ ԱՆԻՄԱՑԻԱՅԻ) */
+    .stApp { background-color: #02060c !important; }
+    
     [data-testid="stSidebar"] {
         background-color: #050a12 !important;
         border-right: 1px solid rgba(0, 119, 255, 0.1) !important;
     }
     [data-testid="stSidebarNav"] { background-color: transparent !important; }
     
-    /* 3. ՄԵՏՐԻԿԱՆԵՐԻ ԹՎԵՐԸ (STATISTICS) - ՄՈՒԳ ԿԱՊՈՒՅՏ ԵՎ ՀԱՍՏ */
+    /* 2. ՄԵՏՐԻԿԱՆԵՐԻ ՄՈՒԳ ԿԱՊՈՒՅՏ ԹՎԵՐ */
     [data-testid="stMetricValue"] {
-        color: #0055ff !important; /* Մուգ կապույտ */
-        font-weight: 800 !important; /* Ավելի հաստ տեսք */
+        color: #0055ff !important; 
+        font-weight: 800 !important; 
         font-size: 34px !important;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
     }
 
-    /* 4. ԿՈՃԱԿՆԵՐԻ ՀԻՄՆԱԿԱՆ ՈՃԸ */
-    div.stButton > button {
+    /* 3. ԿՈՃԱԿՆԵՐԻ ՈՃԸ (ԼՈԳԻՆ + ՍՈՎՈՐԱԿԱՆ) */
+    div.stButton > button, div.stFormSubmitButton > button {
         border-radius: 12px !important;
-        border: 1px solid rgba(0, 119, 255, 0.3) !important;
+        border: 1px solid rgba(0, 85, 255, 0.3) !important;
         background-color: #0a121e !important;
-        color: #ccd6f6 !important; /* Մեղմ բաց գույն սկզբնական վիճակում */
+        color: #ccd6f6 !important;
         padding: 10px 20px !important;
         transition: all 0.3s ease-in-out !important;
         font-weight: 600 !important;
     }
 
-    /* 5. ԿՈՃԱԿՆԵՐԻ ՀՈՎԵՐ (HOVER) - ՍՊԻՏԱԿ ԼՈՒՍԱՎՈՐՈՒԹՅՈՒՆ */
-    div.stButton > button:hover {
-        border: 1px solid #0077ff !important;
-        color: #ffffff !important; /* Մաքուր սպիտակ տեքստ */
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.1) !important; /* Նուրբ սպիտակ glow */
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5) !important; /* Տեքստի փայլ */
-        transform: scale(1.02);
+    /* 4. ԿՈՃԱԿՆԵՐԻ ՀՈՎԵՐ (HOVER) - ԼՈՒՍԱՎՈՐՎՈՂ ԵԶՐԱԳԾԵՐ */
+    div.stButton > button:hover, div.stFormSubmitButton > button:hover {
+        border: 1px solid #0055ff !important;
+        color: #0055ff !important; 
+        background-color: #0d1726 !important;
+        box-shadow: 0 0 15px rgba(0, 85, 255, 0.3) !important; 
+        text-shadow: 0 0 10px rgba(0, 85, 255, 0.5) !important; 
+        transform: translateY(-1px);
     }
 
-    /* 6. ՎՏԱՆԳԱՎՈՐ ԳՈՏՈՒ ԿՈՃԱԿԸ (DISABLED ՎԻՃԱԿՈՒՄ) */
+    /* 5. ԺԱՄԻ ԵՎ ԱՄՍԱԹՎԻ ՍԻՄԵՏՐԻԿ ՈՃԸ */
+    .time-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .date-val {
+        color: #0055ff !important;
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        letter-spacing: 1px;
+        margin-bottom: -5px !important;
+    }
+    .hour-val {
+        color: #0055ff !important;
+        font-size: 40px !important;
+        font-weight: 900 !important;
+        line-height: 1.1;
+    }
+
+    /* 6. DISABLED ՎԻՃԱԿ */
     div.stButton > button:disabled {
         background-color: #161b22 !important;
         color: #484f58 !important;
         border: 1px solid #30363d !important;
-        cursor: not-allowed !important;
         opacity: 0.6 !important;
-        box-shadow: none !important;
-        transform: none !important;
-        text-shadow: none !important;
     }
 
-    /* 7. ԼՐԱՑՈՒՑԻՉ ՀԱՐՄԱՐՈՒԹՅՈՒՆ ՀԵՌԱԽՈՍՆԵՐԻ ՀԱՄԱՐ */
-    .main .block-container {
-        padding-bottom: 200px !important;
-    }
-
-    /* 8. ԷՔՍՊԱՆԴԵՐՆԵՐԻ (EXPANDER) ՈՃԸ */
+    /* 7. ԷՔՍՊԱՆԴԵՐՆԵՐ */
     .streamlit-expanderHeader {
         background-color: #0a121e !important;
         border: 1px solid rgba(255, 255, 255, 0.05) !important;
@@ -1653,28 +1658,18 @@ elif st.session_state.active_page == "normal":
             
         with col_time:
             st.markdown(f"""
-                <div style="
-                    display: flex; 
-                    justify-content: center; 
-                    align-items: center; 
-                    margin-top: 10px; 
-                    padding: 10px 15px; 
-                    border-radius: 12px; 
-                    background: rgba(88, 166, 255, 0.08); 
-                    border: 1px solid rgba(88, 166, 255, 0.2);
-                    width: 100%;
-                ">
-                    <div style="text-align: right; margin-right: 15px;">
-                        <p style="margin:0; font-size:14px; color:#1a73e8; font-weight: 800; text-transform: uppercase;">Վերջին պահպանում</p>
-                        <p style="margin:0; font-size:15px; color:#ffffff; font-weight: bold;">
-                            <span style="color:#0047AB; font-weight: 900;">հեղինակ՝</span> <span style="color:#00ff00; font-weight: 900;">{db_user}</span>
+                <div style="display: flex; justify-content: center; align-items: center; padding: 15px; border-radius: 15px; background: rgba(0, 85, 255, 0.05); border: 1px solid rgba(0, 85, 255, 0.2); width: 100%;">
+                    <div style="text-align: right; margin-right: 20px;">
+                        <p style="margin:0; font-size:14px; color:#0055ff; font-weight: 800; text-transform: uppercase;">Վերջին պահպանում</p>
+                        <p style="margin:0; font-size:16px; color:#ffffff; font-weight: bold;">
+                            <span style="color:#0047AB;">հեղինակ՝</span> <span style="color:#00ff00;">{db_user}</span>
                         </p>
                     </div>
-                    <div style="display: flex; align-items: center; border-left: 2px solid rgba(88,166,255,0.3); padding-left: 15px;">
-                        <span style="font-size: 24px; margin-right: 10px;">🕒</span>
-                        <div style="display: flex; flex-direction: column; justify-content: center;">
-                            <span style="margin:0; color:#58a6ff; font-size: 13px; font-weight: bold; opacity: 0.8; line-height: 1;">{db_date}</span>
-                            <h2 style="margin:0; color:#58a6ff; font-family: 'Courier New', monospace; font-size: 30px; line-height: 1.1;">{db_hour}</h2>
+                    <div style="display: flex; align-items: center; border-left: 2px solid rgba(0, 85, 255, 0.3); padding-left: 20px;">
+                        <span style="font-size: 30px; margin-right: 12px;">🕒</span>
+                        <div class="time-wrapper">
+                            <span class="date-val">{db_date}</span>
+                            <span class="hour-val">{db_hour}</span>
                         </div>
                     </div>
                 </div>
