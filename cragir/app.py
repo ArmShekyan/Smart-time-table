@@ -450,7 +450,7 @@ st.markdown("""
     
     /* 3. ՄԵՏՐԻԿԱՆԵՐԻ ԹՎԵՐԸ (STATISTICS) - ՄՈՒԳ ԿԱՊՈՒՅՏ ԵՎ ՀԱՍՏ */
     [data-testid="stMetricValue"] {
-        color: #0055ff !important; 
+        color: #0055ff !important; /* Քո ուզած մուգ կապույտը */
         font-weight: 800 !important; 
         font-size: 34px !important;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
@@ -467,11 +467,12 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* 5. ԿՈՃԱԿՆԵՐԻ ՀՈՎԵՐ (HOVER) - ՄՈՒԳ ԿԱՊՈՒՅՏ ԼՈՒՍԱՎՈՐՈՒԹՅՈՒՆ */
+    /* 5. ԿՈՃԱԿՆԵՐԻ ՀՈՎԵՐ (HOVER) - ՏԵՔՍՏԸ ԴԱՌՆՈՒՄ Է ԿԱՊՈՒՅՏ */
     div.stButton > button:hover {
         border: 1px solid #0055ff !important;
-        color: #ffffff !important; 
-        /* Կապույտ glow էֆեկտ՝ թվերի գույնով */
+        color: #0055ff !important; /* Հիմա տեքստը կդառնա կապույտ */
+        background-color: #0d1726 !important;
+        /* Կապույտ glow էֆեկտ */
         box-shadow: 0 0 20px rgba(0, 85, 255, 0.3) !important; 
         text-shadow: 0 0 10px rgba(0, 85, 255, 0.6) !important; 
         transform: translateY(-1px);
