@@ -450,14 +450,14 @@ st.markdown("""
     
     /* 3. ՄԵՏՐԻԿԱՆԵՐԻ ԹՎԵՐԸ (STATISTICS) - ՄՈՒԳ ԿԱՊՈՒՅՏ ԵՎ ՀԱՍՏ */
     [data-testid="stMetricValue"] {
-        color: #0055ff !important; /* Քո ուզած մուգ կապույտը */
+        color: #0055ff !important; 
         font-weight: 800 !important; 
         font-size: 34px !important;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
     }
 
-    /* 4. ԿՈՃԱԿՆԵՐԻ ՀԻՄՆԱԿԱՆ ՈՃԸ */
-    div.stButton > button {
+    /* 4. ԿՈՃԱԿՆԵՐԻ ՀԻՄՆԱԿԱՆ ՈՃԸ (ՆԵՐԱՌՅԱԼ ԼՈԳԻՆԻ ԿՈՃԱԿԸ) */
+    div.stButton > button, div.stFormSubmitButton > button {
         border-radius: 12px !important;
         border: 1px solid rgba(0, 85, 255, 0.3) !important;
         background-color: #0a121e !important;
@@ -467,12 +467,12 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* 5. ԿՈՃԱԿՆԵՐԻ ՀՈՎԵՐ (HOVER) - ՏԵՔՍՏԸ ԴԱՌՆՈՒՄ Է ԿԱՊՈՒՅՏ */
-    div.stButton > button:hover {
+    /* 5. ԿՈՃԱԿՆԵՐԻ ՀՈՎԵՐ (HOVER) - ՏԵՔՍՏԸ ԵՎ ԵԶՐԱԳԾԵՐԸ ԴԱՌՆՈՒՄ ԵՆ ԿԱՊՈՒՅՏ */
+    div.stButton > button:hover, div.stFormSubmitButton > button:hover {
         border: 1px solid #0055ff !important;
-        color: #0055ff !important; /* Հիմա տեքստը կդառնա կապույտ */
+        color: #0055ff !important; 
         background-color: #0d1726 !important;
-        /* Կապույտ glow էֆեկտ */
+        /* Կապույտ glow էֆեկտ՝ թվերի գույնով */
         box-shadow: 0 0 20px rgba(0, 85, 255, 0.3) !important; 
         text-shadow: 0 0 10px rgba(0, 85, 255, 0.6) !important; 
         transform: translateY(-1px);
