@@ -577,11 +577,11 @@ if not st.session_state.logged_in:
             st.markdown(
                 """
                 <div style='text-align: center; padding: 20px 0;'>
-                    <h1 style='color: #ffffff; font-weight: 100; letter-spacing: 5px; font-size: 35px; margin-bottom: 10px;'>
-                        SMART <span style='color: #0077ff; font-weight: 800;'>TIME</span>
+                    <h1 style='color: #0077ff; font-weight: 800; letter-spacing: 5px; font-size: 35px; margin-bottom: 10px;'>
+                        SMART TIME
                     </h1>
                     <p style='color: #8b949e; font-size: 14px; font-weight: 300; letter-spacing: 1px;'>
-                        Անվտանգ մուտք համակարգ
+                        Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար
                     </p>
                     <div style='width: 30px; height: 2px; background: #0077ff; margin: 20px auto; box-shadow: 0 0 10px #0077ff;'></div>
                 </div>
