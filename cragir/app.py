@@ -568,50 +568,39 @@ if not st.session_state.logged_in:
 
 # --- 🚪 ԼՈԳԻՆԻ ԷՋ ---
 if not st.session_state.logged_in:
-    left_col, center_col, right_col = st.columns([1, 1.5, 1])
+    _, center_col, _ = st.columns([1, 1.5, 1])
 
     with center_col:
         st.markdown("<br><br>", unsafe_allow_html=True)
         
         with st.container(border=True):
-            # Էլեգանտ վերնագիր և սուբտեքստ
             st.markdown(
                 """
-                <div style='text-align: center; padding-bottom: 10px;'>
-                    <h2 style='color: #ffffff; font-weight: 200; letter-spacing: 2px; margin-bottom: 0;'>SMART TIME TABLE</h2>
-                    <div style='width: 50px; height: 2px; background: #00f2ff; margin: 15px auto;'></div>
-                    <p style='color: #a0aec0; font-size: 13px; font-weight: 300; letter-spacing: 0.5px;'>
-                        Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար
+                <div style='text-align: center; padding: 20px 0;'>
+                    <h1 style='color: #ffffff; font-weight: 100; letter-spacing: 5px; font-size: 35px; margin-bottom: 10px;'>
+                        SMART <span style='color: #0077ff; font-weight: 800;'>TIME</span>
+                    </h1>
+                    <p style='color: #8b949e; font-size: 14px; font-weight: 300; letter-spacing: 1px;'>
+                        Անվտանգ մուտք համակարգ
                     </p>
+                    <div style='width: 30px; height: 2px; background: #0077ff; margin: 20px auto; box-shadow: 0 0 10px #0077ff;'></div>
                 </div>
                 """, 
                 unsafe_allow_html=True
             )
 
-            # Մուտքային դաշտերը
-            user_input = st.text_input("Օգտանուն", placeholder="Մուտքագրեք օգտանունը")
-            pass_input = st.text_input("Գաղտնաբառ", type="password", placeholder="••••••••")
+            user_input = st.text_input("Օգտանուն")
+            pass_input = st.text_input("Գաղտնաբառ", type="password")
 
             st.markdown("<br>", unsafe_allow_html=True)
 
-            # Մուտքի կոճակը
-            if st.button("ՄՈՒՏՔ ԳՈՐԾԵԼ", use_container_width=True, type="primary"):
-                # Քո լոգինի տրամաբանությունը այստեղ
+            if st.button("ՀԱՍՏԱՏԵԼ ՄՈՒՏՔԸ", use_container_width=True, type="primary"):
                 if user_input in st.session_state.users_list and st.session_state.users_list[user_input] == pass_input:
                     st.session_state.logged_in = True
                     st.session_state.current_user = user_input
                     st.rerun()
                 else:
-                    st.error("Սխալ օգտանուն կամ գաղտնաբառ")
-
-    # Էջի ֆոնի լրացուցիչ կարգավորում (ըստ ցանկության, ավելի մաքուր տեսքի համար)
-    st.markdown("""
-        <style>
-        div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
-            border-radius: 15px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+                    st.error("Տվյալները սխալ են")
     st.stop()
 
 
