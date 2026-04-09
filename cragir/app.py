@@ -1658,18 +1658,15 @@ elif st.session_state.active_page == "normal":
             
         with col_time:
             st.markdown(f"""
-                <div style="display: flex; justify-content: center; align-items: center; padding: 15px; border-radius: 15px; background: rgba(0, 85, 255, 0.05); border: 1px solid rgba(0, 85, 255, 0.2); width: 100%;">
-                    <div style="text-align: right; margin-right: 20px;">
-                        <p style="margin:0; font-size:14px; color:#0055ff; font-weight: 800; text-transform: uppercase;">Վերջին պահպանում</p>
-                        <p style="margin:0; font-size:16px; color:#ffffff; font-weight: bold;">
-                            <span style="color:#0047AB;">հեղինակ՝</span> <span style="color:#00ff00;">{db_user}</span>
-                        </p>
+                <div style="display:flex; justify-content:center; align-items:center; padding:10px; border-radius:12px; background:rgba(0,85,255,0.05); border:1px solid rgba(0,85,255,0.1);">
+                    <div style="text-align:right; margin-right:15px;">
+                        <p style="margin:0; font-size:12px; color:#0055ff; font-weight:800;">ՎԵՐՋԻՆ ՊԱՀՊԱՆՈՒՄ</p>
+                        <p style="margin:0; font-size:14px; color:#ffffff;">հեղինակ՝ <span style="color:#00ff00;">{db_user}</span></p>
                     </div>
-                    <div style="display: flex; align-items: center; border-left: 2px solid rgba(0, 85, 255, 0.3); padding-left: 20px;">
-                        <span style="font-size: 30px; margin-right: 12px;">🕒</span>
+                    <div style="display:flex; align-items:center; border-left:1px solid rgba(0,85,255,0.2); padding-left:15px;">
                         <div class="time-wrapper">
-                            <span class="date-val">{db_date}</span>
-                            <span class="hour-val">{db_hour}</span>
+                            <span class="date-val" style="font-size:13px !important;">{db_date}</span>
+                            <span class="hour-val" style="font-size:28px !important;">{db_hour}</span>
                         </div>
                     </div>
                 </div>
