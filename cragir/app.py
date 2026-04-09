@@ -439,7 +439,7 @@ st.markdown("""
     /* 2. Sidebar-ի էլեգանտ մուգ դիզայն */
     [data-testid="stSidebar"] {
         background-color: #050a12 !important;
-        border-right: 1px solid rgba(0, 242, 255, 0.1);
+        border-right: 1px solid rgba(0, 119, 255, 0.1);
     }
     [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {
         color: #ffffff;
@@ -447,25 +447,26 @@ st.markdown("""
         letter-spacing: 1px;
     }
     
-    /* 3. Սայդբարի կոճակների նուրբ ոճը */
-    [data-testid="stSidebar"] .stButton>button {
+    /* 3. Սայդբարի և բոլոր սովորական կոճակների ոճը */
+    div.stButton > button, [data-testid="stSidebar"] .stButton>button {
         border-radius: 12px;
-        background-color: rgba(255, 255, 255, 0.03);
-        color: #e0e6ed;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.3s ease-in-out;
+        background-color: rgba(255, 255, 255, 0.03) !important;
+        color: #e0e6ed !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        transition: all 0.3s ease-in-out !important;
     }
-    [data-testid="stSidebar"] .stButton>button:hover {
-        border: 1px solid #00f2ff;
-        color: #00f2ff;
-        box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+    div.stButton > button:hover {
+        border: 1px solid #0077ff !important;
+        color: #0077ff !important;
+        box-shadow: 0 0 15px rgba(0, 119, 255, 0.15) !important;
     }
 
-    /* 4. ԳԼԽԱՎՈՐ ԷԼԵԳԱՆՏ ԿՈՃԱԿԸ (Glow Effect) */
-    div.stButton > button[kind="primary"] {
+    /* 4. ԳԼԽԱՎՈՐ ԿՈՃԱԿԸ ԵՎ FORM SUBMIT (Enter-ի համար) - Glow Effect */
+    div.stButton > button[kind="primary"], 
+    div.stFormSubmitButton > button {
         background-color: #0a121e !important;
         color: #ffffff !important;
-        border: 1px solid rgba(0, 242, 255, 0.1) !important;
+        border: 1px solid rgba(0, 119, 255, 0.2) !important;
         border-radius: 14px !important;
         padding: 12px 28px !important;
         font-weight: 200 !important;
@@ -474,10 +475,12 @@ st.markdown("""
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
         width: 100%;
     }
-    div.stButton > button[kind="primary"]:hover {
-        border: 1px solid #00f2ff !important;
-        color: #00f2ff !important;
-        box-shadow: 0 0 20px rgba(0, 242, 255, 0.3) !important;
+    
+    div.stButton > button[kind="primary"]:hover, 
+    div.stFormSubmitButton > button:hover {
+        border: 1px solid #0077ff !important;
+        color: #0077ff !important;
+        box-shadow: 0 0 25px rgba(0, 119, 255, 0.35) !important;
         transform: translateY(-2px);
     }
 
@@ -489,7 +492,7 @@ st.markdown("""
     }
     [data-testid="stDataFrameDataframe"] div table thead tr th {
         background-color: #0d1624 !important;
-        color: #00f2ff !important;
+        color: #0077ff !important;
         font-weight: 400 !important;
         text-transform: uppercase;
         font-size: 12px;
@@ -505,9 +508,9 @@ st.markdown("""
         font-weight: 300 !important;
     }
 
-    /* 7. Metric-ների գույնը (Ice Cyan) */
+    /* 7. Metric-ների գույնը */
     [data-testid="stMetricValue"] {
-        color: #00f2ff !important;
+        color: #0077ff !important;
         font-weight: 200 !important;
         letter-spacing: -1px;
     }
@@ -567,40 +570,68 @@ if not st.session_state.logged_in:
 
 
 # --- 🚪 ԼՈԳԻՆԻ ԷՋ ---
-if not st.session_state.logged_in:
-    _, center_col, _ = st.columns([1, 1.5, 1])
+if not st.session_state.get('logged_in', False):
+    # Պահպանում ենք լայնացված սյունակները [1, 2, 1]
+    _, center_col, _ = st.columns([1, 2, 1])
 
     with center_col:
         st.markdown("<br><br>", unsafe_allow_html=True)
         
         with st.container(border=True):
+            # Քո ուզած SMART TIME TABLE վերնագիրը և գույները
             st.markdown(
                 """
                 <div style='text-align: center; padding: 20px 0;'>
                     <h1 style='color: #0077ff; font-weight: 800; letter-spacing: 5px; font-size: 30px; margin-bottom: 10px;'>
                         SMART TIME TABLE
                     </h1>
-                    <p style='color: #8b949e; font-size: 14px; font-weight: 300; letter-spacing: 1px;'>
+                    <p style='color: #8b949e; font-size: 14px; font-weight: 300;'>
                         Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար
                     </p>
-                    <div style='width: 40px; height: 2px; background: #0077ff; margin: 20px auto; box-shadow: 0 0 10px #0077ff;'></div>
+                    <div style='width: 50px; height: 2px; background: #0077ff; margin: 20px auto; box-shadow: 0 0 10px #0077ff;'></div>
                 </div>
                 """, 
                 unsafe_allow_html=True
             )
+            
+            with st.form("login_panel", clear_on_submit=False):
+                username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
+                password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="Ներմուծեք ձեր գաղտնաբառը")
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                # Մեր էլեգանտ կոճակը
+                submit_login = st.form_submit_button("ՀԱՍՏԱՏԵԼ ՄՈՒՏՔԸ", use_container_width=True)
 
-            user_input = st.text_input("Օգտանուն")
-            pass_input = st.text_input("Գաղտնաբառ", type="password")
-
-            st.markdown("<br>", unsafe_allow_html=True)
-
-            if st.button("ՀԱՍՏԱՏԵԼ ՄՈՒՏՔԸ", use_container_width=True, type="primary"):
-                if user_input in st.session_state.users_list and st.session_state.users_list[user_input] == pass_input:
-                    st.session_state.logged_in = True
-                    st.session_state.current_user = user_input
-                    st.rerun()
+            # Ստուգումը ֆորմայից դուրս՝ կայունության համար
+            if submit_login:
+                if not username_input or not password_input:
+                    st.error("⚠️ Խնդրում ենք լրացնել բոլոր դաշտերը:")
                 else:
-                    st.error("Տվյալները սխալ են")
+                    user = check_user(username_input, password_input)
+                    if user:
+                        st.session_state.logged_in = True
+                        st.session_state.username = user['username']
+                        st.session_state.user_role = user['role']
+                        st.session_state.show_readme = True 
+                        
+                        if user['role'] in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
+                            st.session_state.active_tab = "📊 Վահանակ"
+                        else:
+                            st.session_state.active_tab = "📂 Վերջին պահպանվածը"
+
+                        cookies.set("saved_username", user['username'])
+                        cookies.set("saved_role", user['role'])
+                        
+                        st.toast(f"🎉 Բարի վերադարձ, {username_input}!", icon="🚀")
+                        st.snow() 
+                        
+                        time.sleep(0.5)
+                        st.rerun()
+                    else:
+                        # Սա այն կարմիր սխալի հաղորդագրությունն է, որը երևում է քո նկարում
+                        st.error("Տվյալները սխալ են")
+                
     st.stop()
 
 
