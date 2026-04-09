@@ -472,34 +472,13 @@ st.markdown("""
         border: 1px solid #0055ff !important;
         color: #0055ff !important; 
         background-color: #0d1726 !important;
+        /* Կապույտ glow էֆեկտ՝ թվերի գույնով */
         box-shadow: 0 0 20px rgba(0, 85, 255, 0.3) !important; 
         text-shadow: 0 0 10px rgba(0, 85, 255, 0.6) !important; 
         transform: translateY(-1px);
     }
 
-    /* 6. ԺԱՄԻ ԵՎ ԱՄՍԱԹՎԻ ՈՃԸ (ՆՈՐ ԱՎԵԼԱՑՎԱԾ ՍԻՄԵՏՐԻԱՅԻ ՀԱՄԱՐ) */
-    .time-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-    .date-display {
-        color: #0055ff !important; /* Մուգ կապույտ */
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        letter-spacing: 1px;
-        margin-bottom: -5px !important;
-    }
-    .hour-display {
-        color: #0055ff !important; /* Մուգ կապույտ */
-        font-size: 40px !important;
-        font-weight: 900 !important;
-        line-height: 1.1;
-        text-shadow: 0 0 10px rgba(0, 85, 255, 0.2) !important;
-    }
-
-    /* 7. ՎՏԱՆԳԱՎՈՐ ԳՈՏՈՒ ԿՈՃԱԿԸ (DISABLED ՎԻՃԱԿՈՒՄ) */
+    /* 6. ՎՏԱՆԳԱՎՈՐ ԳՈՏՈՒ ԿՈՃԱԿԸ (DISABLED ՎԻՃԱԿՈՒՄ) */
     div.stButton > button:disabled {
         background-color: #161b22 !important;
         color: #484f58 !important;
@@ -511,12 +490,12 @@ st.markdown("""
         text-shadow: none !important;
     }
 
-    /* 8. ԼՐԱՑՈՒՑԻՉ ՀԱՐՄԱՐՈՒԹՅՈՒՆ ՀԵՌԱԽՈՍՆԵՐԻ ՀԱՄԱՐ */
+    /* 7. ԼՐԱՑՈՒՑԻՉ ՀԱՐՄԱՐՈՒԹՅՈՒՆ ՀԵՌԱԽՈՍՆԵՐԻ ՀԱՄԱՐ */
     .main .block-container {
         padding-bottom: 200px !important;
     }
 
-    /* 9. ԷՔՍՊԱՆԴԵՐՆԵՐԻ (EXPANDER) ՈՃԸ */
+    /* 8. ԷՔՍՊԱՆԴԵՐՆԵՐԻ (EXPANDER) ՈՃԸ */
     .streamlit-expanderHeader {
         background-color: #0a121e !important;
         border: 1px solid rgba(255, 255, 255, 0.05) !important;
@@ -1681,23 +1660,23 @@ elif st.session_state.active_page == "normal":
                     justify-content: center; 
                     align-items: center; 
                     margin-top: 10px; 
-                    padding: 15px 20px; 
-                    border-radius: 15px; 
-                    background: rgba(0, 85, 255, 0.05); 
-                    border: 1px solid rgba(0, 85, 255, 0.2);
+                    padding: 10px 15px; 
+                    border-radius: 12px; 
+                    background: rgba(88, 166, 255, 0.08); 
+                    border: 1px solid rgba(88, 166, 255, 0.2);
                     width: 100%;
                 ">
-                    <div style="text-align: right; margin-right: 20px;">
-                        <p style="margin:0; font-size:15px; color:#0055ff; font-weight: 800; text-transform: uppercase;">Վերջին պահպանում</p>
-                        <p style="margin:0; font-size:16px; color:#ffffff; font-weight: bold;">
+                    <div style="text-align: right; margin-right: 15px;">
+                        <p style="margin:0; font-size:14px; color:#1a73e8; font-weight: 800; text-transform: uppercase;">Վերջին պահպանում</p>
+                        <p style="margin:0; font-size:15px; color:#ffffff; font-weight: bold;">
                             <span style="color:#0047AB; font-weight: 900;">հեղինակ՝</span> <span style="color:#00ff00; font-weight: 900;">{db_user}</span>
                         </p>
                     </div>
-                    <div style="display: flex; align-items: center; border-left: 2px solid rgba(0, 85, 255, 0.3); padding-left: 20px;">
-                        <span style="font-size: 30px; margin-right: 12px;">🕒</span>
-                        <div class="time-container">
-                            <span class="date-display">{db_date}</span>
-                            <h2 class="hour-display">{db_hour}</h2>
+                    <div style="display: flex; align-items: center; border-left: 2px solid rgba(88,166,255,0.3); padding-left: 15px;">
+                        <span style="font-size: 24px; margin-right: 10px;">🕒</span>
+                        <div style="display: flex; flex-direction: column; justify-content: center;">
+                            <span style="margin:0; color:#58a6ff; font-size: 13px; font-weight: bold; opacity: 0.8; line-height: 1;">{db_date}</span>
+                            <h2 style="margin:0; color:#58a6ff; font-family: 'Courier New', monospace; font-size: 30px; line-height: 1.1;">{db_hour}</h2>
                         </div>
                     </div>
                 </div>
