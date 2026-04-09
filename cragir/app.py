@@ -571,7 +571,7 @@ if not st.session_state.logged_in:
 
 # --- 🚪 ԼՈԳԻՆԻ ԷՋ ---
 if not st.session_state.logged_in:
-    _, center_col, _ = st.columns([1, 1.5, 1])
+    _, center_col, _ = st.columns([1, 2, 1]) # Մի փոքր լայնացված
 
     with center_col:
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -583,30 +583,26 @@ if not st.session_state.logged_in:
                     <h1 style='color: #0077ff; font-weight: 800; letter-spacing: 5px; font-size: 30px; margin-bottom: 10px;'>
                         SMART TIME TABLE
                     </h1>
-                    <p style='color: #8b949e; font-size: 14px; font-weight: 300; letter-spacing: 1px;'>
+                    <p style='color: #8b949e; font-size: 14px; font-weight: 300;'>
                         Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար
                     </p>
-                    <div style='width: 40px; height: 2px; background: #0077ff; margin: 20px auto; box-shadow: 0 0 10px #0077ff;'></div>
                 </div>
-                """, 
-                unsafe_allow_html=True
+                """, unsafe_allow_html=True
             )
 
-            # Օգտագործում ենք st.form, որպեսզի Enter-ը աշխատի
-            with st.form("login_form", clear_on_submit=False):
-                user_input = st.text_input("Օգտանուն")
-                pass_input = st.text_input("Գաղտնաբառ", type="password")
+            with st.form("login_form"):
+                user_input = st.text_input("Օգտանուն", key="user_val")
+                pass_input = st.text_input("Գաղտնաբառ", type="password", key="pass_val")
                 
-                st.markdown("<br>", unsafe_allow_html=True)
-                
-                # st.form_submit_button-ը թույլ է տալիս Enter-ով մուտք գործել
                 submit_button = st.form_submit_button("ՀԱՍՏԱՏԵԼ ՄՈՒՏՔԸ", use_container_width=True)
 
                 if submit_button:
+                    # Ստուգում ենք տվյալները
                     if user_input in st.session_state.users_list and st.session_state.users_list[user_input] == pass_input:
                         st.session_state.logged_in = True
                         st.session_state.current_user = user_input
-                        st.rerun()
+                        st.success("Մուտքը հաջողվեց:")
+                        st.rerun() # Սա կարևոր է, որ էջը թարմանա ու մտնի ներս
                     else:
                         st.error("Տվյալները սխալ են")
     st.stop()
