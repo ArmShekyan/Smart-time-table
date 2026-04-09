@@ -450,8 +450,8 @@ st.markdown("""
     
     /* 3. ՄԵՏՐԻԿԱՆԵՐԻ ԹՎԵՐԸ (STATISTICS) - ՄՈՒԳ ԿԱՊՈՒՅՏ ԵՎ ՀԱՍՏ */
     [data-testid="stMetricValue"] {
-        color: #0055ff !important; /* Մուգ կապույտ */
-        font-weight: 800 !important; /* Ավելի հաստ տեսք */
+        color: #0055ff !important; 
+        font-weight: 800 !important; 
         font-size: 34px !important;
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
     }
@@ -459,21 +459,22 @@ st.markdown("""
     /* 4. ԿՈՃԱԿՆԵՐԻ ՀԻՄՆԱԿԱՆ ՈՃԸ */
     div.stButton > button {
         border-radius: 12px !important;
-        border: 1px solid rgba(0, 119, 255, 0.3) !important;
+        border: 1px solid rgba(0, 85, 255, 0.3) !important;
         background-color: #0a121e !important;
-        color: #ccd6f6 !important; /* Մեղմ բաց գույն սկզբնական վիճակում */
+        color: #ccd6f6 !important;
         padding: 10px 20px !important;
-        transition: all 0.3s ease-in-out !important;
+        transition: all 0.4s ease-in-out !important;
         font-weight: 600 !important;
     }
 
-    /* 5. ԿՈՃԱԿՆԵՐԻ ՀՈՎԵՐ (HOVER) - ՍՊԻՏԱԿ ԼՈՒՍԱՎՈՐՈՒԹՅՈՒՆ */
+    /* 5. ԿՈՃԱԿՆԵՐԻ ՀՈՎԵՐ (HOVER) - ՄՈՒԳ ԿԱՊՈՒՅՏ ԼՈՒՍԱՎՈՐՈՒԹՅՈՒՆ */
     div.stButton > button:hover {
-        border: 1px solid #0077ff !important;
-        color: #ffffff !important; /* Մաքուր սպիտակ տեքստ */
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.1) !important; /* Նուրբ սպիտակ glow */
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5) !important; /* Տեքստի փայլ */
-        transform: scale(1.02);
+        border: 1px solid #0055ff !important;
+        color: #ffffff !important; 
+        /* Կապույտ glow էֆեկտ՝ թվերի գույնով */
+        box-shadow: 0 0 20px rgba(0, 85, 255, 0.3) !important; 
+        text-shadow: 0 0 10px rgba(0, 85, 255, 0.6) !important; 
+        transform: translateY(-1px);
     }
 
     /* 6. ՎՏԱՆԳԱՎՈՐ ԳՈՏՈՒ ԿՈՃԱԿԸ (DISABLED ՎԻՃԱԿՈՒՄ) */
