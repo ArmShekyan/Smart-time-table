@@ -530,48 +530,44 @@ if not st.session_state.logged_in:
         st.markdown("<br><br>", unsafe_allow_html=True)
         
         with st.container(border=True):
+            # Էլեգանտ վերնագիր և սուբտեքստ
             st.markdown(
-                "<h2 style='text-align: center; color: #0d6efd; font-weight: 800; margin-bottom: 5px;'>Smart Time Table</h2>"
-                "<p style='text-align: center; color: #6c757d; font-size: 14px;'>Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար</p>", 
+                """
+                <div style='text-align: center; padding-bottom: 10px;'>
+                    <h2 style='color: #ffffff; font-weight: 200; letter-spacing: 2px; margin-bottom: 0;'>SMART TIME TABLE</h2>
+                    <div style='width: 50px; height: 2px; background: #00f2ff; margin: 15px auto;'></div>
+                    <p style='color: #a0aec0; font-size: 13px; font-weight: 300; letter-spacing: 0.5px;'>
+                        Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար
+                    </p>
+                </div>
+                """, 
                 unsafe_allow_html=True
             )
-            
-            with st.form("login_panel", clear_on_submit=False):
-                username_input = st.text_input("👤 Օգտատիրոջ անուն", placeholder="Մուտքագրեք username-ը")
-                password_input = st.text_input("🔒 Գաղտնաբառ", type="password", placeholder="Ներմուծեք ձեր գաղտնաբառը")
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-                
-                submit_login = st.form_submit_button("Մուտք գործել", use_container_width=True, type="primary")
 
-            if submit_login:
-                if not username_input or not password_input:
-                    st.error("⚠️ Խնդրում ենք լրացնել բոլոր դաշտերը:")
+            # Մուտքային դաշտերը
+            user_input = st.text_input("Օգտանուն", placeholder="Մուտքագրեք օգտանունը")
+            pass_input = st.text_input("Գաղտնաբառ", type="password", placeholder="••••••••")
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # Մուտքի կոճակը
+            if st.button("ՄՈՒՏՔ ԳՈՐԾԵԼ", use_container_width=True, type="primary"):
+                # Քո լոգինի տրամաբանությունը այստեղ
+                if user_input in st.session_state.users_list and st.session_state.users_list[user_input] == pass_input:
+                    st.session_state.logged_in = True
+                    st.session_state.current_user = user_input
+                    st.rerun()
                 else:
-                    user = check_user(username_input, password_input)
-                    if user:
-                        st.session_state.logged_in = True
-                        st.session_state.username = user['username']
-                        st.session_state.user_role = user['role']
-                        
-                        # 🔥 ՊԱՀՈՒՄ ԵՆՔ ՏՎՅԱԼՆԵՐԸ COOKIE-ՈՒՄ 🔥
-                        cookies.set("saved_username", user['username'])
-                        cookies.set("saved_role", user['role'])
-                        
-                        st.session_state.show_readme = True 
-                        
-                        if user['role'] in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
-                            st.session_state.active_tab = "📊 Վահանակ"
-                        else:
-                            st.session_state.active_tab = "📂 Վերջին պահպանվածը"
+                    st.error("Սխալ օգտանուն կամ գաղտնաբառ")
 
-                        st.toast(f"🎉 Բարի վերադարձ, {username_input}!", icon="🚀")
-                        st.snow() 
-                        time.sleep(1)
-                        st.rerun()
-                    else:
-                        st.error("❌ Սխալ օգտանուն կամ գաղտնաբառ:")
-                
+    # Էջի ֆոնի լրացուցիչ կարգավորում (ըստ ցանկության, ավելի մաքուր տեսքի համար)
+    st.markdown("""
+        <style>
+        div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
+            border-radius: 15px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
     st.stop()
 
 
@@ -1623,23 +1619,23 @@ elif st.session_state.active_page == "normal":
                     justify-content: center; 
                     align-items: center; 
                     margin-top: 10px; 
-                    padding: 10px 15px; 
-                    border-radius: 12px; 
-                    background: rgba(88, 166, 255, 0.08); 
-                    border: 1px solid rgba(88, 166, 255, 0.2);
+                    padding: 15px 25px; 
+                    border-radius: 20px; 
+                    background: linear-gradient(145deg, #0a121e, #030811); 
+                    border: 1px solid rgba(0, 242, 255, 0.15);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
                     width: 100%;
                 ">
-                    <div style="text-align: right; margin-right: 15px;">
-                        <p style="margin:0; font-size:14px; color:#1a73e8; font-weight: 800; text-transform: uppercase;">Վերջին պահպանում</p>
-                        <p style="margin:0; font-size:15px; color:#ffffff; font-weight: bold;">
-                            <span style="color:#0047AB; font-weight: 900;">հեղինակ՝</span> <span style="color:#00ff00; font-weight: 900;">{db_user}</span>
+                    <div style="text-align: right; margin-right: 20px;">
+                        <p style="margin:0; font-size:11px; color:#00f2ff; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; opacity: 0.8;">Վերջին պահպանում</p>
+                        <p style="margin:0; font-size:16px; color:#ffffff; font-weight: 300;">
+                            <span style="opacity: 0.6;">հեղինակ՝</span> <span style="font-weight: 600; color:#ffffff;">{db_user}</span>
                         </p>
                     </div>
-                    <div style="display: flex; align-items: center; border-left: 2px solid rgba(88,166,255,0.3); padding-left: 15px;">
-                        <span style="font-size: 24px; margin-right: 10px;">🕒</span>
+                    <div style="display: flex; align-items: center; border-left: 1px solid rgba(255, 255, 255, 0.1); padding-left: 20px;">
                         <div style="display: flex; flex-direction: column; justify-content: center;">
-                            <span style="margin:0; color:#58a6ff; font-size: 13px; font-weight: bold; opacity: 0.8; line-height: 1;">{db_date}</span>
-                            <h2 style="margin:0; color:#58a6ff; font-family: 'Courier New', monospace; font-size: 30px; line-height: 1.1;">{db_hour}</h2>
+                            <span style="margin:0; color:#00f2ff; font-size: 12px; font-weight: 500; opacity: 0.7;">{db_date}</span>
+                            <h2 style="margin:0; color:#ffffff; font-family: 'Inter', -apple-system, sans-serif; font-size: 32px; font-weight: 200; letter-spacing: -1px; line-height: 1;">{db_hour}</h2>
                         </div>
                     </div>
                 </div>
