@@ -569,7 +569,7 @@ if not st.session_state.get('logged_in', False):
                     <p style='color: #8b949e; font-size: 14px; font-weight: 300;'>
                         Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար
                     </p>
-                    <div style='width: 50px; height: 2px; background: #0077ff; margin: 20px auto; box-shadow: 0 0 10px #0077ff;'></div>
+                    <div style='width: 85px; height: 2px; background: #0077ff; margin: 20px auto; box-shadow: 0 0 10px #0077ff;'></div>
                 </div>
                 """, 
                 unsafe_allow_html=True
