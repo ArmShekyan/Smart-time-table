@@ -438,8 +438,7 @@ st.markdown("""
         border-right: 1px solid rgba(0, 119, 255, 0.1);
     }
     
-    /* --- 4. ԿՈՃԱԿՆԵՐԻ ԹԱՐՄԱՑՎԱԾ ՈՃԸ --- */
-    /* text-transform: none և letter-spacing-ի նվազեցում՝ էլեգանտության համար */
+    /* --- 4. ԿՈՃԱԿՆԵՐԻ ԹԱՐՄԱՑՎԱԾ ՈՃԸ (ԱՆՓՈՓՈԽ) --- */
     div.stButton > button, div.stFormSubmitButton > button {
         background-color: #0a121e !important;
         color: #ffffff !important;
@@ -447,15 +446,12 @@ st.markdown("""
         border-radius: 12px !important;
         padding: 10px 20px !important;
         font-weight: 300 !important;
-        
-        /* Ուղղումներ տեքստի համար */
-        text-transform: none !important; /* Վերացնում ենք բոլորը մեծատառ գրելը */
-        letter-spacing: 0.5px !important; /* Նվազեցնում ենք տարածությունը */
-        font-size: 14px !important; /* Իդեալական չափ */
-        
+        text-transform: none !important;
+        letter-spacing: 0.5px !important;
+        font-size: 14px !important;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
         width: 100%;
-        line-height: 1.2 !important; /* Որ emoji-ն և տեքստը լինեն նույն գծի վրա */
+        line-height: 1.2 !important;
     }
     
     div.stButton > button:hover, div.stFormSubmitButton > button:hover {
@@ -471,12 +467,14 @@ st.markdown("""
         background-color: #0d1624 !important; color: #0077ff !important;
     }
     .streamlit-expanderHeader { background-color: #0a121e !important; border-radius: 12px !important; }
-    [data-testid="stMetricValue"] { color: #0077ff !important; font-weight: 200 !important; }
 
-    /* --- 9. ԺԱՄԱՑՈՒՅՑԻ ԱՄԲՈՂՋԱԿԱՆ ՈւՂՂՈՒՄ --- */
-    /* Ներբեռնում ենք էլեգանտ ֆոնտ միայն ժամերի համար */
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100&display=swap');
+    /* --- ՎԻՃԱԿԱԳՐՈՒԹՅԱՆ ԹՎԵՐԻ ՈՒՂՂՈՒՄ (ՀԱՍՏ ԵՎ ՄՈՒԳ ԿԱՊՈՒՅՏ) --- */
+    [data-testid="stMetricValue"] { 
+        color: #0077ff !important; 
+        font-weight: 800 !important; 
+    }
 
+    /* --- 9. ԺԱՄԱՑՈՒՅՑԻ ՈՃԸ (ԹԱՐՄԱՑՎԱԾ՝ ՀԱՍՏ ԹՎԵՐՈՎ) --- */
     .clock-block {
         display: flex;
         align-items: center;
@@ -498,31 +496,29 @@ st.markdown("""
 
     .clock-divider { width: 1px; height: 50px; background-color: rgba(255, 255, 255, 0.05); }
 
-    /* Ժամանակի հատվածի կատարյալ սիմետրիա */
     .clock-time-side {
         display: flex;
-        flex-direction: column; /* Ամսաթիվը ժամի վերևում */
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         min-width: 120px;
     }
     
     .clock-date {
-        font-size: 12px;
-        color: #8b949e; /* Մեղմ գույն */
+        font-size: 14px;
+        color: #ffffff; 
+        font-weight: 700;
         letter-spacing: 1px;
-        margin-bottom: -5px; /* Մոտեցնում ենք ժամին */
+        margin-bottom: 2px;
     }
     
     .clock-time {
-        font-size: 40px; /* Մեծ և ակնառու */
-        font-weight: 100; /* Շատ բարակ */
-        color: #ffffff; /* Սպիտակ, բայց տակը կա Glow */
+        font-size: 38px;
+        font-weight: 900 !important; /* ՀԱՍՏ ԹՎԵՐ */
+        color: #0077ff !important; /* ՄՈՒԳ ԿԱՊՈՒՅՏ */
         line-height: 1;
-        /* Էլեգանտ մուգ կապույտ glow էֆեկտ */
-        text-shadow: 0 0 15px rgba(0, 119, 255, 0.4);
-        font-family: 'JetBrains Mono', monospace !important; /* Էլեգանտ թվեր */
-        letter-spacing: -1.5px;
+        text-shadow: 0 0 15px rgba(0, 119, 255, 0.3);
+        letter-spacing: -1px;
     }
 
     /* Անիմացիան (ԱՆՓՈՓՈԽ) */
@@ -1689,32 +1685,30 @@ elif st.session_state.active_page == "normal":
                     padding: 15px 30px; 
                     border-radius: 20px; 
                     background: #0a121e; 
-                    border: 1px solid rgba(0, 119, 255, 0.15);
+                    border: 1px solid rgba(0, 119, 255, 0.3);
                     width: 100%;
                 ">
                     <div style="text-align: right; margin-right: 25px; line-height: 1.4;">
-                        <p style="margin:0; font-size:11px; color:#0077ff; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">Վերջին պահպանում</p>
-                        <p style="margin:0; font-size:15px; color:#ffffff; font-weight: 300;">
-                            <span style="opacity: 0.6;">հեղինակ՝</span> <span style="font-weight: 600;">{db_user}</span>
+                        <p style="margin:0; font-size:11px; color:#0077ff; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Վերջին պահպանում</p>
+                        <p style="margin:0; font-size:15px; color:#ffffff; font-weight: 400;">
+                            <span style="opacity: 0.6;">հեղինակ՝</span> <span style="font-weight: 700; color: #0077ff;">{db_user}</span>
                         </p>
                     </div>
 
-                    <div style="height: 45px; width: 1px; background: rgba(255, 255, 255, 0.1);"></div>
+                    <div style="height: 45px; width: 1px; background: rgba(0, 119, 255, 0.2);"></div>
 
-                    <div style="display: flex; flex-direction: column; align-items: center; padding-left: 25px; min-width: 100px;">
-                        <span style="margin-bottom: -2px; color:#8b949e; font-size: 12px; font-weight: 400; letter-spacing: 1px;">{db_date}</span>
-                        <h2 style="
+                    <div style="display: flex; flex-direction: column; align-items: center; padding-left: 25px;">
+                        <span style="margin-bottom: 2px; color:#ffffff; font-size: 14px; font-weight: 700; letter-spacing: 1px;">{db_date}</span>
+                        <div style="
                             margin: 0; 
-                            color: #ffffff; 
-                            font-family: 'JetBrains Mono', monospace; 
-                            font-size: 38px; 
-                            font-weight: 100; 
+                            color: #0077ff; 
+                            font-size: 35px; 
+                            font-weight: 900; 
                             line-height: 1;
-                            text-shadow: 0 0 15px rgba(0, 119, 255, 0.4);
-                            letter-spacing: -1px;
+                            text-shadow: 0 0 10px rgba(0, 119, 255, 0.3);
                         ">
                             {db_hour}
-                        </h2>
+                        </div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
