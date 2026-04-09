@@ -448,31 +448,35 @@ st.markdown("""
     }
     [data-testid="stSidebarNav"] { background-color: transparent !important; }
     
-    /* 3. ՄԵՏՐԻԿԱՆԵՐԻ ԹՎԵՐԸ (STATISTICS) - ԿԱՊՈՒՅՏ ԵՎ ԲԱՐԱԿ */
+    /* 3. ՄԵՏՐԻԿԱՆԵՐԻ ԹՎԵՐԸ (STATISTICS) - ՄՈՒԳ ԿԱՊՈՒՅՏ ԵՎ ՀԱՍՏ */
     [data-testid="stMetricValue"] {
-        color: #0077ff !important;
-        font-weight: 300 !important;
-        font-size: 32px !important;
+        color: #0055ff !important; /* Մուգ կապույտ */
+        font-weight: 800 !important; /* Ավելի հաստ տեսք */
+        font-size: 34px !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
     }
 
-    /* 4. ԿՈՃԱԿՆԵՐԻ ՀԻՄՆԱԿԱՆ ՈՃԸ (Օրինակ՝ Պահպանել բոլորը) */
+    /* 4. ԿՈՃԱԿՆԵՐԻ ՀԻՄՆԱԿԱՆ ՈՃԸ */
     div.stButton > button {
         border-radius: 12px !important;
         border: 1px solid rgba(0, 119, 255, 0.3) !important;
         background-color: #0a121e !important;
-        color: white !important;
+        color: #ccd6f6 !important; /* Մեղմ բաց գույն սկզբնական վիճակում */
         padding: 10px 20px !important;
-        transition: all 0.3s ease !important;
-        font-weight: 500 !important;
+        transition: all 0.3s ease-in-out !important;
+        font-weight: 600 !important;
     }
+
+    /* 5. ԿՈՃԱԿՆԵՐԻ ՀՈՎԵՐ (HOVER) - ՍՊԻՏԱԿ ԼՈՒՍԱՎՈՐՈՒԹՅՈՒՆ */
     div.stButton > button:hover {
         border: 1px solid #0077ff !important;
-        box-shadow: 0 0 15px rgba(0, 119, 255, 0.2) !important;
+        color: #ffffff !important; /* Մաքուր սպիտակ տեքստ */
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.1) !important; /* Նուրբ սպիտակ glow */
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5) !important; /* Տեքստի փայլ */
         transform: scale(1.02);
     }
 
-    /* 5. ՎՏԱՆԳԱՎՈՐ ԳՈՏՈՒ ԿՈՃԱԿԸ (DISABLED ՎԻՃԱԿՈՒՄ) */
-    /* Երբ checkbox-ը դրված չէ, կոճակը կլինի մոխրագույն ու անջատված */
+    /* 6. ՎՏԱՆԳԱՎՈՐ ԳՈՏՈՒ ԿՈՃԱԿԸ (DISABLED ՎԻՃԱԿՈՒՄ) */
     div.stButton > button:disabled {
         background-color: #161b22 !important;
         color: #484f58 !important;
@@ -481,14 +485,15 @@ st.markdown("""
         opacity: 0.6 !important;
         box-shadow: none !important;
         transform: none !important;
+        text-shadow: none !important;
     }
 
-    /* 6. ԼՐԱՑՈՒՑԻՉ ՀԱՐՄԱՐՈՒԹՅՈՒՆ ՀԵՌԱԽՈՍՆԵՐԻ ՀԱՄԱՐ */
+    /* 7. ԼՐԱՑՈՒՑԻՉ ՀԱՐՄԱՐՈՒԹՅՈՒՆ ՀԵՌԱԽՈՍՆԵՐԻ ՀԱՄԱՐ */
     .main .block-container {
         padding-bottom: 200px !important;
     }
 
-    /* 7. ԷՔՍՊԱՆԴԵՐՆԵՐԻ (EXPANDER) ՈՃԸ */
+    /* 8. ԷՔՍՊԱՆԴԵՐՆԵՐԻ (EXPANDER) ՈՃԸ */
     .streamlit-expanderHeader {
         background-color: #0a121e !important;
         border: 1px solid rgba(255, 255, 255, 0.05) !important;
