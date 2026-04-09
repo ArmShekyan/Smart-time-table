@@ -431,99 +431,52 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* --- ՀԻՄՆԱԿԱՆ ԲԼՈԿՆԵՐ (ԱՆՓՈՓՈԽ) --- */
-    .main .block-container { padding-bottom: 300px !important; }
+    /* Ավելացված է միայն այս հատվածը հեռախոսի համար */
+    .main .block-container {
+        padding-bottom: 300px !important;
+    }
+
+    /* ՔՈ ԿՈԴԸ՝ ԱՌԱՆՑ ՈՐԵՎԷ ՓՈՓՈԽՈՒԹՅԱՆ */
     [data-testid="stSidebar"] {
-        background-color: #050a12 !important;
-        border-right: 1px solid rgba(0, 119, 255, 0.1);
+        background-color: #1a1c24;
+        border-right: 1px solid #343a40;
     }
-    
-    /* --- 4. ԿՈՃԱԿՆԵՐԻ ԹԱՐՄԱՑՎԱԾ ՈՃԸ (ԱՆՓՈՓՈԽ) --- */
-    div.stButton > button, div.stFormSubmitButton > button {
-        background-color: #0a121e !important;
-        color: #ffffff !important;
-        border: 1px solid rgba(0, 119, 255, 0.2) !important;
-        border-radius: 12px !important;
-        padding: 10px 20px !important;
-        font-weight: 300 !important;
-        text-transform: none !important;
-        letter-spacing: 0.5px !important;
-        font-size: 14px !important;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        width: 100%;
-        line-height: 1.2 !important;
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {
+        color: #f8f9fa;
     }
-    
-    div.stButton > button:hover, div.stFormSubmitButton > button:hover {
-        border: 1px solid #0077ff !important;
-        color: #0077ff !important;
-        box-shadow: 0 0 20px rgba(0, 119, 255, 0.2) !important;
-        transform: translateY(-2px);
+    [data-testid="stSidebar"] .stButton>button {
+        border-radius: 20px;
+        transition: all 0.3s ease-in-out;
     }
-
-    /* --- ԱԼՅՈՒՍԱԿՆԵՐ, Expander-ներ (ԱՆՓՈՓՈԽ) --- */
-    [data-testid="stDataFrameDataframe"] { border-radius: 15px; overflow: hidden; }
-    [data-testid="stDataFrameDataframe"] table thead tr th {
-        background-color: #0d1624 !important; color: #0077ff !important;
+    [data-testid="stSidebar"] .stButton>button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
     }
-    .streamlit-expanderHeader { background-color: #0a121e !important; border-radius: 12px !important; }
-
-    /* --- ՎԻՃԱԿԱԳՐՈՒԹՅԱՆ ԹՎԵՐԻ ՈՒՂՂՈՒՄ (ՀԱՍՏ ԵՎ ՄՈՒԳ ԿԱՊՈՒՅՏ) --- */
-    [data-testid="stMetricValue"] { 
-        color: #0077ff !important; 
-        font-weight: 800 !important; 
+    [data-testid="stDataFrameDataframe"] div table {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
-
-    /* --- 9. ԺԱՄԱՑՈՒՅՑԻ ՈՃԸ (ԹԱՐՄԱՑՎԱԾ՝ ՀԱՍՏ ԹՎԵՐՈՎ) --- */
-    .clock-block {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 30px;
-        padding: 20px;
-        background-color: #0a121e;
-        border-radius: 15px;
-        border: 1px solid rgba(0, 119, 255, 0.1);
-        color: #8b949e;
-        width: 100%;
-        font-family: 'Segoe UI', sans-serif;
+    [data-testid="stDataFrameDataframe"] div table thead tr th {
+        background-color: #343a40 !important;
+        color: white !important;
     }
-    
-    .clock-left-side { text-align: right; line-height: 1.3; }
-    .clock-title { color: #0077ff; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; }
-    .clock-author { font-size: 14px; color: #e0e6ed; }
-    .author-name { color: #ffffff; font-weight: 600; }
-
-    .clock-divider { width: 1px; height: 50px; background-color: rgba(255, 255, 255, 0.05); }
-
-    .clock-time-side {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-width: 120px;
+    [data-testid="stMetricValue"] {
+        color: #0d6efd;
+        font-weight: bold;
     }
-    
-    .clock-date {
-        font-size: 14px;
-        color: #ffffff; 
-        font-weight: 700;
-        letter-spacing: 1px;
-        margin-bottom: 2px;
+    .streamlit-expanderHeader {
+        background-color: #e9ecef;
+        border-radius: 8px;
+        font-weight: bold;
     }
-    
-    .clock-time {
-        font-size: 38px;
-        font-weight: 900 !important; /* ՀԱՍՏ ԹՎԵՐ */
-        color: #0077ff !important; /* ՄՈՒԳ ԿԱՊՈՒՅՏ */
-        line-height: 1;
-        text-shadow: 0 0 15px rgba(0, 119, 255, 0.3);
-        letter-spacing: -1px;
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
-
-    /* Անիմացիան (ԱՆՓՈՓՈԽ) */
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .stApp { animation: fadeIn 0.8s ease-in-out; background-color: #02060c; }
+    .stApp {
+        animation: fadeIn 0.8s ease-in-out;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -553,11 +506,6 @@ if "subjects" not in st.session_state:
     })
     load_from_disk()
 
-
-# --- ⚙️ ՍԿԶԲՆԱԿԱՆ ԿԱՐԳԱՎՈՐՈՒՄՆԵՐ ---
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
 # 🔥 --- COOKIE-Ի ՍՏՈՒԳՈՒՄ ՍԿԶԲՆԱՄԱՍՈՒՄ (Refresh-ի համար) --- 🔥
 if not st.session_state.logged_in:
     saved_user = cookies.get("saved_username")
@@ -572,31 +520,19 @@ if not st.session_state.logged_in:
             st.session_state.active_tab = "📊 Վահանակ"
         else:
             st.session_state.active_tab = "📂 Վերջին պահպանվածը"
-        
-        st.rerun()  # Սա թույլ է տալիս անմիջապես շրջանցել լոգինի էջը
+
 
 # --- 🚪 ԼՈԳԻՆԻ ԷՋ ---
-if not st.session_state.get('logged_in', False):
-    # Պահպանում ենք լայնացված սյունակները [1, 2, 1]
-    _, center_col, _ = st.columns([1, 2, 1])
+if not st.session_state.logged_in:
+    left_col, center_col, right_col = st.columns([1, 1.5, 1])
 
     with center_col:
         st.markdown("<br><br>", unsafe_allow_html=True)
         
         with st.container(border=True):
-            # Քո ուզած SMART TIME TABLE վերնագիրը և գույները
             st.markdown(
-                """
-                <div style='text-align: center; padding: 20px 0;'>
-                    <h1 style='color: #0077ff; font-weight: 800; letter-spacing: 5px; font-size: 30px; margin-bottom: 10px;'>
-                        SMART TIME TABLE
-                    </h1>
-                    <p style='color: #8b949e; font-size: 14px; font-weight: 300;'>
-                        Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար
-                    </p>
-                    <div style='width: 50px; height: 2px; background: #0077ff; margin: 20px auto; box-shadow: 0 0 10px #0077ff;'></div>
-                </div>
-                """, 
+                "<h2 style='text-align: center; color: #0d6efd; font-weight: 800; margin-bottom: 5px;'>Smart Time Table</h2>"
+                "<p style='text-align: center; color: #6c757d; font-size: 14px;'>Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար</p>", 
                 unsafe_allow_html=True
             )
             
@@ -606,10 +542,8 @@ if not st.session_state.get('logged_in', False):
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
-                # Մեր էլեգանտ կոճակը
-                submit_login = st.form_submit_button("ՀԱՍՏԱՏԵԼ ՄՈՒՏՔԸ", use_container_width=True)
+                submit_login = st.form_submit_button("Մուտք գործել", use_container_width=True, type="primary")
 
-            # Ստուգումը ֆորմայից դուրս՝ կայունության համար
             if submit_login:
                 if not username_input or not password_input:
                     st.error("⚠️ Խնդրում ենք լրացնել բոլոր դաշտերը:")
@@ -619,6 +553,11 @@ if not st.session_state.get('logged_in', False):
                         st.session_state.logged_in = True
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
+                        
+                        # 🔥 ՊԱՀՈՒՄ ԵՆՔ ՏՎՅԱԼՆԵՐԸ COOKIE-ՈՒՄ 🔥
+                        cookies.set("saved_username", user['username'])
+                        cookies.set("saved_role", user['role'])
+                        
                         st.session_state.show_readme = True 
                         
                         if user['role'] in ['owner', 'admin', 'subject_editor', 'teacher_editor']:
@@ -626,16 +565,12 @@ if not st.session_state.get('logged_in', False):
                         else:
                             st.session_state.active_tab = "📂 Վերջին պահպանվածը"
 
-                        cookies.set("saved_username", user['username'])
-                        cookies.set("saved_role", user['role'])
-                        
                         st.toast(f"🎉 Բարի վերադարձ, {username_input}!", icon="🚀")
                         st.snow() 
-                        
-                        time.sleep(0.5)
+                        time.sleep(1)
                         st.rerun()
                     else:
-                        st.error("❌ Տվյալները սխալ են")
+                        st.error("❌ Սխալ օգտանուն կամ գաղտնաբառ:")
                 
     st.stop()
 
@@ -1687,32 +1622,24 @@ elif st.session_state.active_page == "normal":
                     display: flex; 
                     justify-content: center; 
                     align-items: center; 
-                    padding: 15px 30px; 
-                    border-radius: 20px; 
-                    background: #0a121e; 
-                    border: 1px solid rgba(0, 119, 255, 0.3);
+                    margin-top: 10px; 
+                    padding: 10px 15px; 
+                    border-radius: 12px; 
+                    background: rgba(88, 166, 255, 0.08); 
+                    border: 1px solid rgba(88, 166, 255, 0.2);
                     width: 100%;
                 ">
-                    <div style="text-align: right; margin-right: 25px; line-height: 1.4;">
-                        <p style="margin:0; font-size:11px; color:#0077ff; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Վերջին պահպանում</p>
-                        <p style="margin:0; font-size:15px; color:#ffffff; font-weight: 400;">
-                            <span style="opacity: 0.6;">հեղինակ՝</span> <span style="font-weight: 700; color: #0077ff;">{db_user}</span>
+                    <div style="text-align: right; margin-right: 15px;">
+                        <p style="margin:0; font-size:14px; color:#1a73e8; font-weight: 800; text-transform: uppercase;">Վերջին պահպանում</p>
+                        <p style="margin:0; font-size:15px; color:#ffffff; font-weight: bold;">
+                            <span style="color:#0047AB; font-weight: 900;">հեղինակ՝</span> <span style="color:#00ff00; font-weight: 900;">{db_user}</span>
                         </p>
                     </div>
-
-                    <div style="height: 45px; width: 1px; background: rgba(0, 119, 255, 0.2);"></div>
-
-                    <div style="display: flex; flex-direction: column; align-items: center; padding-left: 25px;">
-                        <span style="margin-bottom: 2px; color:#ffffff; font-size: 14px; font-weight: 700; letter-spacing: 1px;">{db_date}</span>
-                        <div style="
-                            margin: 0; 
-                            color: #0077ff; 
-                            font-size: 35px; 
-                            font-weight: 900; 
-                            line-height: 1;
-                            text-shadow: 0 0 10px rgba(0, 119, 255, 0.3);
-                        ">
-                            {db_hour}
+                    <div style="display: flex; align-items: center; border-left: 2px solid rgba(88,166,255,0.3); padding-left: 15px;">
+                        <span style="font-size: 24px; margin-right: 10px;">🕒</span>
+                        <div style="display: flex; flex-direction: column; justify-content: center;">
+                            <span style="margin:0; color:#58a6ff; font-size: 13px; font-weight: bold; opacity: 0.8; line-height: 1;">{db_date}</span>
+                            <h2 style="margin:0; color:#58a6ff; font-family: 'Courier New', monospace; font-size: 30px; line-height: 1.1;">{db_hour}</h2>
                         </div>
                     </div>
                 </div>
