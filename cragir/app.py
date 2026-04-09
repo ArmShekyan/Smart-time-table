@@ -553,6 +553,11 @@ if "subjects" not in st.session_state:
     })
     load_from_disk()
 
+
+# --- ⚙️ ՍԿԶԲՆԱԿԱՆ ԿԱՐԳԱՎՈՐՈՒՄՆԵՐ ---
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
 # 🔥 --- COOKIE-Ի ՍՏՈՒԳՈՒՄ ՍԿԶԲՆԱՄԱՍՈՒՄ (Refresh-ի համար) --- 🔥
 if not st.session_state.logged_in:
     saved_user = cookies.get("saved_username")
@@ -567,7 +572,8 @@ if not st.session_state.logged_in:
             st.session_state.active_tab = "📊 Վահանակ"
         else:
             st.session_state.active_tab = "📂 Վերջին պահպանվածը"
-
+        
+        st.rerun()  # Սա թույլ է տալիս անմիջապես շրջանցել լոգինի էջը
 
 # --- 🚪 ԼՈԳԻՆԻ ԷՋ ---
 if not st.session_state.get('logged_in', False):
@@ -629,8 +635,7 @@ if not st.session_state.get('logged_in', False):
                         time.sleep(0.5)
                         st.rerun()
                     else:
-                        # Սա այն կարմիր սխալի հաղորդագրությունն է, որը երևում է քո նկարում
-                        st.error("Տվյալները սխալ են")
+                        st.error("❌ Տվյալները սխալ են")
                 
     st.stop()
 
