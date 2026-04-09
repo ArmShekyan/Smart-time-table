@@ -589,18 +589,23 @@ if not st.session_state.logged_in:
                 unsafe_allow_html=True
             )
 
-            user_input = st.text_input("Օգտանուն")
-            pass_input = st.text_input("Գաղտնաբառ", type="password")
+            # Օգտագործում ենք st.form, որպեսզի Enter-ը աշխատի
+            with st.form("login_form", clear_on_submit=False):
+                user_input = st.text_input("Օգտանուն")
+                pass_input = st.text_input("Գաղտնաբառ", type="password")
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                # st.form_submit_button-ը թույլ է տալիս Enter-ով մուտք գործել
+                submit_button = st.form_submit_button("ՀԱՍՏԱՏԵԼ ՄՈՒՏՔԸ", use_container_width=True)
 
-            st.markdown("<br>", unsafe_allow_html=True)
-
-            if st.button("ՀԱՍՏԱՏԵԼ ՄՈՒՏՔԸ", use_container_width=True, type="primary"):
-                if user_input in st.session_state.users_list and st.session_state.users_list[user_input] == pass_input:
-                    st.session_state.logged_in = True
-                    st.session_state.current_user = user_input
-                    st.rerun()
-                else:
-                    st.error("Տվյալները սխալ են")
+                if submit_button:
+                    if user_input in st.session_state.users_list and st.session_state.users_list[user_input] == pass_input:
+                        st.session_state.logged_in = True
+                        st.session_state.current_user = user_input
+                        st.rerun()
+                    else:
+                        st.error("Տվյալները սխալ են")
     st.stop()
 
 
