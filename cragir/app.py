@@ -1171,12 +1171,10 @@ elif st.session_state.active_page == "normal":
                     else:
                         st.warning("⚠️ Մուտքագրեք անունը:")
 
-            # --- ՀԱՏՈՒԿ ԱՐՏՈՆՈՒԹՅՈՒՆՆԵՐԻ ԲԱԺԻՆ (Մեկ կոճակով) ---
+            # --- ՀԱՏՈՒԿ ԱՐՏՈՆՈՒԹՅՈՒՆՆԵՐԻ ԲԱԺԻՆ ---
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # Այստեղ դնում ենք քո ուզած popover-ը
             with st.popover("🌟 Հատուկ Արտոնությունների Բաժին", use_container_width=True):
-                # Վերնագիր և Մատիտի կոճակ (մաքրելու համար)
                 h_col, e_col = st.columns([0.85, 0.15])
                 with h_col:
                     st.markdown("##### 🗓️ Ուսուցչի հարմար օրերը")
@@ -1213,6 +1211,10 @@ elif st.session_state.active_page == "normal":
                         st.session_state.teacher_preferences[target_t] = selected_days
                         
                         save_to_disk()
+                        
+                        st.session_state.pref_days_multi = []
+                        st.session_state.pref_t_select = [t.name for t in st.session_state.teachers][0]
+                        
                         st.toast(f"✅ {target_t}-ին հարմար օրերը գրանցվեցին")
                         st.rerun()
                     else:
