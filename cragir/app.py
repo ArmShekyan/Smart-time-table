@@ -245,8 +245,9 @@ def save_to_disk(force_overwrite=False):
                 # Բուն պահպանումը Cloud-ում
                 url_post = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1"
                 payload = {"id": 1, "data": final_data}
+                headers["Content-Type"] = "application/json"
                 headers["Prefer"] = "resolution=merge-duplicates"
-                resp = requests.post(url_post, headers=headers, data=json.dumps(payload))
+                resp = requests.post(url_post, headers=headers, json=payload)
                 
                 if resp.status_code in [200, 201, 204]:
                     cloud_success = True
@@ -336,46 +337,46 @@ def manual_refresh():
             try:
                 url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
                 response = requests.get(url, headers=headers)
-                if response.status_code == 200 and response.json():
-                    data = response.json()[0]["data"]
+                
+                if response.status_code == 200:
+                    raw_json = response.json()
                     
-                    # ✨ Ավելացված է հին տվյալների մաքրումը նախքան նորը բեռնելը
-                    st.session_state.schedule = []
-                    st.session_state.teacher_preferences = {}
-                    
-                    parse_data(data)
-                    
-                    # ✨ ԼՈՒԾՈՒՄԸ. Մաքրում ենք selectbox-ի հիշողությունը
-                    if "v_bot_view" in st.session_state:
-                        del st.session_state["v_bot_view"]
-                    
-                    # Եթե դասարաններ կան, սահմանում ենք առաջինը որպես ընթացիկ
-                    if st.session_state.classes:
-                        st.session_state.v_bot_view = st.session_state.classes[0]
+                    # ✨ ՈՒՂՂՈՒՄ. Supabase-ը միշտ վերադարձնում է LIST (զանգված)
+                    # Ստուգում ենք՝ արդյոք պատասխանը դատարկ չէ և վերցնում ենք առաջին էլեմենտը [0]
+                    if isinstance(raw_json, list) and len(raw_json) > 0:
+                        data = raw_json[0]["data"]
                         
-                    st.toast("✅ Տվյալները թարմ են:", icon="🔄")
-                    st.rerun()
-                    return
-            except Exception:
+                        # Մաքրում ենք հին վիճակը
+                        st.session_state.schedule = []
+                        st.session_state.teacher_preferences = {}
+                        
+                        parse_data(data)
+                        
+                        if "v_bot_view" in st.session_state:
+                            del st.session_state["v_bot_view"]
+                        
+                        if st.session_state.classes:
+                            st.session_state.v_bot_view = st.session_state.classes[0]
+                            
+                        st.toast("✅ Տվյալները թարմ են:", icon="🔄")
+                        st.rerun()
+                        return
+            except Exception as e:
+                # Օգտակար է տեսնել իրական սխալը, եթե այն առաջանա
                 pass
 
+        # Local Backup հատվածը մնում է նույնը
         if os.path.exists(DB_FILE):
             try:
                 with open(DB_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    
-                    # ✨ Նույն մաքրումը տեղական ֆայլի դեպքում
                     st.session_state.schedule = []
                     st.session_state.teacher_preferences = {}
-                    
                     parse_data(data)
-                    
-                    # ✨ Նույնը տեղական ֆայլի դեպքում
                     if "v_bot_view" in st.session_state:
                         del st.session_state["v_bot_view"]
                     if st.session_state.classes:
                         st.session_state.v_bot_view = st.session_state.classes[0]
-                        
                     st.toast("✅ Տեղական տվյալները թարմ են:", icon="🔄")
             except Exception:
                 pass
