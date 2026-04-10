@@ -1557,13 +1557,13 @@ elif st.session_state.active_page == "normal":
             if not st.session_state.classes or not st.session_state.assignments:
                 st.error("❌ Բացակայում են դասարանները կամ ժամերը գեներացման համար:")
             else:
-                with st.spinner("🧠 Ալգորիթմը փնտրում է լավագույն տարբերակը (Max 100 փորձ)..."):
+                with st.spinner("🧠 Ալգորիթմը փնտրում է լավագույն տարբերակը (Max 1000 փորձ)..."):
                     teacher_prefs = st.session_state.get('teacher_preferences', {})
                     final_schedule = []
                     total_success = False
                     fail_reason = "" 
 
-                    for attempt in range(100):
+                    for attempt in range(1000):
                         teacher_occupancy = {d: {h: set() for h in range(1, 9)} for d in DAYS_AM}
                         class_occupancy = {d: {h: set() for h in range(1, 9)} for d in DAYS_AM}
                         room_occupancy = {d: {h: set() for h in range(1, 9)} for d in DAYS_AM}
@@ -1672,9 +1672,9 @@ elif st.session_state.active_page == "normal":
                         st.success(f"🎉 Լավագույն տարբերակը գտնվեց {num}{suffix} փորձից:")
                         st.balloons()
                     else:
-                        st.error(f"⚠️ Գեներացումը ձախողվեց 100 փորձից հետո:")
+                        st.error(f"⚠️ Գեներացումը ձախողվեց 1000 փորձից հետո:")
                         st.info(f"🔍 Պատճառը. {fail_reason}")
-                        
+
 
         # --- ԳԵՆԵՐԱՑՈՒՄ ԷՋԻ ՍԿԻԶԲ (Ստուգում) ---
         if not st.session_state.get('schedule') or len(st.session_state.schedule) == 0:
