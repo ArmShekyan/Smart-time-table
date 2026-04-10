@@ -338,6 +338,11 @@ def manual_refresh():
                 response = requests.get(url, headers=headers)
                 if response.status_code == 200 and response.json():
                     data = response.json()[0]["data"]
+                    
+                    # ✨ Ավելացված է հին տվյալների մաքրումը նախքան նորը բեռնելը
+                    st.session_state.schedule = []
+                    st.session_state.teacher_preferences = {}
+                    
                     parse_data(data)
                     
                     # ✨ ԼՈՒԾՈՒՄԸ. Մաքրում ենք selectbox-ի հիշողությունը
@@ -358,6 +363,11 @@ def manual_refresh():
             try:
                 with open(DB_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
+                    
+                    # ✨ Նույն մաքրումը տեղական ֆայլի դեպքում
+                    st.session_state.schedule = []
+                    st.session_state.teacher_preferences = {}
+                    
                     parse_data(data)
                     
                     # ✨ Նույնը տեղական ֆայլի դեպքում
