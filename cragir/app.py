@@ -208,27 +208,38 @@ def save_to_disk(force_overwrite=False):
 
         if headers:
             try:
-                # Տվյալների ստացում Cloud-ից՝ Merge-ի համար
+                # Տվյալների ստացում Cloud-ից
                 url_get = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
                 res = requests.get(url_get, headers=headers)
-                cloud_data = res.json()[0]["data"] if res.status_code == 200 and res.json() else {}
+                
+                # ✨ ՈՒՂՂՈՒՄ 1. Ապահով ստանում ենք cloud_data-ն
+                raw_res = res.json()
+                cloud_data = raw_res[0]["data"] if res.status_code == 200 and raw_res else {}
+                
+                # Եթե բազայից եկածը dictionary չէ, սարքում ենք դատարկ dictionary
+                if not isinstance(cloud_data, dict):
+                    cloud_data = {}
 
                 if not force_overwrite:
-                    # ✨ Smart Merge տրամաբանություն (մնացել է անփոփոխ)
+                    # ✨ ՈՒՂՂՈՒՄ 2. Ապահով Merge (ավելացված է isinstance ստուգում ամեն բաժնի համար)
+                    def get_safe_list(key):
+                        lst = cloud_data.get(key, [])
+                        return lst if isinstance(lst, list) else []
+
                     final_data = {
-                        "subjects": list({**{s.get("id"): s for s in cloud_data.get("subjects", []) if isinstance(s, dict)}, **local_state["subjects"]}.values()),
-                        "teachers": list({**{t.get("id"): t for t in cloud_data.get("teachers", []) if isinstance(t, dict)}, **local_state["teachers"]}.values()),
-                        "classes": list({**{c.get("id"): c for c in cloud_data.get("classes", []) if isinstance(c, dict)}, **local_state["classes"]}.values()),
-                        "rooms": list({**{r.get("id"): r for r in cloud_data.get("rooms", []) if isinstance(r, dict)}, **local_state["rooms"]}.values()),
-                        "assignments": list({**{a.get("id"): a for a in cloud_data.get("assignments", []) if isinstance(a, dict)}, **local_state["assignments"]}.values()),
+                        "subjects": list({**{s.get("id"): s for s in get_safe_list("subjects") if isinstance(s, dict)}, **local_state["subjects"]}.values()),
+                        "teachers": list({**{t.get("id"): t for t in get_safe_list("teachers") if isinstance(t, dict)}, **local_state["teachers"]}.values()),
+                        "classes": list({**{c.get("id"): c for c in get_safe_list("classes") if isinstance(c, dict)}, **local_state["classes"]}.values()),
+                        "rooms": list({**{r.get("id"): r for r in get_safe_list("rooms") if isinstance(r, dict)}, **local_state["rooms"]}.values()),
+                        "assignments": list({**{a.get("id"): a for a in get_safe_list("assignments") if isinstance(a, dict)}, **local_state["assignments"]}.values()),
                         "schedule": local_state["schedule"],
-                        "subj_pool": list(set(cloud_data.get("subj_pool", []) + local_state["subj_pool"])),
-                        "teacher_pool": list(set(cloud_data.get("teacher_pool", []) + local_state["teacher_pool"])),
+                        "subj_pool": list(set(get_safe_list("subj_pool") + local_state["subj_pool"])),
+                        "teacher_pool": list(set(get_safe_list("teacher_pool") + local_state["teacher_pool"])),
                         "users_list": local_state["users_list"],
-                        "teacher_preferences": {**cloud_data.get("teacher_preferences", {}), **local_state["teacher_preferences"]}
+                        "teacher_preferences": {**(cloud_data.get("teacher_preferences", {}) if isinstance(cloud_data.get("teacher_preferences"), dict) else {}), **local_state["teacher_preferences"]}
                     }
                 else:
-                    # Overwrite վիճակ (ուղղված Dictionary ձևաչափով)
+                    # Overwrite վիճակ
                     final_data = {
                         "subjects": list(local_state["subjects"].values()),
                         "teachers": list(local_state["teachers"].values()),
@@ -242,7 +253,7 @@ def save_to_disk(force_overwrite=False):
                         "teacher_preferences": local_state["teacher_preferences"]
                     }
 
-                # ✨ ՈՒՂՂՈՒՄ. Պահպանումը Cloud-ում PATCH մեթոդով
+                # ✨ ՈՒՂՂՈՒՄ 3. Պահպանումը PATCH-ով (որպեսզի mapping-ի սխալ չտա)
                 url_post = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1"
                 payload = {"data": final_data}
                 
@@ -254,36 +265,22 @@ def save_to_disk(force_overwrite=False):
                 if 200 <= resp.status_code < 300:
                     cloud_success = True
                 else:
-                    # Սխալի ցուցադրում Streamlit-ի մեջ
                     st.error(f"❌ Supabase Error: {resp.status_code} - {resp.text}")
                     
             except Exception as e:
-                # Ավելի մանրամասն Warning
-                st.warning(f"⚠️ Supabase-ի հետ կապի խնդիր: {type(e).__name__} - {str(e)}")
+                st.warning(f"⚠️ Կապի խնդիր: {type(e).__name__} - {str(e)}")
 
-        # Եթե Cloud-ը ձախողվեց, օգտագործում ենք տեղական վիճակը backup-ի համար
+        # Եթե Cloud-ը ձախողվեց
         if final_data is None:
-            final_data = {
-                "subjects": list(local_state["subjects"].values()),
-                "teachers": list(local_state["teachers"].values()),
-                "classes": list(local_state["classes"].values()),
-                "rooms": list(local_state["rooms"].values()),
-                "assignments": list(local_state["assignments"].values()),
-                "schedule": local_state["schedule"],
-                "subj_pool": local_state["subj_pool"],
-                "teacher_pool": local_state["teacher_pool"],
-                "users_list": local_state["users_list"],
-                "teacher_preferences": local_state["teacher_preferences"]
-            }
+            final_data = {k: (list(v.values()) if isinstance(v, dict) else v) for k, v in local_state.items()}
 
-        # Local Backup (DB_FILE)
+        # Local Backup
         try:
             with open(DB_FILE, "w", encoding="utf-8") as f:
                 json.dump(final_data, f, ensure_ascii=False, indent=4)
         except Exception as e:
             st.error(f"❌ Ֆայլի պահպանման սխալ: {e}")
 
-        # Փոքր դադար էֆեկտի համար
         time.sleep(1) 
         
         if cloud_success:
@@ -291,9 +288,8 @@ def save_to_disk(force_overwrite=False):
         else:
             st.toast("💾 Պահպանվեց տեղական backup-ում", icon="📁")
 
-        # Տվյալների թարմացում ինտերֆեյսում
         parse_data(final_data)
-
+        
 
 def reset_all_data():
     with st.spinner("🚨 Ամբողջական ջնջում..."):
