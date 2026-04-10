@@ -569,7 +569,7 @@ if not st.session_state.get('logged_in', False):
                     <p style='color: #8b949e; font-size: 14px; font-weight: 300;'>
                         Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար
                     </p>
-                    <div style='width: 345px; height: 2px; background: #0077ff; margin: 20px auto; box-shadow: 0 0 10px #0077ff;'></div>
+                    <div style='width: 50px; height: 2px; background: #0077ff; margin: 20px auto; box-shadow: 0 0 10px #0077ff;'></div>
                 </div>
                 """, 
                 unsafe_allow_html=True
@@ -1905,6 +1905,8 @@ elif st.session_state.active_page == "normal":
                                 "2. Հաշվի առ ամբողջ դպրոցի զբաղվածությունը (Full Data), որպեսզի նույն ուսուցիչը նույն ժամին երկու տեղ չլինի: "
                                 "3. Եթե ցույց ես տալիս դասացուցակը, օգտագործիր Markdown աղյուսակ: "
                                 "4. Եթե առաջարկում ես փոփոխություն, վերջում ավելացրու '[PROPOSAL]':"
+                                "5. ԱՄԵՆԱԿԱՐԵՎՈՐԸ. Առաջարկիր միայն այնպիսի տարբերակներ, որոնք ԶՐՈՅԱԿԱՆ ՀԱՄԸՆԿՆՈՒՄ (conflict) ունեն այլ դասարանների հետ: "
+                                    "Ընտրիր լավագույն և ամենաանվտանգ լուծումը բոլոր հնարավոր տարբերակներից:"
                             )
                             
                             full_prompt = f"{system_prompt}\n\nFull Schedule Data:\n{full_schedule_context}\n\nTarget Class: {selected_class}\nUser: {prompt}"
