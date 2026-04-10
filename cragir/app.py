@@ -208,13 +208,13 @@ def save_to_disk(force_overwrite=False):
 
         if headers:
             try:
-                # Տվյալների ստացում Cloud-ից
+                # Տվյալների ստացում Cloud-ից՝ Merge-ի համար
                 url_get = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
                 res = requests.get(url_get, headers=headers)
                 cloud_data = res.json()[0]["data"] if res.status_code == 200 and res.json() else {}
 
                 if not force_overwrite:
-                    # Սովորական Smart Merge (ոչինչ չի փոխվել քո տրամաբանությունից)
+                    # ✨ Smart Merge տրամաբանություն (մնացել է անփոփոխ)
                     final_data = {
                         "subjects": list({**{s.get("id"): s for s in cloud_data.get("subjects", []) if isinstance(s, dict)}, **local_state["subjects"]}.values()),
                         "teachers": list({**{t.get("id"): t for t in cloud_data.get("teachers", []) if isinstance(t, dict)}, **local_state["teachers"]}.values()),
@@ -228,7 +228,7 @@ def save_to_disk(force_overwrite=False):
                         "teacher_preferences": {**cloud_data.get("teacher_preferences", {}), **local_state["teacher_preferences"]}
                     }
                 else:
-                    # Ուղղակի Overwrite վիճակ
+                    # Overwrite վիճակ (ուղղված Dictionary ձևաչափով)
                     final_data = {
                         "subjects": list(local_state["subjects"].values()),
                         "teachers": list(local_state["teachers"].values()),
@@ -242,26 +242,26 @@ def save_to_disk(force_overwrite=False):
                         "teacher_preferences": local_state["teacher_preferences"]
                     }
 
-                # ✨ ՈՒՂՂՈՒՄ. Պահպանում ենք PATCH-ով, որպեսզի ID=1-ը թարմացվի, այլոչ թե նորը ստեղծվի
+                # ✨ ՈՒՂՂՈՒՄ. Պահպանումը Cloud-ում PATCH մեթոդով
                 url_post = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1"
-                payload = {"data": final_data} # PATCH-ի դեպքում ID-ն պետք չէ ուղարկել ներսում
+                payload = {"data": final_data}
                 
                 headers["Content-Type"] = "application/json"
-                headers["Prefer"] = "return=minimal" # Արագացնում է պատասխանը
+                headers["Prefer"] = "return=minimal"
                 
-                # Օգտագործում ենք requests.patch, որը հասկանում է "Թարմացնել գոյություն ունեցողը"
                 resp = requests.patch(url_post, headers=headers, json=payload)
                 
-                # Ստուգում ենք բոլոր հաջող կոդերը (200, 201, 204)
                 if 200 <= resp.status_code < 300:
                     cloud_success = True
                 else:
-                    st.error(f"Cloud Error {resp.status_code}: {resp.text}")
+                    # Սխալի ցուցադրում Streamlit-ի մեջ
+                    st.error(f"❌ Supabase Error: {resp.status_code} - {resp.text}")
                     
             except Exception as e:
-                st.warning(f"⚠️ Supabase-ի հետ կապի խնդիր: {e}")
+                # Ավելի մանրամասն Warning
+                st.warning(f"⚠️ Supabase-ի հետ կապի խնդիր: {type(e).__name__} - {str(e)}")
 
-        # Եթե Cloud-ը չաշխատեց, տվյալները վերցնում ենք local_state-ից
+        # Եթե Cloud-ը ձախողվեց, օգտագործում ենք տեղական վիճակը backup-ի համար
         if final_data is None:
             final_data = {
                 "subjects": list(local_state["subjects"].values()),
@@ -276,13 +276,14 @@ def save_to_disk(force_overwrite=False):
                 "teacher_preferences": local_state["teacher_preferences"]
             }
 
-        # Local Backup
+        # Local Backup (DB_FILE)
         try:
             with open(DB_FILE, "w", encoding="utf-8") as f:
                 json.dump(final_data, f, ensure_ascii=False, indent=4)
         except Exception as e:
             st.error(f"❌ Ֆայլի պահպանման սխալ: {e}")
 
+        # Փոքր դադար էֆեկտի համար
         time.sleep(1) 
         
         if cloud_success:
@@ -290,6 +291,7 @@ def save_to_disk(force_overwrite=False):
         else:
             st.toast("💾 Պահպանվեց տեղական backup-ում", icon="📁")
 
+        # Տվյալների թարմացում ինտերֆեյսում
         parse_data(final_data)
 
 
