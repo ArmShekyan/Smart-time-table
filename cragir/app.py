@@ -208,12 +208,13 @@ def save_to_disk(force_overwrite=False):
 
         if headers:
             try:
+                # Տվյալների ստացում Cloud-ից
                 url_get = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1&select=data"
                 res = requests.get(url_get, headers=headers)
                 cloud_data = res.json()[0]["data"] if res.status_code == 200 and res.json() else {}
 
                 if not force_overwrite:
-                    # Սովորական Merge
+                    # Սովորական Smart Merge (ոչինչ չի փոխվել քո տրամաբանությունից)
                     final_data = {
                         "subjects": list({**{s.get("id"): s for s in cloud_data.get("subjects", []) if isinstance(s, dict)}, **local_state["subjects"]}.values()),
                         "teachers": list({**{t.get("id"): t for t in cloud_data.get("teachers", []) if isinstance(t, dict)}, **local_state["teachers"]}.values()),
@@ -227,7 +228,7 @@ def save_to_disk(force_overwrite=False):
                         "teacher_preferences": {**cloud_data.get("teacher_preferences", {}), **local_state["teacher_preferences"]}
                     }
                 else:
-                    # ✨ ՈՒՂՂՈՒՄ 1. Սարքում ենք մաքուր Dictionary՝ առանց list(v.values())-ի
+                    # Ուղղակի Overwrite վիճակ
                     final_data = {
                         "subjects": list(local_state["subjects"].values()),
                         "teachers": list(local_state["teachers"].values()),
@@ -241,21 +242,26 @@ def save_to_disk(force_overwrite=False):
                         "teacher_preferences": local_state["teacher_preferences"]
                     }
 
-                # Բուն պահպանումը Cloud-ում
+                # ✨ ՈՒՂՂՈՒՄ. Պահպանում ենք PATCH-ով, որպեսզի ID=1-ը թարմացվի, այլոչ թե նորը ստեղծվի
                 url_post = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1"
-                payload = {"id": 1, "data": final_data}
+                payload = {"data": final_data} # PATCH-ի դեպքում ID-ն պետք չէ ուղարկել ներսում
                 
                 headers["Content-Type"] = "application/json"
-                headers["Prefer"] = "resolution=merge-duplicates"
+                headers["Prefer"] = "return=minimal" # Արագացնում է պատասխանը
                 
-                resp = requests.post(url_post, headers=headers, json=payload)
+                # Օգտագործում ենք requests.patch, որը հասկանում է "Թարմացնել գոյություն ունեցողը"
+                resp = requests.patch(url_post, headers=headers, json=payload)
                 
-                if resp.status_code in [200, 201, 204]:
+                # Ստուգում ենք բոլոր հաջող կոդերը (200, 201, 204)
+                if 200 <= resp.status_code < 300:
                     cloud_success = True
+                else:
+                    st.error(f"Cloud Error {resp.status_code}: {resp.text}")
+                    
             except Exception as e:
                 st.warning(f"⚠️ Supabase-ի հետ կապի խնդիր: {e}")
 
-        # ✨ ՈՒՂՂՈՒՄ 2. Եթե Cloud-ը ձախողվեց, նույնպես օգտագործում ենք մաքուր կառուցվածքը
+        # Եթե Cloud-ը չաշխատեց, տվյալները վերցնում ենք local_state-ից
         if final_data is None:
             final_data = {
                 "subjects": list(local_state["subjects"].values()),
@@ -270,6 +276,7 @@ def save_to_disk(force_overwrite=False):
                 "teacher_preferences": local_state["teacher_preferences"]
             }
 
+        # Local Backup
         try:
             with open(DB_FILE, "w", encoding="utf-8") as f:
                 json.dump(final_data, f, ensure_ascii=False, indent=4)
