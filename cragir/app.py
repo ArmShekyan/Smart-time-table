@@ -199,7 +199,6 @@ def save_to_disk(force_overwrite=False):
             "subj_pool": list(set(st.session_state.subj_pool)),
             "teacher_pool": list(set(st.session_state.teacher_pool)),
             "users_list": st.session_state.users_list,
-            # ✨ Ավելացնում ենք սա
             "teacher_preferences": st.session_state.get('teacher_preferences', {})
         }
 
@@ -214,31 +213,41 @@ def save_to_disk(force_overwrite=False):
                 cloud_data = res.json()[0]["data"] if res.status_code == 200 and res.json() else {}
 
                 if not force_overwrite:
+                    # Սովորական Merge
                     final_data = {
-                        "subjects": list({**{s["id"]: s for s in cloud_data.get("subjects", [])}, **local_state["subjects"]}.values()),
-                        "teachers": list({**{t["id"]: t for t in cloud_data.get("teachers", [])}, **local_state["teachers"]}.values()),
-                        "classes": list({**{c["id"]: c for c in cloud_data.get("classes", [])}, **local_state["classes"]}.values()),
-                        "rooms": list({**{r["id"]: r for r in cloud_data.get("rooms", [])}, **local_state["rooms"]}.values()),
-                        "assignments": list({**{a["id"]: a for a in cloud_data.get("assignments", [])}, **local_state["assignments"]}.values()),
+                        "subjects": list({**{s.get("id"): s for s in cloud_data.get("subjects", []) if isinstance(s, dict)}, **local_state["subjects"]}.values()),
+                        "teachers": list({**{t.get("id"): t for t in cloud_data.get("teachers", []) if isinstance(t, dict)}, **local_state["teachers"]}.values()),
+                        "classes": list({**{c.get("id"): c for c in cloud_data.get("classes", []) if isinstance(c, dict)}, **local_state["classes"]}.values()),
+                        "rooms": list({**{r.get("id"): r for r in cloud_data.get("rooms", []) if isinstance(r, dict)}, **local_state["rooms"]}.values()),
+                        "assignments": list({**{a.get("id"): a for a in cloud_data.get("assignments", []) if isinstance(a, dict)}, **local_state["assignments"]}.values()),
                         "schedule": local_state["schedule"],
                         "subj_pool": list(set(cloud_data.get("subj_pool", []) + local_state["subj_pool"])),
                         "teacher_pool": list(set(cloud_data.get("teacher_pool", []) + local_state["teacher_pool"])),
                         "users_list": local_state["users_list"],
-                        # ✨ Ավելացնում ենք սա Merge-ի համար
                         "teacher_preferences": {**cloud_data.get("teacher_preferences", {}), **local_state["teacher_preferences"]}
                     }
                 else:
-                    final_data = {k: (list(v.values()) if isinstance(v, dict) else v) for k, v in local_state.items()}
+                    # ✨ ՈՒՂՂՈՒՄ 1. Սարքում ենք մաքուր Dictionary՝ առանց list(v.values())-ի
+                    final_data = {
+                        "subjects": list(local_state["subjects"].values()),
+                        "teachers": list(local_state["teachers"].values()),
+                        "classes": list(local_state["classes"].values()),
+                        "rooms": list(local_state["rooms"].values()),
+                        "assignments": list(local_state["assignments"].values()),
+                        "schedule": local_state["schedule"],
+                        "subj_pool": local_state["subj_pool"],
+                        "teacher_pool": local_state["teacher_pool"],
+                        "users_list": local_state["users_list"],
+                        "teacher_preferences": local_state["teacher_preferences"]
+                    }
 
                 # Բուն պահպանումը Cloud-ում
                 url_post = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1"
                 payload = {"id": 1, "data": final_data}
                 
-                # ✨ ՍԱ Է ԿԱՐԵՎՈՐ ՓՈՓՈԽՈՒԹՅՈՒՆԸ
-                headers["Content-Type"] = "application/json" # Ավելացրու սա
+                headers["Content-Type"] = "application/json"
                 headers["Prefer"] = "resolution=merge-duplicates"
                 
-                # Օգտագործիր json=payload, ոչ թե data=json.dumps
                 resp = requests.post(url_post, headers=headers, json=payload)
                 
                 if resp.status_code in [200, 201, 204]:
@@ -246,8 +255,20 @@ def save_to_disk(force_overwrite=False):
             except Exception as e:
                 st.warning(f"⚠️ Supabase-ի հետ կապի խնդիր: {e}")
 
+        # ✨ ՈՒՂՂՈՒՄ 2. Եթե Cloud-ը ձախողվեց, նույնպես օգտագործում ենք մաքուր կառուցվածքը
         if final_data is None:
-            final_data = {k: (list(v.values()) if isinstance(v, dict) else v) for k, v in local_state.items()}
+            final_data = {
+                "subjects": list(local_state["subjects"].values()),
+                "teachers": list(local_state["teachers"].values()),
+                "classes": list(local_state["classes"].values()),
+                "rooms": list(local_state["rooms"].values()),
+                "assignments": list(local_state["assignments"].values()),
+                "schedule": local_state["schedule"],
+                "subj_pool": local_state["subj_pool"],
+                "teacher_pool": local_state["teacher_pool"],
+                "users_list": local_state["users_list"],
+                "teacher_preferences": local_state["teacher_preferences"]
+            }
 
         try:
             with open(DB_FILE, "w", encoding="utf-8") as f:
