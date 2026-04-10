@@ -1222,6 +1222,58 @@ elif st.session_state.active_page == "normal":
                                 st.toast(f"✅ Ուսուցիչը գրանցվեց", icon="👩‍🏫")
                                 st.rerun()
 
+                                
+        # --- ՀԱՏՈՒԿ ՆԱԽԱՊԱՅՄԱՆՆԵՐ (Քո նշած կարմիր շրջանակի տեղում) ---
+        st.markdown("<br>", unsafe_allow_html=True)
+        with st.container(border=True):
+            # Վերնագիր և Մատիտի կոճակ
+            head_col, edit_col = st.columns([0.9, 0.1])
+            with head_col:
+                st.markdown("### 🗓️ Հատուկ նախապայմաններ / Արտոնություններ")
+            
+            with edit_col:
+                with st.popover("✏️", help="Ջնջել նախապայմանները"):
+                    st.write("🗑️ Մաքրել ուսուցչի օրերը")
+                    # Ստուգում ենք, թե ում համար արդեն կան գրանցված օրեր
+                    pref_dict = st.session_state.all_data.get('teacher_preferences', {})
+                    if pref_dict:
+                        t_to_clear = st.selectbox("Ընտրեք ուսուցչին", options=list(pref_dict.keys()), key="clear_pref_select")
+                        if st.button("Հաստատել մաքրումը", type="primary", use_container_width=True):
+                            del st.session_state.all_data['teacher_preferences'][t_to_clear]
+                            save_to_disk(force_overwrite=True)
+                            st.toast(f"🧹 {t_to_clear}-ի նախապայմանները մաքրվեցին")
+                            st.rerun()
+                    else:
+                        st.info("Դեռ գրանցված նախապայմաններ չկան:")
+
+            # Ներմուծման դաշտերը
+            t_pref_col, days_pref_col = st.columns([1, 1])
+            
+            with t_pref_col:
+                # Ուսուցիչների ցանկը հիմնական գրանցվածներից
+                registered_names = [t.name for t in st.session_state.teachers]
+                target_t = st.selectbox("Ընտրեք ուսուցչին", options=registered_names, key="pref_t_select")
+            
+            with days_pref_col:
+                days_list = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
+                selected_days = st.multiselect("Հարմար օրերը (max 4)", options=days_list, max_selections=4, key="pref_days_multi")
+
+            if st.button("💾 Պահպանել արտոնությունները", use_container_width=True):
+                if target_t and selected_days:
+                    # Ստեղծում ենք կամ թարմացնում ենք teacher_preferences-ը session_state-ում
+                    if 'teacher_preferences' not in st.session_state.all_data:
+                        st.session_state.all_data['teacher_preferences'] = {}
+                    
+                    st.session_state.all_data['teacher_preferences'][target_t] = selected_days
+                    
+                    # Պահպանում ենք Supabase-ում (քո save_to_disk ֆունկցիան կօգտագործի թարմացված all_data-ն)
+                    save_to_disk(force_overwrite=True)
+                    st.success(f"✅ {target_t}-ի համար պահպանվեց՝ {', '.join(selected_days)}")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ Ընտրեք ուսուցչին և գոնե մեկ օր:")
+                
+
         st.divider()
         st.subheader("📋 Դիտել Ուսուցիչներն ըստ Առարկաների")
 
