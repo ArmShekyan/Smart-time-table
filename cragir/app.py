@@ -330,16 +330,16 @@ def manual_refresh():
                 if response.status_code == 200:
                     raw_json = response.json()
                     
-                    # ✨ ՈՒՂՂՈՒՄ. Supabase-ը միշտ վերադարձնում է LIST (զանգված)
-                    # Ստուգում ենք՝ արդյոք պատասխանը դատարկ չէ և վերցնում ենք առաջին էլեմենտը [0]
                     if isinstance(raw_json, list) and len(raw_json) > 0:
                         data = raw_json[0]["data"]
                         
-                        # Մաքրում ենք հին վիճակը
-                        st.session_state.schedule = []
-                        st.session_state.teacher_preferences = {}
-                        
+                        # 1. Բեռնում ենք բոլոր թարմ տվյալները
                         parse_data(data)
+                        
+                        # 2. ✨ ՈՒՂՂՈՒՄ. parse_data-ից հետո դատարկում ենք schedule-ը,
+                        # որպեսզի գեներացման բաժնում հին աղյուսակը չմնա:
+                        st.session_state.schedule = []
+                        st.session_state.teacher_preferences = data.get('teacher_preferences', {})
                         
                         if "v_bot_view" in st.session_state:
                             del st.session_state["v_bot_view"]
@@ -351,17 +351,20 @@ def manual_refresh():
                         st.rerun()
                         return
             except Exception as e:
-                # Օգտակար է տեսնել իրական սխալը, եթե այն առաջանա
                 pass
 
-        # Local Backup հատվածը մնում է նույնը
+        # Local Backup հատվածը
         if os.path.exists(DB_FILE):
             try:
                 with open(DB_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    st.session_state.schedule = []
-                    st.session_state.teacher_preferences = {}
+                    
                     parse_data(data)
+                    
+                    # Նույն տրամաբանությունը տեղական ֆայլի համար
+                    st.session_state.schedule = []
+                    st.session_state.teacher_preferences = data.get('teacher_preferences', {})
+                    
                     if "v_bot_view" in st.session_state:
                         del st.session_state["v_bot_view"]
                     if st.session_state.classes:
