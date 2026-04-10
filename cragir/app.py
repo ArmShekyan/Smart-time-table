@@ -1161,37 +1161,35 @@ elif st.session_state.active_page == "normal":
                 
                 if st.form_submit_button("Ավելացնել ցանկում", use_container_width=True):
                     if t_name:
-                        # Ստուգում ենք կրկնությունը teacher_pool-ում
                         if t_name.lower() in [name.lower() for name in st.session_state.teacher_pool]:
                             st.error(f"❌ '{t_name}' անունով ուսուցիչ արդեն կա ցուցակում:")
                         else:
                             st.session_state.teacher_pool.append(t_name)
-                            save_to_disk()  # Պահպանում ենք նոր անունը
+                            save_to_disk()
                             st.toast(f"👤 {t_name}-ն ավելացվեց ցանկում", icon="📝")
                             st.rerun()
                     else:
                         st.warning("⚠️ Մուտքագրեք անունը:")
 
-            # --- ՁԱԽ ՍՅՈՒՆԻ ՎԵՐՋՈՒՄ (Քո նշած նոր տեղը) ---
+            # --- ՀԱՏՈՒԿ ԱՐՏՈՆՈՒԹՅՈՒՆՆԵՐԻ ԲԱԺԻՆ (Մեկ կոճակով) ---
             st.markdown("<br>", unsafe_allow_html=True)
-            with st.container(border=True):
-                # Վերնագիր և Մատիտի կոճակ
+            
+            # Այստեղ դնում ենք քո ուզած popover-ը
+            with st.popover("🌟 Հատուկ Արտոնությունների Բաժին", use_container_width=True):
+                # Վերնագիր և Մատիտի կոճակ (մաքրելու համար)
                 h_col, e_col = st.columns([0.85, 0.15])
                 with h_col:
                     st.markdown("##### 🗓️ Ուսուցչի հարմար օրերը")
                 
                 with e_col:
-                    # Օգտագործում ենք քո ունեցած տվյալների կառուցվածքը
                     with st.popover("✏️"):
                         st.write("🗑️ Մաքրել")
-                        # Փորձում ենք գտնել նախապայմանները քո բազայի կառուցվածքից
-                        # Եթե all_data չկա, օգտագործում ենք դատարկ dictionary
                         prefs = st.session_state.get('teacher_preferences', {})
                         if prefs:
                             t_clear = st.selectbox("Ուսուցիչ", options=list(prefs.keys()), key="clr_pref")
                             if st.button("Ջնջել", type="primary"):
                                 del st.session_state.teacher_preferences[t_clear]
-                                save_to_disk() # Կամ քո համապատասխան ֆունկցիան
+                                save_to_disk(force_overwrite=True)
                                 st.rerun()
                         else:
                             st.caption("Դատարկ է")
@@ -1203,21 +1201,22 @@ elif st.session_state.active_page == "normal":
                 
                 days_list = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
                 selected_days = st.multiselect("Ընտրեք օրերը", 
-                                            options=days_list, 
-                                            max_selections=4, 
-                                            key="pref_days_multi")
+                                               options=days_list, 
+                                               max_selections=4, 
+                                               key="pref_days_multi")
 
                 if st.button("Գրանցել օրերը", use_container_width=True):
                     if target_t and selected_days:
-                        # Ստեղծում ենք առանձին դաշտ session_state-ում, որ սխալ չտա
                         if 'teacher_preferences' not in st.session_state:
                             st.session_state.teacher_preferences = {}
                         
                         st.session_state.teacher_preferences[target_t] = selected_days
                         
-                        save_to_disk() # Այս ֆունկցիան կպահի փոփոխությունը
+                        save_to_disk()
                         st.toast(f"✅ {target_t}-ին հարմար օրերը գրանցվեցին")
                         st.rerun()
+                    else:
+                        st.warning("⚠️ Ընտրեք ուսուցչին և օրերը:")
 
         # --- ԱՋ ՍՅՈՒՆ: Գրանցել Ուսուցչին (Առարկաների հետ) ---
         with col_r:
