@@ -1170,6 +1170,7 @@ elif st.session_state.active_page == "normal":
                             st.rerun()
                     else:
                         st.warning("⚠️ Մուտքագրեք անունը:")
+                        
 
             # --- ՀԱՏՈՒԿ ԱՐՏՈՆՈՒԹՅՈՒՆՆԵՐԻ ԲԱԺԻՆ ---
             st.markdown("<br>", unsafe_allow_html=True)
@@ -1178,10 +1179,8 @@ elif st.session_state.active_page == "normal":
                 h_col, e_col = st.columns([0.85, 0.15])
                 with h_col:
                     st.markdown("##### 🗓️ Ուսուցչի հարմար օրերը")
-                
                 with e_col:
                     with st.popover("✏️"):
-                        st.write("🗑️ Մաքրել")
                         prefs = st.session_state.get('teacher_preferences', {})
                         if prefs:
                             t_clear = st.selectbox("Ուսուցիչ", options=list(prefs.keys()), key="clr_pref")
@@ -1192,33 +1191,30 @@ elif st.session_state.active_page == "normal":
                         else:
                             st.caption("Դատարկ է")
 
-                # Ընտրության դաշտեր
-                target_t = st.selectbox("Ընտրեք ուսուցչին", 
-                                        options=[t.name for t in st.session_state.teachers], 
-                                        key="pref_t_select")
-                
-                days_list = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
-                selected_days = st.multiselect("Ընտրեք օրերը", 
-                                               options=days_list, 
-                                               max_selections=4, 
-                                               key="pref_days_multi")
+                with st.form("pref_form", clear_on_submit=True):
+                    target_t = st.selectbox("Ընտրեք ուսուցչին", 
+                                            options=[t.name for t in st.session_state.teachers])
+                    
+                    days_list = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
+                    selected_days = st.multiselect("Ընտրեք օրերը", options=days_list, max_selections=4)
 
-                if st.button("Գրանցել օրերը", use_container_width=True):
-                    if target_t and selected_days:
-                        if 'teacher_preferences' not in st.session_state:
-                            st.session_state.teacher_preferences = {}
+                    if st.form_submit_button("Գրանցել օրերը", use_container_width=True):
+                        # Ստուգում ենք՝ արդյոք այս ուսուցիչն արդեն ունի գրանցված օրեր
+                        existing_prefs = st.session_state.get('teacher_preferences', {})
                         
-                        st.session_state.teacher_preferences[target_t] = selected_days
-                        
-                        save_to_disk()
-                        
-                        st.session_state.pref_days_multi = []
-                        st.session_state.pref_t_select = [t.name for t in st.session_state.teachers][0]
-                        
-                        st.toast(f"✅ {target_t}-ին հարմար օրերը գրանցվեցին")
-                        st.rerun()
-                    else:
-                        st.warning("⚠️ Ընտրեք ուսուցչին և օրերը:")
+                        if target_t in existing_prefs:
+                            st.error(f"❌ {target_t}-ն արդեն ունի գրանցված արտոնություն: Նորը գրանցելու համար նախ հեռացրեք հինը մատիտի (✏️) օգնությամբ:")
+                        elif target_t and selected_days:
+                            if 'teacher_preferences' not in st.session_state:
+                                st.session_state.teacher_preferences = {}
+                            
+                            st.session_state.teacher_preferences[target_t] = selected_days
+                            save_to_disk()
+                            
+                            st.toast(f"✅ {target_t}-ին հարմար օրերը գրանցվեցին")
+                            st.rerun()
+                        else:
+                            st.warning("⚠️ Ընտրեք ուսուցչին և օրերը:")
 
         # --- ԱՋ ՍՅՈՒՆ: Գրանցել Ուսուցչին (Առարկաների հետ) ---
         with col_r:
