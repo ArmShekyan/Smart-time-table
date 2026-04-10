@@ -1201,8 +1201,8 @@ elif st.session_state.active_page == "normal":
                                         options=[t.name for t in st.session_state.teachers], 
                                         key="pref_t_select")
                 
-                days_list = ["Երկ", "Երք", "Չոր", "Հին", "Ուրբ"]
-                selected_days = st.multiselect("Օրեր (max 4)", 
+                days_list = ["Երկուշաբթի", "Երեքշաբթի", "Չորեքշաբթի", "Հինգշաբթի", "Ուրբաթ"]
+                selected_days = st.multiselect("Ընտրեք օրերը", 
                                             options=days_list, 
                                             max_selections=4, 
                                             key="pref_days_multi")
@@ -1216,7 +1216,7 @@ elif st.session_state.active_page == "normal":
                         st.session_state.teacher_preferences[target_t] = selected_days
                         
                         save_to_disk() # Այս ֆունկցիան կպահի փոփոխությունը
-                        st.toast(f"✅ {target_t}-ի օրերը գրանցվեցին")
+                        st.toast(f"✅ {target_t}-ին հարմար օրերը գրանցվեցին")
                         st.rerun()
 
         # --- ԱՋ ՍՅՈՒՆ: Գրանցել Ուսուցչին (Առարկաների հետ) ---
