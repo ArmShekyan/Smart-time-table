@@ -510,6 +510,30 @@ st.markdown("""
         border-radius: 10px !important;
         color: white !important;
     }
+            
+    /* 8. ԷՋԻ ՍԱՀՈՒՆ ՀԱՅՏՆՎԵԼՈՒ ԱՆԻՄԱՑԻԱ (1.5 վայրկյան) */
+    @keyframes pageEntrance {
+        from { 
+            opacity: 0; 
+            transform: translateY(15px); 
+            filter: blur(5px);
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0); 
+            filter: blur(0);
+        }
+    }
+
+    /* Կիրառում ենք հիմնական կոնտեյների վրա */
+    .stMainBlockContainer {
+        animation: pageEntrance 1.5s ease-out;
+    }
+
+    /* Սայդբարի տարրերի հերթականությամբ հայտնվելը */
+    [data-testid="stSidebarUserContent"] {
+        animation: pageEntrance 1s ease-in-out;
+    }
 </style>
 """, unsafe_allow_html=True)
 
