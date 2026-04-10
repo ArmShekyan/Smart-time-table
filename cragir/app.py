@@ -1170,12 +1170,12 @@ elif st.session_state.active_page == "normal":
                             st.rerun()
                     else:
                         st.warning("⚠️ Մուտքագրեք անունը:")
-                        
+
 
             # --- ՀԱՏՈՒԿ ԱՐՏՈՆՈՒԹՅՈՒՆՆԵՐԻ ԲԱԺԻՆ ---
             st.markdown("<br>", unsafe_allow_html=True)
             
-            with st.popover("🌟 Հատուկ Արտոնությունների Բաժին", use_container_width=True):
+            with st.popover("💎 Հատուկ Արտոնությունների Բաժին", use_container_width=True):
                 h_col, e_col = st.columns([0.85, 0.15])
                 with h_col:
                     st.markdown("##### 🗓️ Ուսուցչի հարմար օրերը")
