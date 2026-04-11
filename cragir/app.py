@@ -868,6 +868,40 @@ if st.session_state.user_role in ['owner', 'admin']:
         st.session_state.active_page = "👥 Օգտատերեր"
         st.rerun()
 
+# --- ՄԱՍՍԱՅԱԿԱՆ ԱՎԵԼԱՑՈՒՄ (Միայն Owner-ի համար) ---
+    if st.session_state.user_role == 'owner':
+        with st.sidebar.expander("🚀 Մասսայական Ավելացում", expanded=False):
+            tab_t, tab_s = st.tabs(["👨‍🏫 Ուս.", "📚 Առ."])
+
+            with tab_t:
+                st.caption("Անունները՝ իրար տակ")
+                raw_t = st.text_area("Ուսուցիչների ցանկ", height=100, placeholder="Անուն Ազգանուն...", key="bulk_t")
+                if st.button("Ավելացնել Ուս.", use_container_width=True):
+                    if raw_t:
+                        names = [n.strip() for n in raw_t.split('\n') if n.strip()]
+                        added = 0
+                        for name in names:
+                            if name not in st.session_state.teacher_pool:
+                                st.session_state.teacher_pool.append(name)
+                                added += 1
+                        save_to_disk()
+                        st.success(f"✅ {added} անուն ավելացվեց")
+                        st.rerun()
+
+            with tab_s:
+                st.caption("Առարկաները՝ իրար տակ")
+                raw_s = st.text_area("Առարկաների ցանկ", height=100, placeholder="Ֆիզիկա...", key="bulk_s")
+                if st.button("Ավելացնել Առ.", use_container_width=True):
+                    if raw_s:
+                        subjs = [s.strip() for s in raw_s.split('\n') if s.strip()]
+                        added = 0
+                        for s in subjs:
+                            if s not in st.session_state.subj_pool:
+                                st.session_state.subj_pool.append(s)
+                                added += 1
+                        save_to_disk()
+                        st.success(f"✅ {added} առարկա ավելացվեց")
+                        st.rerun()
 
 # 🆕 ԹՌՆՈՂ ՊԱՏՈՒՀԱՆ՝ ՕԳՏԱՏԵՐ ՋՆՋԵԼՈՒ ՀԱՄԱՐ
 @st.dialog("🗑️ Հաստատեք ջնջումը")
