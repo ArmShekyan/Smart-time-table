@@ -986,50 +986,49 @@ elif st.session_state.active_page == "🚀 Մասսայական" and st.session_
     with col1:
         with st.container(border=True):
             st.subheader("👨‍🏫 Ուսուցիչներ")
-            raw_t = st.text_area("Մուտքագրեք անունները (ստորակետով)", key="bulk_page_t")
-            if st.button("Ավելացնել Ուսուցիչներին", use_container_width=True, type="primary"):
-                if raw_t:
-                    # Անունների մաքրում
+            # Օգտագործում ենք form, որ ավտոմատ մաքրի դաշտը
+            with st.form("bulk_teachers_form", clear_on_submit=True):
+                raw_t = st.text_area("Մուտքագրեք անունները (ստորակետով)", key="bulk_page_t")
+                submit_t = st.form_submit_button("Ավելացնել Ուսուցիչներին", use_container_width=True, type="primary")
+                
+                if submit_t and raw_t:
                     names = [n.strip() for n in raw_t.replace(',', '\n').split('\n') if n.strip()]
-                    
                     added = 0
                     for name in names:
-                        # Ավելացնում ենք հենց teacher_pool-ի մեջ
                         if name not in st.session_state.teacher_pool:
                             st.session_state.teacher_pool.append(name)
                             added += 1
                     
                     if added > 0:
                         save_to_disk()
-                        st.session_state["bulk_page_t"] = ""
-                        msg_container = st.empty()
-                        msg_container.success(f"✅ {added} անուն ավելացվեց ուսուցիչների pool-ում:")
+                        msg = st.empty()
+                        msg.success(f"✅ {added} անուն ավելացվեց ուսուցիչների pool-ում:")
                         time.sleep(1.5)
-                        msg_container.empty()
+                        msg.empty()
                         st.rerun()
 
     with col2:
         with st.container(border=True):
             st.subheader("📚 Առարկաներ")
-            raw_s = st.text_area("Մուտքագրեք առարկաները (ստորակետով)", key="bulk_page_s")
-            if st.button("Ավելացնել Առարկաները", use_container_width=True, type="primary"):
-                if raw_s:
+            # Օգտագործում ենք form նաև առարկաների համար
+            with st.form("bulk_subjects_form", clear_on_submit=True):
+                raw_s = st.text_area("Մուտքագրեք առարկաները (ստորակետով)", key="bulk_page_s")
+                submit_s = st.form_submit_button("Ավելացնել Առարկաները", use_container_width=True, type="primary")
+                
+                if submit_s and raw_s:
                     subjs = [s.strip() for s in raw_s.replace(',', '\n').split('\n') if s.strip()]
-                    
                     added_s = 0
                     for s_name in subjs:
-                        # Ավելացնում ենք հենց subj_pool-ի մեջ
                         if s_name not in st.session_state.subj_pool:
                             st.session_state.subj_pool.append(s_name)
                             added_s += 1
                     
                     if added_s > 0:
                         save_to_disk()
-                        st.session_state["bulk_page_t"] = ""
-                        msg_container = st.empty()
-                        msg_container.success(f"✅ {added_s} առարկա ավելացվեց առարկաների pool-ում:")
+                        msg = st.empty()
+                        msg.success(f"✅ {added_s} առարկա ավելացվեց առարկաների pool-ում:")
                         time.sleep(1.5)
-                        msg_container.empty()
+                        msg.empty()
                         st.rerun()
                     
 
