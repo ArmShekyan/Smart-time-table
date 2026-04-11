@@ -986,7 +986,6 @@ elif st.session_state.active_page == "🚀 Մասսայական" and st.session_
     with col1:
         with st.container(border=True):
             st.subheader("👨‍🏫 Ուսուցիչներ")
-            # Օգտագործում ենք form, որ ավտոմատ մաքրի դաշտը
             with st.form("bulk_teachers_form", clear_on_submit=True):
                 raw_t = st.text_area("Մուտքագրեք անունները (ստորակետով)", key="bulk_page_t")
                 submit_t = st.form_submit_button("Ավելացնել Ուսուցիչներին", use_container_width=True, type="primary")
@@ -994,15 +993,24 @@ elif st.session_state.active_page == "🚀 Մասսայական" and st.session_
                 if submit_t and raw_t:
                     names = [n.strip() for n in raw_t.replace(',', '\n').split('\n') if n.strip()]
                     added = 0
+                    errors = []
+
                     for name in names:
-                        if name not in st.session_state.teacher_pool:
+                        # Ստուգում ենք՝ արդյոք անունն արդեն կա pool-ում
+                        if any(existing.lower() == name.lower() for existing in st.session_state.teacher_pool):
+                            errors.append(name)
+                        else:
                             st.session_state.teacher_pool.append(name)
                             added += 1
                     
+                    # Եթե կան արդեն գրանցված անուններ, ցույց ենք տալիս կարմիրով
+                    for err_name in errors:
+                        st.error(f"❌ '{err_name}' ուսուցիչը արդեն գրանցված է ցանկում:")
+
                     if added > 0:
                         save_to_disk()
                         msg = st.empty()
-                        msg.success(f"✅ {added} անուն ավելացվեց ուսուցիչների pool-ում:")
+                        msg.success(f"✅ {added} նոր անուն ավելացվեց:")
                         time.sleep(1.5)
                         msg.empty()
                         st.rerun()
@@ -1010,7 +1018,6 @@ elif st.session_state.active_page == "🚀 Մասսայական" and st.session_
     with col2:
         with st.container(border=True):
             st.subheader("📚 Առարկաներ")
-            # Օգտագործում ենք form նաև առարկաների համար
             with st.form("bulk_subjects_form", clear_on_submit=True):
                 raw_s = st.text_area("Մուտքագրեք առարկաները (ստորակետով)", key="bulk_page_s")
                 submit_s = st.form_submit_button("Ավելացնել Առարկաները", use_container_width=True, type="primary")
@@ -1018,15 +1025,23 @@ elif st.session_state.active_page == "🚀 Մասսայական" and st.session_
                 if submit_s and raw_s:
                     subjs = [s.strip() for s in raw_s.replace(',', '\n').split('\n') if s.strip()]
                     added_s = 0
+                    s_errors = []
+
                     for s_name in subjs:
-                        if s_name not in st.session_state.subj_pool:
+                        # Ստուգում ենք առարկաների համար
+                        if any(existing.lower() == s_name.lower() for existing in st.session_state.subj_pool):
+                            s_errors.append(s_name)
+                        else:
                             st.session_state.subj_pool.append(s_name)
                             added_s += 1
                     
+                    for err_s in s_errors:
+                        st.error(f"❌ '{err_s}' առարկան արդեն գրանցված է ցանկում:")
+
                     if added_s > 0:
                         save_to_disk()
                         msg = st.empty()
-                        msg.success(f"✅ {added_s} առարկա ավելացվեց առարկաների pool-ում:")
+                        msg.success(f"✅ {added_s} նոր առարկա ավելացվեց:")
                         time.sleep(1.5)
                         msg.empty()
                         st.rerun()
