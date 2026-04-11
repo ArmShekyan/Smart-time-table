@@ -989,22 +989,19 @@ elif st.session_state.active_page == "🚀 Մասսայական" and st.session_
             raw_t = st.text_area("Մուտքագրեք անունները (ստորակետով)", key="bulk_page_t")
             if st.button("Ավելացնել Ուսուցիչներին", use_container_width=True, type="primary"):
                 if raw_t:
-                    # Ստորակետով բաժանում և մաքրում
+                    # Անունների մաքրում
                     names = [n.strip() for n in raw_t.replace(',', '\n').split('\n') if n.strip()]
                     
                     added = 0
                     for name in names:
-                        # ՍՏՈՒԳՈՒՄ: Արդյոք այս անունով ուսուցիչ արդեն ԳՐԱՆՑՎԱԾ Է
-                        if not any(t.name.lower() == name.lower() for t in st.session_state.teachers):
-                            # Ստեղծում ենք լիարժեք Teacher օբյեկտ (դատարկ առարկաներով), որ երևա ցուցակում
-                            from uuid import uuid4
-                            new_teacher = Teacher(id=str(uuid4()), name=name, subject_ids=[])
-                            st.session_state.teachers.append(new_teacher)
+                        # Ավելացնում ենք հենց teacher_pool-ի մեջ
+                        if name not in st.session_state.teacher_pool:
+                            st.session_state.teacher_pool.append(name)
                             added += 1
                     
                     if added > 0:
                         save_to_disk()
-                        st.success(f"✅ {added} ուսուցիչ միանգամից ավելացվեց բազա:")
+                        st.success(f"✅ {added} անուն ավելացվեց ուսուցիչների pool-ում:")
                         st.rerun()
 
     with col2:
@@ -1014,18 +1011,17 @@ elif st.session_state.active_page == "🚀 Մասսայական" and st.session_
             if st.button("Ավելացնել Առարկաները", use_container_width=True, type="primary"):
                 if raw_s:
                     subjs = [s.strip() for s in raw_s.replace(',', '\n').split('\n') if s.strip()]
+                    
                     added_s = 0
                     for s_name in subjs:
-                        # ՍՏՈՒԳՈՒՄ: Արդյոք այս առարկան արդեն ԳՐԱՆՑՎԱԾ Է
-                        if not any(s.name.lower() == s_name.lower() for s in st.session_state.subjects):
-                            from uuid import uuid4
-                            new_subj = Subject(id=str(uuid4()), name=s_name, complexity=3)
-                            st.session_state.subjects.append(new_subj)
+                        # Ավելացնում ենք հենց subj_pool-ի մեջ
+                        if s_name not in st.session_state.subj_pool:
+                            st.session_state.subj_pool.append(s_name)
                             added_s += 1
                     
                     if added_s > 0:
                         save_to_disk()
-                        st.success(f"✅ {added_s} առարկա միանգամից ավելացվեց բազա:")
+                        st.success(f"✅ {added_s} առարկա ավելացվեց առարկաների pool-ում:")
                         st.rerun()
                     
 
