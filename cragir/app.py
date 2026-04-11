@@ -855,23 +855,17 @@ if st.session_state.user_role == 'owner':
     st.sidebar.divider()
     st.sidebar.markdown("<h3 style='color: #dc3545;'>⚠️ Վտանգավոր Գոտի</h3>", unsafe_allow_html=True)
     
-    # 1. Եթե key-ը չկա session_state-ում, ստեղծում ենք այն False արժեքով
-    if "reset_checkbox" not in st.session_state:
-        st.session_state["reset_checkbox"] = False
-
-    # 2. Checkbox-ին տալիս ենք value պարամետրը, որը կապված է session_state-ի հետ
-    confirm_reset = st.sidebar.checkbox(
-        "Հաստատում եմ ամբողջական ջնջումը", 
-        key="reset_checkbox"
-    )
+    # Checkbox-ը իր key-ով
+    confirm_reset = st.sidebar.checkbox("Հաստատում եմ ամբողջական ջնջումը", key="reset_checkbox")
     
-    if st.sidebar.button("🚨 Զրոյացնել Ամբողջ Բազան", type="primary", use_container_width=True, disabled=not confirm_reset):
-        reset_all_data()
+    # Օգտագործում ենք on_click, որը կաշխատի button-ը սեղմելուց հետո, բայց rerun-ից առաջ
+    if st.sidebar.button("🚨 Զրոյացնել Ամբողջ Բազան", 
+                         type="primary", 
+                         use_container_width=True, 
+                         disabled=not confirm_reset,
+                         on_click=lambda: st.session_state.update({"reset_checkbox": False})):
         
-        # 3. Ձեռքով զրոյացնում ենք session_state-ի արժեքը
-        st.session_state["reset_checkbox"] = False
-        
-        # 4. Թարմացնում ենք էջը
+        reset_all_data() # Քո ջնջելու ֆունկցիան
         st.rerun()
 
 st.sidebar.divider()
