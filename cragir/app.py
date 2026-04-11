@@ -1557,16 +1557,17 @@ elif st.session_state.active_page == "normal":
             if not st.session_state.classes or not st.session_state.assignments:
                 st.error("❌ Բացակայում են դասարանները կամ ժամերը գեներացման համար:")
             else:
-                # 250-ից 500 փորձը լիովին բավարար է այս տրամաբանության համար
-                max_attempts = 500 
-                with st.spinner(f"🧠 Ալգորիթմը փնտրում է լավագույն տարբերակը (Max {max_attempts} փորձ)..."):
+                max_attempts = 200 
+                with st.spinner(f"🧠 Ալգորիթմը համեմատում է լավագույն տարբերակները ({max_attempts} փորձ)..."):
                     teacher_prefs = st.session_state.get('teacher_preferences', {})
-                    final_schedule = []
-                    total_success = False
+                    
+                    # Լավագույնին պահելու համար
+                    best_overall_schedule = []
+                    best_score = -1
+                    best_attempt_num = 0
                     fail_reason = "" 
 
                     for attempt in range(max_attempts):
-                        # range(1, 8) երաշխավորում է միայն 1-7-րդ ժամերը
                         teacher_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
                         class_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
                         room_occupancy = {d: {h: set() for h in range(1, 8)} for d in DAYS_AM}
@@ -1577,6 +1578,7 @@ elif st.session_state.active_page == "normal":
                         random.shuffle(shuffled_classes)
                         
                         generation_failed = False
+                        current_score = 0 # Այս փորձի միավորը
                         
                         for cls in shuffled_classes:
                             class_label = f"{cls.grade}{cls.section}"
@@ -1586,7 +1588,6 @@ elif st.session_state.active_page == "normal":
                             for ass in assignments_for_cls:
                                 class_fund.extend([ass] * ass.lessons_per_week)
                             
-                            # 1. ԱՄԵՆԱԿԱՐԵՎՈՐԸ. Սորտավորում ենք ըստ բարդության և հատուկ առարկաների (AI, Python)
                             class_fund.sort(key=lambda x: (
                                 "ai" in get_subj_name(x.subject_id).lower() or 
                                 "python" in get_subj_name(x.subject_id).lower(),
@@ -1599,15 +1600,14 @@ elif st.session_state.active_page == "normal":
                             while class_fund and timeout < 2000:
                                 timeout += 1
                                 candidate = class_fund[0]
+                                subj_name = get_subj_name(candidate.subject_id)
+                                subj_complexity = get_subj_complexity(candidate.subject_id)
                                 t_name = next((t.name for t in st.session_state.teachers if t.id == candidate.teacher_id), "Անհայտ")
                                 
-                                # 2. ՕՐՎԱ ԸՆՏՐՈՒԹՅԱՆ ՃՇԳՐԻՏ ԼՈԳԻԿԱ
                                 possible_days = []
-                                # Նախ ստուգում ենք ուսուցչի նախընտրած օրերը (օրինակ՝ AI միայն Երկուշաբթի)
                                 if t_name in teacher_prefs:
                                     possible_days = [d for d in teacher_prefs[t_name] if class_day_counts[d] < 7]
                                 
-                                # Եթե նախընտրած օր չկա կամ դրանք արդեն 7 ժամ ունեն, վերցնում ենք թեթև օրերը
                                 if not possible_days:
                                     min_count = min(class_day_counts.values())
                                     possible_days = [d for d in DAYS_AM if class_day_counts[d] == min_count and class_day_counts[d] < 7]
@@ -1618,16 +1618,15 @@ elif st.session_state.active_page == "normal":
 
                                 best_day = random.choice(possible_days)
                                 
-                                # 3. ԺԱՄԵՐԻ ՍԱՀՄԱՆԱՓԱԿՈՒՄ (Մաքսիմում 7 ժամ)
-                                available_hours = list(range(1, 8)) # Միայն 1, 2, 3, 4, 5, 6, 7
-                                random.shuffle(available_hours)
+                                if subj_complexity >= 4 or "python" in subj_name.lower() or "ai" in subj_name.lower():
+                                    available_hours = [1, 2, 3, 4, 5, 6, 7]
+                                else:
+                                    available_hours = list(range(1, 8))
+                                    random.shuffle(available_hours)
                                 
                                 found_slot = False
                                 for next_hour in available_hours:
-                                    # Ստուգում ենք բոլոր բախումները
                                     if class_label in class_occupancy[best_day][next_hour]: continue
-
-                                    subj_name = get_subj_name(candidate.subject_id)
                                     room_to_check = get_auto_room(subj_name, class_label)
                                     
                                     if (candidate.teacher_id not in teacher_occupancy[best_day][next_hour] and 
@@ -1635,12 +1634,16 @@ elif st.session_state.active_page == "normal":
                                         
                                         subj_name_low = subj_name.lower()
                                         subj_count_today = class_daily_subjects[cls.id][best_day].count(subj_name)
-                                        
-                                        # Զույգ ժամերի թույլտվություն (AI/Python/Շատ ժամ ունեցողներ)
                                         is_double_allowed = ("python" in subj_name_low or "ai" in subj_name_low or candidate.lessons_per_week >= 6)
 
                                         if (is_double_allowed and subj_count_today < 2) or (not is_double_allowed and subj_count_today < 1):
-                                            # Գրանցում ենք դասը
+                                            # ՀԱՇՎՈՒՄ ԵՆՔ ՄԻԱՎՈՐՆԵՐԸ (Գնահատում ենք որակը)
+                                            if next_hour <= 3: # Լավագույն ժամեր
+                                                if "python" in subj_name_low or "ai" in subj_name_low: current_score += 20
+                                                elif subj_complexity >= 4: current_score += 10
+                                            elif next_hour >= 6: # Ուշ ժամեր
+                                                if subj_complexity <= 2: current_score += 5
+
                                             target = class_fund.pop(0)
                                             current_attempt_schedule.append({
                                                 "Դասարան": class_label, "Օր": best_day, "Ժամ": next_hour, 
@@ -1656,7 +1659,7 @@ elif st.session_state.active_page == "normal":
                                             break
                                 
                                 if not found_slot:
-                                    continue # Փորձում ենք այլ օր հաջորդ timeout-ի ժամանակ
+                                    continue 
 
                             if timeout >= 2000:
                                 remaining = list(set([get_subj_name(a.subject_id) for a in class_fund]))
@@ -1664,14 +1667,16 @@ elif st.session_state.active_page == "normal":
                                 generation_failed = True
                                 break
                         
+                        # Եթե գեներացիան հաջողվեց, համեմատում ենք լավագույնի հետ
                         if not generation_failed:
-                            final_schedule = current_attempt_schedule
-                            total_success = True
-                            break
+                            if current_score > best_score:
+                                best_score = current_score
+                                best_overall_schedule = current_attempt_schedule
+                                best_attempt_num = attempt + 1
 
-                    if total_success:
-                        st.session_state.schedule = final_schedule
-                        st.success(f"🎉 Դասացուցակը պատրաստ է ({attempt + 1} փորձից):")
+                    if best_overall_schedule:
+                        st.session_state.schedule = best_overall_schedule
+                        st.success(f"🎉 Լավագույն տարբերակը գտնված է: Փորձ №{best_attempt_num} (Score: {best_score})")
                         st.balloons()
                     else:
                         st.error(f"⚠️ Գեներացումը ձախողվեց {max_attempts} փորձից հետո:")
