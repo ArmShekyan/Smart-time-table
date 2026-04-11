@@ -1567,6 +1567,16 @@ elif st.session_state.active_page == "normal":
             </style>
         """, unsafe_allow_html=True)
 
+        # --- ԱՅՍՏԵՂ ԱՎԵԼԱՑՎԱԾ Է ԼՈՒՌ ՍՏՈՒԳՈՒՄԸ ---
+        if not st.session_state.classes or not st.session_state.assignments:
+            st.session_state.schedule = [] # Մաքրում ենք հին աղյուսակները
+            error_msg = st.error("❌ Բացակայում են դասարանները կամ ժամերը գեներացման համար:")
+            import time
+            time.sleep(1.5)
+            error_msg.empty()
+            st.rerun()
+        # ----------------------------------------
+
         if "show_tables" not in st.session_state:
             st.session_state.show_tables = True
 
