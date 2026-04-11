@@ -1539,8 +1539,46 @@ elif st.session_state.active_page == "normal":
             
 
     elif st.session_state.active_tab == "🚀 Գեներացում":
-        st.title("🚀 Դասացուցակի Գեներացում")
+        # --- ՎԵՐՆԱԳԻՐ ԵՎ ՋՆՋԵԼՈՒ ԿՈՃԱԿ ---
+        col_title, col_delete = st.columns([0.8, 0.2])
+        
+        with col_title:
+            st.title("🚀 Դասացուցակի Գեներացում")
+            
+        with col_delete:
+            if st.button("🗑️ Ջնջել", use_container_width=True, help="Ջնջել միայն գեներացված դասացուցակը"):
+                st.session_state.schedule = []
+                
+                headers = {
+                    "apikey": st.secrets["supabase_key"],
+                    "Authorization": f"Bearer {st.secrets['supabase_key']}",
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal"
+                }
+                
+                # Պատրաստում ենք տվյալները՝ զրոյացնելով միայն schedule դաշտը
+                updated_payload = {
+                    "data": {
+                        "classes": [c.__dict__ if hasattr(c, '__dict__') else c for cls in st.session_state.classes],
+                        "teachers": [t.__dict__ if hasattr(t, '__dict__') else t for t in st.session_state.teachers],
+                        "subjects": [s.__dict__ if hasattr(s, '__dict__') else s for s in st.session_state.subjects],
+                        "assignments": [a.__dict__ if hasattr(a, '__dict__') else a for a in st.session_state.assignments],
+                        "schedule": [], # Զրոյացնում ենք միայն սա
+                        "last_update": datetime.now().strftime("%d.%m.%Y | %H:%M")
+                    }
+                }
+                
+                try:
+                    url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1"
+                    requests.patch(url, headers=headers, json=updated_payload)
+                    st.toast("✅ Դասացուցակը հեռացվեց", icon="🗑️")
+                    import time
+                    time.sleep(0.5)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Սխալ ջնջելիս: {e}")
 
+        # --- ՔՈ ՕՐԻԳԻՆԱԼ CSS-Ը ---
         st.markdown("""
             <style>
                 /* Ստիպում ենք աղյուսակին զբաղեցնել ողջ լայնությունը և ունենալ հավասար սյունակներ */
@@ -1567,19 +1605,10 @@ elif st.session_state.active_page == "normal":
             </style>
         """, unsafe_allow_html=True)
 
-        # --- ԱՅՍՏԵՂ ԱՎԵԼԱՑՎԱԾ Է ԼՈՒՌ ՍՏՈՒԳՈՒՄԸ ---
-        if not st.session_state.classes or not st.session_state.assignments:
-            st.session_state.schedule = [] # Մաքրում ենք հին աղյուսակները
-            error_msg = st.error("❌ Բացակայում են դասարանները կամ ժամերը գեներացման համար:")
-            import time
-            time.sleep(1.5)
-            error_msg.empty()
-            st.rerun()
-        # ----------------------------------------
-
         if "show_tables" not in st.session_state:
             st.session_state.show_tables = True
 
+        # --- ՔՈ ՕՐԻԳԻՆԱԼ ՖՈՒՆԿՑԻԱՆԵՐԸ ԵՎ ԱԼԳՈՐԻԹՄԸ ---
         def get_auto_room(subj_name, class_label):
             s_name = str(subj_name).lower()
             if "python" in s_name or "ai" in s_name:
