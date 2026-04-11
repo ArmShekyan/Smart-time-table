@@ -660,11 +660,13 @@ if not st.session_state.get('logged_in', False):
                             st.session_state.active_tab = "📂 Վերջին պահպանվածը"
 
                         st.toast(f"🎉 Բարի վերադարձ, {username_input}!", icon="🚀")
-                        st.snow() 
                         time.sleep(1.3)
                         st.rerun()
                     else:
-                        st.error("❌ Տվյալները սխալ են")
+                        error_placeholder = st.empty() # Ստեղծում ենք դատարկ տեղ
+                        error_placeholder.error("❌ Տվյալները սխալ են") # Ցույց ենք տալիս սխալը
+                        time.sleep(1.5) # Սպասում ենք 1.5 վայրկյան
+                        error_placeholder.empty() # Մաքրում ենք այդ տեղը
                 
     st.stop()
 
