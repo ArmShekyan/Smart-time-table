@@ -1546,7 +1546,7 @@ elif st.session_state.active_page == "normal":
             st.title("🚀 Դասացուցակի Գեներացում")
             
         with col_delete:
-            if st.button("🗑️ Ջնջել", use_container_width=True, help="Ջնջել միայն գեներացված դասացուցակը"):
+            if st.button("🗑️ Ջնջել", use_container_width=True, help="Ջնջել գեներացված դասացուցակը"):
                 # Ստեղծում ենք դատարկ տեղ հաղորդագրության համար
                 placeholder = st.empty()
                 
