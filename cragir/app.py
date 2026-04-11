@@ -455,9 +455,27 @@ def parse_data(data):
     st.session_state.teacher_pool = data.get("teacher_pool", [])
     st.session_state.users_list = data.get("users_list", [DEFAULT_OWNER])
 
+def check_sync():
+    try:
+        read_url = f"{st.secrets['supabase_url']}/rest/v1/global_updates?id=eq.1&select=last_update"
+        headers = {
+            "apikey": st.secrets["supabase_key"],
+            "Authorization": f"Bearer {st.secrets['supabase_key']}"
+        }
+        resp = requests.get(read_url, headers=headers).json()
+        db_time = resp[0]['last_update']
+
+        # Եթե բազայի ժամը ավելի նոր է, քան մեր էջի բեռնման ժամը
+        if db_time > st.session_state.load_time:
+            st.toast("⚠️ Տվյալները փոխվել են ուրիշի կողմից: Խնդրում ենք թարմացնել էջը:", icon="🔔")
+    except:
+        pass
 
 # --- INITIALIZATION ---
 st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅")
+
+if "load_time" not in st.session_state:
+    st.session_state.load_time = datetime.datetime.now().strftime("%d.%m.%Y | %H:%M")
 
 st.markdown("""
 <style>
@@ -669,6 +687,7 @@ if not st.session_state.get('logged_in', False):
                 
     st.stop()
 
+check_sync()
 
 if st.session_state.get("show_readme", False):
     st.session_state.show_readme = False
