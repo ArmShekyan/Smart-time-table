@@ -1788,7 +1788,6 @@ elif st.session_state.active_page == "normal":
             resp = requests.get(read_url, headers=headers).json()
             raw_time = resp[0]['last_update']  # Սա բերում է "05.04.2026 | 18:24" տիպի տեքստ
             
-            # Բաժանում ենք ամսաթիվը և ժամը, եթե կա " | " նշանը
             if " | " in raw_time:
                 db_date, db_hour = raw_time.split(" | ")
             else:
@@ -1820,23 +1819,20 @@ elif st.session_state.active_page == "normal":
                 </div>
             """, unsafe_allow_html=True)
 
-        # 3. Քո մնացած կոդը՝ ՀԻՇՈՂՈՒԹՅԱՄԲ
+        # 3. Ցուցադրման տրամաբանությունը
         if st.session_state.schedule:
             df = pd.DataFrame(st.session_state.schedule)
             all_grades = sorted(list(set([c.grade for c in st.session_state.classes])))
             
             if all_grades:
-                # ✨ ՀԻՇՈՂՈՒԹՅՈՒՆ: Պահում ենք ընտրված դասարանի թիվը (grade)
                 if "selected_view_grade" not in st.session_state:
                     st.session_state.selected_view_grade = all_grades[0]
 
-                # Գտնում ենք current_idx-ը ըստ պահված դասարանի
                 try:
                     current_idx = all_grades.index(st.session_state.selected_view_grade)
                 except (ValueError, IndexError):
                     current_idx = 0
 
-                # Selectbox-ը՝ index-ով և key-ով
                 sel_grade = st.selectbox(
                     "Ընտրեք դասարանը", 
                     all_grades, 
@@ -1844,34 +1840,35 @@ elif st.session_state.active_page == "normal":
                     key="grade_view_selector"
                 )
 
-                # Թարմացնում ենք հիշողությունը
                 st.session_state.selected_view_grade = sel_grade
 
-                # --- Ստուգում ենք չլրացված դասարանները տվյալ թվի (grade) համար ---
+                # --- ՃՇՏՎԱԾ ՍՏՈՒԳՈՒՄ ---
+                # Վերցնում ենք տվյալ թվի տակ եղած բոլոր հնարավոր դասարանները (10Ա, 10Բ...)
                 full_classes_in_grade = [f"{c.grade}{c.section}" for c in st.session_state.classes if c.grade == sel_grade]
                 filled_classes = df['Դասարան'].unique()
-                missing_classes = [c for c in full_classes_in_grade if c not in filled_classes]
+                
+                # Պարզում ենք՝ արդյոք տվյալ grade-ի տակ գոնե մի լրացված դասարան կա
+                actually_filled_in_this_grade = [c for c in full_classes_in_grade if c in filled_classes]
 
-                if missing_classes:
-                    # Այստեղ missing_classes-ի փոխարեն դնում ենք sel_grade
+                if not actually_filled_in_this_grade:
+                    # Միայն եթե ՈՉ ՄԻ դասարան լրացված չէ տվյալ թվի համար
                     st.warning(f"⚠️ Դեռևս {sel_grade}-րդ դասարանների համար դասացուցակ կազմված չէ")
+                else:
+                    # Եթե կան լրացված դասարաններ, ցուցադրում ենք դրանք
+                    for cls in full_classes_in_grade:
+                        cls_data = df[df['Դասարան'] == cls]
+                        if not cls_data.empty:
+                            with st.expander(f"🏫 Դասարան՝ {cls}", expanded=True):
+                                cls_df_clean = cls_data.copy()
+                                cls_df_clean['Առարկա'] = cls_df_clean['Առարկա'].apply(lambda x: str(x).split(" (")[0])
+                                
+                                pivot = cls_df_clean.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
+                                
+                                existing_days = [day for day in DAYS_AM if day in pivot.columns]
+                                if existing_days:
+                                    pivot = pivot[existing_days]
 
-                # Ցուցադրման տրամաբանությունը
-                for cls in full_classes_in_grade:
-                    cls_data = df[df['Դասարան'] == cls]
-                    if not cls_data.empty:
-                        with st.expander(f"🏫 Դասարան՝ {cls}", expanded=True):
-                            cls_df_clean = cls_data.copy()
-                            # Մաքրում ենք առարկայի անունը (հանում ենք ID-ն փակագծերով)
-                            cls_df_clean['Առարկա'] = cls_df_clean['Առարկա'].apply(lambda x: str(x).split(" (")[0])
-                            
-                            pivot = cls_df_clean.pivot(index='Ժամ', columns='Օր', values='Առարկա').fillna("-")
-                            
-                            existing_days = [day for day in DAYS_AM if day in pivot.columns]
-                            if existing_days:
-                                pivot = pivot[existing_days]
-
-                            st.dataframe(pivot, use_container_width=True)
+                                st.dataframe(pivot, use_container_width=True)
             else: 
                 st.info("Դեռ դասարաններ չկան")
         else: 
