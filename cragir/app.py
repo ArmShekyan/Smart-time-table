@@ -293,7 +293,7 @@ def save_to_disk(force_overwrite=False):
 
 def reset_all_data():
     with st.spinner("🚨 Ամբողջական ջնջում..."):
-        time.sleep(2)
+        # Նախապատրաստում ենք դատարկ տվյալները
         st.session_state.subjects = []
         st.session_state.teachers = []
         st.session_state.classes = []
@@ -316,11 +316,13 @@ def reset_all_data():
         headers = get_supabase_headers()
         if headers:
             try:
+                # 1. Ջնջում ենք Cloud-ում
                 url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data"
                 payload = {"id": 1, "data": data}
                 headers["Prefer"] = "resolution=merge-duplicates"
                 requests.post(url, headers=headers, data=json.dumps(payload))
 
+                # 2. Զրոյացնում ենք թարմացման տվյալները
                 update_url = f"{st.secrets['supabase_url']}/rest/v1/global_updates?id=eq.1"
                 reset_update = {
                     "last_update": "--:--", 
@@ -328,22 +330,20 @@ def reset_all_data():
                 }
                 requests.patch(update_url, headers=headers, json=reset_update)
 
-                # --- ՓՈՓՈԽՈՒԹՅՈՒՆԸ ԱՅՍՏԵՂ Է ---
+                # Հաղորդագրություն և թարմացում
                 st.toast("💥 Բազան զրոյացվեց Cloud-ում:", icon="💣")
-                st.balloons()
-                time.sleep(2)  # Տալիս ենք 2 վայրկյան ժամանակ, որ balloons-ը ու toast-ը երևան
-                st.rerun() 
+                time.sleep(1)
+                st.rerun()
                 return
             except Exception:
                 pass
 
+        # Եթե Cloud-ը չաշխատի, պահպանում ենք տեղական ֆայլում
         with open(DB_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
-            
-        # --- ԵՎ ԱՅՍՏԵՂ ---
+        
         st.toast("💥 Բազան զրոյացվեց տեղական ֆայլում:", icon="💣")
-        st.balloons()
-        time.sleep(2)  # Դադար rerun-ից առաջ
+        time.sleep(1)
         st.rerun()
 
 
