@@ -1001,6 +1001,7 @@ elif st.session_state.active_page == "🚀 Մասսայական" and st.session_
                     
                     if added > 0:
                         save_to_disk()
+                        st.session_state["bulk_page_t"] = ""
                         msg_container = st.empty()
                         msg_container.success(f"✅ {added} անուն ավելացվեց ուսուցիչների pool-ում:")
                         time.sleep(1.5)
@@ -1024,6 +1025,7 @@ elif st.session_state.active_page == "🚀 Մասսայական" and st.session_
                     
                     if added_s > 0:
                         save_to_disk()
+                        st.session_state["bulk_page_t"] = ""
                         msg_container = st.empty()
                         msg_container.success(f"✅ {added_s} առարկա ավելացվեց առարկաների pool-ում:")
                         time.sleep(1.5)
