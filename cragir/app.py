@@ -1541,6 +1541,32 @@ elif st.session_state.active_page == "normal":
     elif st.session_state.active_tab == "🚀 Գեներացում":
         st.title("🚀 Դասացուցակի Գեներացում")
 
+        st.markdown("""
+            <style>
+                /* Ստիպում ենք աղյուսակին զբաղեցնել ողջ լայնությունը և ունենալ հավասար սյունակներ */
+                div[data-testid="stTable"] table {
+                    width: 100% !important;
+                    table-layout: fixed !important; 
+                }
+                
+                /* Բոլոր վանդակների (տողերի) համար */
+                div[data-testid="stTable"] td, div[data-testid="stTable"] th {
+                    text-align: center !important;
+                    vertical-align: middle !important;
+                    height: 50px !important; /* Տողերի հավասար բարձրություն */
+                    border: 1px solid #444 !important;
+                    word-wrap: break-word !important; /* Եթե տեքստը երկար լինի, կտեղավորի */
+                }
+
+                /* Առաջին սյունակի (Ժամ) լայնությունը */
+                div[data-testid="stTable"] th:first-child, 
+                div[data-testid="stTable"] td:first-child {
+                    width: 60px !important;
+                    background-color: #1e1e1e !important; /* Մի փոքր տարբերվող գույն */
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
         if "show_tables" not in st.session_state:
             st.session_state.show_tables = True
 
@@ -1676,7 +1702,7 @@ elif st.session_state.active_page == "normal":
 
                     if best_overall_schedule:
                         st.session_state.schedule = best_overall_schedule
-                        st.success(f"🎉 Լավագույն տարբերակը գտնված է: Փորձ №{best_attempt_num} (Score: {best_score})")
+                        st.success(f"🎉 Լավագույն տարբերակը գտնված է: Փորձ №{best_attempt_num}")
                         st.balloons()
                     else:
                         st.error(f"⚠️ Գեներացումը ձախողվեց {max_attempts} փորձից հետո:")
