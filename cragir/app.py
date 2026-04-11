@@ -475,7 +475,7 @@ def check_sync():
 st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅")
 
 if "load_time" not in st.session_state:
-    st.session_state.load_time = datetime.datetime.now().strftime("%d.%m.%Y | %H:%M")
+    st.session_state.load_time = datetime.now().strftime("%d.%m.%Y | %H:%M")
 
 st.markdown("""
 <style>
