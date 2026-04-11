@@ -617,14 +617,14 @@ if not st.session_state.get('logged_in', False):
             st.markdown(
                 """
                 <div style='text-align: center; padding-bottom: 20px;'>
-                    <div style='display: inline-block; border-bottom: 2px solid #0077ff; padding-bottom: 10px; margin-bottom: 20px; box-shadow: 0 4px 10px -5px #0077ff;'>
-                        <h1 style='color: #0077ff; font-weight: 800; letter-spacing: 5px; font-size: 30px; margin: 0;'>
-                            SMART TIME TABLE
-                        </h1>
+                    <h1 style='color: #0077ff; font-weight: 800; letter-spacing: 5px; font-size: 30px; margin-bottom: 10px;'>
+                        SMART TIME TABLE
+                    </h1>
+                    <div style='display: inline-block; border-bottom: 2px solid #0077ff; padding-bottom: 10px; box-shadow: 0 4px 8px -4px #0077ff;'>
+                        <p style='color: #8b949e; font-size: 14px; font-weight: 300; margin: 0;'>
+                            Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար
+                        </p>
                     </div>
-                    <p style='color: #8b949e; font-size: 14px; font-weight: 300; margin-top: 10px;'>
-                        Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար
-                    </p>
                 </div>
                 """, 
                 unsafe_allow_html=True
