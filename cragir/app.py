@@ -362,9 +362,9 @@ def manual_refresh():
                         # 1. Բեռնում ենք բոլոր թարմ տվյալները
                         parse_data(data)
                         
-                        # 2. ✨ ՈՒՂՂՈՒՄ. parse_data-ից հետո դատարկում ենք schedule-ը,
-                        # որպեսզի գեներացման բաժնում հին աղյուսակը չմնա:
-                        st.session_state.schedule = []
+                        # ✨ ՈՒՂՂՈՒՄ. Հեռացրել ենք st.session_state.schedule = [] տողը,
+                        # որպեսզի պահպանված դասացուցակը ՉՋՆՋՎԻ թարմացման ժամանակ:
+                        
                         st.session_state.teacher_preferences = data.get('teacher_preferences', {})
                         
                         if "v_bot_view" in st.session_state:
@@ -387,8 +387,7 @@ def manual_refresh():
                     
                     parse_data(data)
                     
-                    # Նույն տրամաբանությունը տեղական ֆայլի համար
-                    st.session_state.schedule = []
+                    # ✨ ՈՒՂՂՈՒՄ. Այստեղ նույնպես հեռացրել ենք դատարկման տողը
                     st.session_state.teacher_preferences = data.get('teacher_preferences', {})
                     
                     if "v_bot_view" in st.session_state:
