@@ -1547,36 +1547,39 @@ elif st.session_state.active_page == "normal":
             
         with col_delete:
             if st.button("🗑️ Ջնջել", use_container_width=True, help="Ջնջել միայն գեներացված դասացուցակը"):
-                st.session_state.schedule = []
-                
-                headers = {
-                    "apikey": st.secrets["supabase_key"],
-                    "Authorization": f"Bearer {st.secrets['supabase_key']}",
-                    "Content-Type": "application/json",
-                    "Prefer": "return=minimal"
-                }
-                
-                # Ուղղված տվյալների ձևավորումը
-                updated_payload = {
-                    "data": {
-                        "classes": [c.__dict__ if hasattr(c, '__dict__') else c for c in st.session_state.classes],
-                        "teachers": [t.__dict__ if hasattr(t, '__dict__') else t for t in st.session_state.teachers],
-                        "subjects": [s.__dict__ if hasattr(s, '__dict__') else s for s in st.session_state.subjects],
-                        "assignments": [a.__dict__ if hasattr(a, '__dict__') else a for a in st.session_state.assignments],
-                        "schedule": [], 
-                        "last_update": datetime.now().strftime("%d.%m.%Y | %H:%M")
+                # Ստուգում ենք՝ արդյոք կա ջնջելու բան
+                if not st.session_state.schedule:
+                    st.warning("Դեռևս չկա գեներացված դասացուցակ ջնջելու համար:")
+                else:
+                    st.session_state.schedule = []
+                    
+                    headers = {
+                        "apikey": st.secrets["supabase_key"],
+                        "Authorization": f"Bearer {st.secrets['supabase_key']}",
+                        "Content-Type": "application/json",
+                        "Prefer": "return=minimal"
                     }
-                }
-                
-                try:
-                    url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1"
-                    requests.patch(url, headers=headers, json=updated_payload)
-                    st.toast("✅ Դասացուցակը հեռացվեց", icon="🗑️")
-                    import time
-                    time.sleep(0.5)
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Սխալ ջնջելիս: {e}")
+                    
+                    updated_payload = {
+                        "data": {
+                            "classes": [c.__dict__ if hasattr(c, '__dict__') else c for c in st.session_state.classes],
+                            "teachers": [t.__dict__ if hasattr(t, '__dict__') else t for t in st.session_state.teachers],
+                            "subjects": [s.__dict__ if hasattr(s, '__dict__') else s for s in st.session_state.subjects],
+                            "assignments": [a.__dict__ if hasattr(a, '__dict__') else a for a in st.session_state.assignments],
+                            "schedule": [], 
+                            "last_update": datetime.now().strftime("%d.%m.%Y | %H:%M")
+                        }
+                    }
+                    
+                    try:
+                        url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1"
+                        requests.patch(url, headers=headers, json=updated_payload)
+                        st.toast("✅ Դասացուցակը հեռացվեց", icon="🗑️")
+                        import time
+                        time.sleep(0.5)
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Սխալ ջնջելիս: {e}")
 
         # --- ՔՈ ՕՐԻԳԻՆԱԼ CSS-Ը ---
         st.markdown("""
