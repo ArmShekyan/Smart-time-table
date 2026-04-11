@@ -1614,11 +1614,8 @@ elif st.session_state.active_page == "normal":
                             for ass in assignments_for_cls:
                                 class_fund.extend([ass] * ass.lessons_per_week)
                             
-                            class_fund.sort(key=lambda x: (
-                                "ai" in get_subj_name(x.subject_id).lower() or 
-                                "python" in get_subj_name(x.subject_id).lower(),
-                                get_subj_complexity(x.subject_id)
-                            ), reverse=True)
+                            # ՍՈՐՏԱՎՈՐՈՒՄ ԸՍՏ ԲԱՐԴՈՒԹՅԱՆ
+                            class_fund.sort(key=lambda x: get_subj_complexity(x.subject_id), reverse=True)
 
                             class_day_counts = {d: 0 for d in DAYS_AM}
                             timeout = 0
@@ -1644,7 +1641,8 @@ elif st.session_state.active_page == "normal":
 
                                 best_day = random.choice(possible_days)
                                 
-                                if subj_complexity >= 4 or "python" in subj_name.lower() or "ai" in subj_name.lower():
+                                # ԺԱՄԵՐԻ ԸՆՏՐՈՒԹՅՈՒՆ ԸՍՏ ԲԱՐԴՈՒԹՅԱՆ
+                                if subj_complexity >= 4:
                                     available_hours = [1, 2, 3, 4, 5, 6, 7]
                                 else:
                                     available_hours = list(range(1, 8))
@@ -1664,11 +1662,10 @@ elif st.session_state.active_page == "normal":
 
                                         if (is_double_allowed and subj_count_today < 2) or (not is_double_allowed and subj_count_today < 1):
                                             # ՀԱՇՎՈՒՄ ԵՆՔ ՄԻԱՎՈՐՆԵՐԸ (Գնահատում ենք որակը)
-                                            if next_hour <= 3: # Լավագույն ժամեր
-                                                if "python" in subj_name_low or "ai" in subj_name_low: current_score += 20
-                                                elif subj_complexity >= 4: current_score += 10
-                                            elif next_hour >= 6: # Ուշ ժամեր
-                                                if subj_complexity <= 2: current_score += 5
+                                            if next_hour <= 3 and subj_complexity >= 4:
+                                                current_score += 15 # Բարձր միավոր բարդ առարկաներին առաջին ժամերին դնելու համար
+                                            elif next_hour >= 6 and subj_complexity <= 2:
+                                                current_score += 5 # Թեթև առարկաները վերջին ժամերին
 
                                             target = class_fund.pop(0)
                                             current_attempt_schedule.append({
