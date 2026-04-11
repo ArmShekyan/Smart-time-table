@@ -855,14 +855,21 @@ if st.session_state.user_role == 'owner':
     st.sidebar.divider()
     st.sidebar.markdown("<h3 style='color: #dc3545;'>⚠️ Վտանգավոր Գոտի</h3>", unsafe_allow_html=True)
     
-    # Տալիս ենք key, որպեսզի կարողանանք փոխել սեղմելուց հետո
-    confirm_reset = st.sidebar.checkbox("Հաստատում եմ ամբողջական ջնջումը", key="reset_checkbox")
+    # Ստեղծում ենք դինամիկ key (օրինակ՝ օգտագործելով session_state-ի մի արժեք)
+    if "reset_key_id" not in st.session_state:
+        st.session_state.reset_key_id = 0
+
+    # Օգտագործում ենք key-ը, որը կփոխվի ջնջելուց հետո
+    confirm_reset = st.sidebar.checkbox(
+        "Հաստատում եմ ամբողջական ջնջումը", 
+        key=f"reset_checkbox_{st.session_state.reset_key_id}"
+    )
     
     if st.sidebar.button("🚨 Զրոյացնել Ամբողջ Բազան", type="primary", use_container_width=True, disabled=not confirm_reset):
         reset_all_data()
         
-        # Հենց սա է վերադարձնում սկզբնական վիճակին
-        st.session_state["reset_checkbox"] = False
+        # Փոխելով այս թիվը՝ մենք ստիպում ենք Streamlit-ին ջնջել հին checkbox-ը և ստեղծել նորը
+        st.session_state.reset_key_id += 1
         
         st.rerun()
 
