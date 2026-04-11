@@ -1123,6 +1123,7 @@ elif st.session_state.active_page == "normal":
                     else:
                         st.warning("⚠️ Մուտքագրեք անունը:")
 
+        # --- ԱՋ ՍՅՈՒՆ: Գրանցել Առարկան (Բարդության հետ) ---
         with col_r:
             # Ավելացնում եմ միայն սա՝ եզրագծի և հավասարության համար
             with st.container(border=True):
@@ -1161,12 +1162,13 @@ elif st.session_state.active_page == "normal":
                         comp = st.select_slider("Բարդություն (1-5)", options=[1, 2, 3, 4, 5], value=3)
                         
                         if st.form_submit_button("Գրանցել", use_container_width=True):
-                            # Ստուգում ենք կրկնությունը
-                            if any(s.name.lower() == selected.lower() for s in st.session_state.subjects):
-                                st.error(f"❌ {selected} առարկան արդեն գրանցված է:")
+                            # Ստուգում ենք կրկնությունը (strip-ով՝ ավելի ապահով լինելու համար)
+                            clean_selected = selected.strip()
+                            if any(s.name.lower() == clean_selected.lower() for s in st.session_state.subjects):
+                                st.error(f"❌ {clean_selected} առարկան արդեն գրանցված է:")
                             else:
                                 # 1. Ստեղծում և ավելացնում ենք նոր առարկան
-                                new_subject = Subject(id=str(uuid.uuid4()), name=selected, complexity=comp)
+                                new_subject = Subject(id=str(uuid.uuid4()), name=clean_selected, complexity=comp)
                                 st.session_state.subjects.append(new_subject)
                                 
                                 # 2. ՀԵՌԱՑՆՈՒՄ ԵՆՔ POOL-ԻՑ, որպեսզի այլևս չերևա ընտրացանկում
@@ -1179,7 +1181,7 @@ elif st.session_state.active_page == "normal":
                                 st.toast(f"✅ Առարկան գրանցվեց:", icon="📚")
                                 st.rerun()
                 
-                # --- ԱՅՍ ՄԱՍՆ Է ԱՎԵԼԱՑՎԱԾ ---
+                # Եթե pool-ը դատարկ է
                 else:
                     st.info("ℹ️ Բոլոր առարկաները գրանցված են կամ ցանկը դեռ դատարկ է:")
 
@@ -1313,10 +1315,8 @@ elif st.session_state.active_page == "normal":
                         sel_subjs = st.multiselect("Ընտրեք առարկաները", st.session_state.subjects, format_func=lambda x: x.name)
                         
                         if st.form_submit_button("Գրանցել", use_container_width=True):
-                            # 1. Բերում ենք անունը մաքուր տեսքի (առանց ավելորդ բացատների)
                             clean_name = sel_t.strip()
                             
-                            # 2. Ստուգում ենք կրկնությունը
                             if any(t.name.lower() == clean_name.lower() for t in st.session_state.teachers):
                                 st.error(f"❌ {clean_name}-ն արդեն գրանցված է որպես ուսուցիչ:")
                             elif not sel_subjs:
@@ -1326,18 +1326,17 @@ elif st.session_state.active_page == "normal":
                                 new_teacher = Teacher(id=str(uuid.uuid4()), name=clean_name, subject_ids=[s.id for s in sel_subjs])
                                 st.session_state.teachers.append(new_teacher)
                                 
-                                # --- ԿԱՐԵՎՈՐ ՔԱՅԼ: Հեռացնում ենք ընտրացանկից (pool-ից), որ այլևս չերևա ---
+                                # --- ԼՈՒԾՈՒՄԸ ԱՅՍՏԵՂ Է ---
+                                # Հեռացնում ենք pool-ից, որպեսզի rerun-ից հետո selectbox-ում չլինի
                                 if sel_t in st.session_state.teacher_pool:
                                     st.session_state.teacher_pool.remove(sel_t)
                                 
                                 save_to_disk()
                                 st.toast(f"✅ Ուսուցիչը գրանցվեց", icon="👩‍🏫")
                                 st.rerun()
-
-                # --- ԱՅՍ ՄԱՍՆ Է ԱՎԵԼԱՑՎԱԾ ---
-                elif not st.session_state.subjects:
-                    st.info("ℹ️ Ուսուցիչ գրանցելու համար նախ պետք է գրանցել առնվազն մեկ առարկա «Առարկաներ» բաժնում:")
                 
+                elif not st.session_state.subjects:
+                    st.info("ℹ️ Ուսուցիչ գրանցելու համար նախ պետք է գրանցել առնվազն մեկ առարկա:")
                 else:
                     st.info("ℹ️ Բոլոր ուսուցիչները գրանցված են կամ ցանկը դատարկ է:")
  
