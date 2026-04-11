@@ -1123,7 +1123,6 @@ elif st.session_state.active_page == "normal":
                     else:
                         st.warning("⚠️ Մուտքագրեք անունը:")
 
-        # --- ԱՋ ՍՅՈՒՆ: Գրանցել Առարկան (Բարդության հետ) ---
         with col_r:
             # Ավելացնում եմ միայն սա՝ եզրագծի և հավասարության համար
             with st.container(border=True):
@@ -1170,6 +1169,10 @@ elif st.session_state.active_page == "normal":
                                 save_to_disk()
                                 st.toast(f"✅ Առարկան գրանցվեց:", icon="📚")
                                 st.rerun()
+                
+                # --- ԱՅՍ ՄԱՍՆ Է ԱՎԵԼԱՑՎԱԾ ---
+                else:
+                    st.info("ℹ️ Բոլոր առարկաները գրանցված են կամ ցանկը դեռ դատարկ է:")
 
         st.divider()
         st.subheader("✅ Գրանցված Առարկաներ")
