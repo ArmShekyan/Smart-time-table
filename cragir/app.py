@@ -1546,10 +1546,16 @@ elif st.session_state.active_page == "normal":
             st.title("🚀 Դասացուցակի Գեներացում")
             
         with col_delete:
-            if st.button("🗑️ Ջնջել", use_container_width=True, help="Ջնջել գեներացված դասացուցակը"):
-                # Ստուգում ենք՝ արդյոք կա ջնջելու բան
+            if st.button("🗑️ Ջնջել", use_container_width=True, help="Ջնջել միայն գեներացված դասացուցակը"):
+                # Ստեղծում ենք դատարկ տեղ հաղորդագրության համար
+                placeholder = st.empty()
+                
                 if not st.session_state.schedule:
-                    st.warning("Դեռևս չկա գեներացված դասացուցակ ջնջելու համար:")
+                    # Ցույց ենք տալիս warning-ը դատարկ տեղում
+                    placeholder.warning("Դեռևս չկա գեներացված դասացուցակ ջնջելու համար:")
+                    time.sleep(1.5)
+                    # 1.5 վայրկյան հետո մաքրում ենք այդ տեղը
+                    placeholder.empty()
                 else:
                     st.session_state.schedule = []
                     
@@ -1575,11 +1581,7 @@ elif st.session_state.active_page == "normal":
                         url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1"
                         requests.patch(url, headers=headers, json=updated_payload)
                         st.toast("✅ Դասացուցակը հեռացվեց", icon="🗑️")
-                        
-                        # Ավելացված է 1.5 վայրկյան սպասման ժամանակը
-                        
-                        time.sleep(1.5) 
-                        
+                        time.sleep(1.5)
                         st.rerun()
                     except Exception as e:
                         st.error(f"Սխալ ջնջելիս: {e}")
