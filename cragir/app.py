@@ -607,24 +607,24 @@ if not st.session_state.get('logged_in', False):
 
 # --- 🚪 ԼՈԳԻՆԻ ԷՋ ---
 if not st.session_state.get('logged_in', False):
-    # Պահպանում ենք սյունակների քո [1, 2, 1] հարաբերակցությունը
     _, center_col, _ = st.columns([1, 2, 1])
 
     with center_col:
         st.markdown("<br><br>", unsafe_allow_html=True)
         
         with st.container(border=True):
-            # Դիզայնը՝ ճիշտ նկարի պես
+            # Թարմացված դիզայն՝ հարմարվող գծով
             st.markdown(
                 """
                 <div style='text-align: center; padding-bottom: 20px;'>
-                    <h1 style='color: #0077ff; font-weight: 800; letter-spacing: 5px; font-size: 30px; margin-bottom: 10px;'>
-                        SMART TIME TABLE
-                    </h1>
-                    <p style='color: #8b949e; font-size: 14px; font-weight: 300;'>
+                    <div style='display: inline-block; border-bottom: 2px solid #0077ff; padding-bottom: 10px; margin-bottom: 20px; box-shadow: 0 4px 10px -5px #0077ff;'>
+                        <h1 style='color: #0077ff; font-weight: 800; letter-spacing: 5px; font-size: 30px; margin: 0;'>
+                            SMART TIME TABLE
+                        </h1>
+                    </div>
+                    <p style='color: #8b949e; font-size: 14px; font-weight: 300; margin-top: 10px;'>
                         Մուտք գործեք համակարգ՝ աշխատանքը շարունակելու համար
                     </p>
-                    <div style='width: 50px; height: 2px; background: #0077ff; margin: 20px auto; box-shadow: 0 0 10px #0077ff;'></div>
                 </div>
                 """, 
                 unsafe_allow_html=True
@@ -649,7 +649,6 @@ if not st.session_state.get('logged_in', False):
                         st.session_state.username = user['username']
                         st.session_state.user_role = user['role']
                         
-                        # Cookies պահպանում
                         cookies.set("saved_username", user['username'])
                         cookies.set("saved_role", user['role'])
                         
