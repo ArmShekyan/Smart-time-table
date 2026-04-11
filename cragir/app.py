@@ -868,40 +868,12 @@ if st.session_state.user_role in ['owner', 'admin']:
         st.session_state.active_page = "👥 Օգտատերեր"
         st.rerun()
 
-# --- ՄԱՍՍԱՅԱԿԱՆ ԱՎԵԼԱՑՈՒՄ (Միայն Owner-ի համար) ---
     if st.session_state.user_role == 'owner':
-        with st.sidebar.expander("🚀 Մասսայական Ավելացում", expanded=False):
-            tab_t, tab_s = st.tabs(["👨‍🏫 Ուս.", "📚 Առ."])
+        if st.sidebar.button("🚀 Մասսայական Ավելացում", use_container_width=True):
+            st.session_state.active_page = "🚀 Մասսայական"
+            st.rerun()
 
-            with tab_t:
-                st.caption("Անունները՝ իրար տակ")
-                raw_t = st.text_area("Ուսուցիչների ցանկ", height=100, placeholder="Անուն Ազգանուն...", key="bulk_t")
-                if st.button("Ավելացնել Ուս.", use_container_width=True):
-                    if raw_t:
-                        names = [n.strip() for n in raw_t.split('\n') if n.strip()]
-                        added = 0
-                        for name in names:
-                            if name not in st.session_state.teacher_pool:
-                                st.session_state.teacher_pool.append(name)
-                                added += 1
-                        save_to_disk()
-                        st.success(f"✅ {added} անուն ավելացվեց")
-                        st.rerun()
 
-            with tab_s:
-                st.caption("Առարկաները՝ իրար տակ")
-                raw_s = st.text_area("Առարկաների ցանկ", height=100, placeholder="Ֆիզիկա...", key="bulk_s")
-                if st.button("Ավելացնել Առ.", use_container_width=True):
-                    if raw_s:
-                        subjs = [s.strip() for s in raw_s.split('\n') if s.strip()]
-                        added = 0
-                        for s in subjs:
-                            if s not in st.session_state.subj_pool:
-                                st.session_state.subj_pool.append(s)
-                                added += 1
-                        save_to_disk()
-                        st.success(f"✅ {added} առարկա ավելացվեց")
-                        st.rerun()
 
 # 🆕 ԹՌՆՈՂ ՊԱՏՈՒՀԱՆ՝ ՕԳՏԱՏԵՐ ՋՆՋԵԼՈՒ ՀԱՄԱՐ
 @st.dialog("🗑️ Հաստատեք ջնջումը")
@@ -1005,6 +977,52 @@ if st.session_state.active_page == "👥 Օգտատերեր" and st.session_stat
             if can_delete:
                 if c3.button("🗑️", key=f"del_user_{i}"):
                     confirm_delete_user_modal(i)
+
+elif st.session_state.active_page == "🚀 Մասսայական" and st.session_state.user_role == 'owner':
+    st.title("🚀 Տվյալների Մասսայական Ավելացում")
+    st.info("Այստեղ կարող եք ավելացնել անուններ՝ բաժանելով դրանք ստորակետներով կամ գրելով նոր տողից:")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        with st.container(border=True):
+            st.subheader("👨‍🏫 Ուսուցիչներ")
+            raw_t = st.text_area("Մուտքագրեք անունները (ստորակետով կամ Enter-ով)", height=300, 
+                                 placeholder="Բալայան, Վարդանյան, Հակոբյան...", key="bulk_page_t")
+            if st.button("Ավելացնել Ուսուցիչների Pool", use_container_width=True, type="primary"):
+                if raw_t:
+                    # Փոխարինում ենք ստորակետները նոր տողով, հետո բաժանում ենք
+                    processed_t = raw_t.replace(',', '\n')
+                    names = [n.strip() for n in processed_t.split('\n') if n.strip()]
+                    
+                    added = 0
+                    for name in names:
+                        if name not in st.session_state.teacher_pool:
+                            st.session_state.teacher_pool.append(name)
+                            added += 1
+                    save_to_disk()
+                    st.success(f"✅ {added} նոր ուսուցիչ ավելացվեց:")
+                    st.balloons()
+
+    with col2:
+        with st.container(border=True):
+            st.subheader("📚 Առարկաներ")
+            raw_s = st.text_area("Մուտքագրեք առարկաները (ստորակետով կամ Enter-ով)", height=300, 
+                                 placeholder="Մաթեմ, Ֆիզիկա, Հայոց լեզու...", key="bulk_page_s")
+            if st.button("Ավելացնել Առարկաների Pool", use_container_width=True, type="primary"):
+                if raw_s:
+                    # Փոխարինում ենք ստորակետները նոր տողով, հետո բաժանում ենք
+                    processed_s = raw_s.replace(',', '\n')
+                    subjs = [s.strip() for s in processed_s.split('\n') if s.strip()]
+                    
+                    added = 0
+                    for s in subjs:
+                        if s not in st.session_state.subj_pool:
+                            st.session_state.subj_pool.append(s)
+                            added += 1
+                    save_to_disk()
+                    st.success(f"✅ {added} նոր առարկա ավելացվեց:")
+                    st.balloons()
                     
 
 elif st.session_state.active_page == "normal":
