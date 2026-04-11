@@ -1161,12 +1161,21 @@ elif st.session_state.active_page == "normal":
                         comp = st.select_slider("Բարդություն (1-5)", options=[1, 2, 3, 4, 5], value=3)
                         
                         if st.form_submit_button("Գրանցել", use_container_width=True):
+                            # Ստուգում ենք կրկնությունը
                             if any(s.name.lower() == selected.lower() for s in st.session_state.subjects):
                                 st.error(f"❌ {selected} առարկան արդեն գրանցված է:")
                             else:
+                                # 1. Ստեղծում և ավելացնում ենք նոր առարկան
                                 new_subject = Subject(id=str(uuid.uuid4()), name=selected, complexity=comp)
                                 st.session_state.subjects.append(new_subject)
+                                
+                                # 2. ՀԵՌԱՑՆՈՒՄ ԵՆՔ POOL-ԻՑ, որպեսզի այլևս չերևա ընտրացանկում
+                                if selected in st.session_state.subj_pool:
+                                    st.session_state.subj_pool.remove(selected)
+                                    
+                                # 3. Պահպանում ենք տվյալները
                                 save_to_disk()
+                                
                                 st.toast(f"✅ Առարկան գրանցվեց:", icon="📚")
                                 st.rerun()
                 
@@ -1304,13 +1313,23 @@ elif st.session_state.active_page == "normal":
                         sel_subjs = st.multiselect("Ընտրեք առարկաները", st.session_state.subjects, format_func=lambda x: x.name)
                         
                         if st.form_submit_button("Գրանցել", use_container_width=True):
-                            if any(t.name.lower() == sel_t.lower() for t in st.session_state.teachers):
-                                st.error(f"❌ {sel_t}-ն արդեն գրանցված է որպես ուսուցիչ:")
+                            # 1. Բերում ենք անունը մաքուր տեսքի (առանց ավելորդ բացատների)
+                            clean_name = sel_t.strip()
+                            
+                            # 2. Ստուգում ենք կրկնությունը
+                            if any(t.name.lower() == clean_name.lower() for t in st.session_state.teachers):
+                                st.error(f"❌ {clean_name}-ն արդեն գրանցված է որպես ուսուցիչ:")
                             elif not sel_subjs:
                                 st.warning("⚠️ Ընտրեք առնվազն մեկ առարկա:")
                             else:
-                                new_teacher = Teacher(id=str(uuid.uuid4()), name=sel_t, subject_ids=[s.id for s in sel_subjs])
+                                # Գրանցում ենք նոր ուսուցչին
+                                new_teacher = Teacher(id=str(uuid.uuid4()), name=clean_name, subject_ids=[s.id for s in sel_subjs])
                                 st.session_state.teachers.append(new_teacher)
+                                
+                                # --- ԿԱՐԵՎՈՐ ՔԱՅԼ: Հեռացնում ենք ընտրացանկից (pool-ից), որ այլևս չերևա ---
+                                if sel_t in st.session_state.teacher_pool:
+                                    st.session_state.teacher_pool.remove(sel_t)
+                                
                                 save_to_disk()
                                 st.toast(f"✅ Ուսուցիչը գրանցվեց", icon="👩‍🏫")
                                 st.rerun()
