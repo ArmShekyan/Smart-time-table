@@ -1123,65 +1123,54 @@ elif st.session_state.active_page == "normal":
                     else:
                         st.warning("⚠️ Մուտքագրեք անունը:")
 
-        # --- ԱՋ ՍՅՈՒՆ: Գրանցել Առարկան (Բարդության հետ) ---
+        # --- ԱՋ ՍՅՈՒՆ: Գրանցել Առարկան ---
         with col_r:
-            # Ավելացնում եմ միայն սա՝ եզրագծի և հավասարության համար
             with st.container(border=True):
-                if st.session_state.subj_pool:
-                    # Ստեղծում ենք վերնագրի և մատիտի սյունակները
+                # Ֆիլտրում ենք pool-ը, որպեսզի ցույց տանք միայն չգրանցված առարկաները
+                registered_subj_names = [s.name.lower() for s in st.session_state.subjects]
+                available_subjs = [s for s in st.session_state.subj_pool if s.lower() not in registered_subj_names]
+
+                if available_subjs:
                     header_col, edit_col = st.columns([0.85, 0.15])
                     
                     with header_col:
                         st.markdown("### 📋 Գրանցել Առարկան")
                         
                     with edit_col:
-                        # Մատիտի կոճակը popover-ով
-                        with st.popover("✏️", help="Կառավարել ցանկի առարկաները"):
+                        with st.popover("✏️", help="Կառավարել ցանկը"):
                             st.write("🗑️ Ջնջել առարկան ցանկից")
                             subject_to_del = st.selectbox(
                                 "Ընտրեք ջնջվողը", 
                                 options=st.session_state.subj_pool, 
-                                key="del_from_pool_key" # Ավելացրու եզակի key
+                                key="del_from_pool_key"
                             )
-                            
-                            # ԿԱՐԵՎՈՐ ՓՈՓՈԽՈՒԹՅՈՒՆՆԵՐԸ ԱՅՍՏԵՂ
                             if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="confirm_del_subj_btn"):
                                 if subject_to_del in st.session_state.subj_pool:
-                                    # 1. Հեռացնում ենք Local-ից
                                     st.session_state.subj_pool.remove(subject_to_del)
-                                    
-                                    # 2. Պահպանում ենք force_overwrite=True-ով, որ Cloud-ը հետ չբերի հինը
                                     save_to_disk(force_overwrite=True) 
-                                    
-                                    st.toast(f"🗑️ {subject_to_del}-ը հեռացվեց ցանկից")
+                                    st.toast(f"🗑️ {subject_to_del}-ը հեռացվեց")
                                     st.rerun()
 
-                    # Հիմնական ֆորման
                     with st.form("register_subj", clear_on_submit=True):
-                        selected = st.selectbox("Ընտրեք ցանկից", st.session_state.subj_pool)
+                        # Օգտագործում ենք ֆիլտրված ցուցակը (available_subjs)
+                        selected = st.selectbox("Ընտրեք ցանկից", available_subjs)
                         comp = st.select_slider("Բարդություն (1-5)", options=[1, 2, 3, 4, 5], value=3)
                         
                         if st.form_submit_button("Գրանցել", use_container_width=True):
-                            # Ստուգում ենք կրկնությունը (strip-ով՝ ավելի ապահով լինելու համար)
                             clean_selected = selected.strip()
                             if any(s.name.lower() == clean_selected.lower() for s in st.session_state.subjects):
                                 st.error(f"❌ {clean_selected} առարկան արդեն գրանցված է:")
                             else:
-                                # 1. Ստեղծում և ավելացնում ենք նոր առարկան
                                 new_subject = Subject(id=str(uuid.uuid4()), name=clean_selected, complexity=comp)
                                 st.session_state.subjects.append(new_subject)
                                 
-                                # 2. ՀԵՌԱՑՆՈՒՄ ԵՆՔ POOL-ԻՑ, որպեսզի այլևս չերևա ընտրացանկում
+                                # Հեռացնում ենք pool-ից
                                 if selected in st.session_state.subj_pool:
                                     st.session_state.subj_pool.remove(selected)
                                     
-                                # 3. Պահպանում ենք տվյալները
                                 save_to_disk()
-                                
                                 st.toast(f"✅ Առարկան գրանցվեց:", icon="📚")
                                 st.rerun()
-                
-                # Եթե pool-ը դատարկ է
                 else:
                     st.info("ℹ️ Բոլոր առարկաները գրանցված են կամ ցանկը դեռ դատարկ է:")
 
@@ -1286,8 +1275,11 @@ elif st.session_state.active_page == "normal":
         # --- ԱՋ ՍՅՈՒՆ: Գրանցել Ուսուցչին (Առարկաների հետ) ---
         with col_r:
             with st.container(border=True):
-                if st.session_state.teacher_pool and st.session_state.subjects:
-                    # Ստեղծում ենք վերնագրի և մատիտի սյունակները
+                # Ֆիլտրում ենք pool-ը, որպեսզի ցույց տանք միայն չգրանցվածներին
+                registered_teacher_names = [t.name.lower() for t in st.session_state.teachers]
+                available_teachers = [t for t in st.session_state.teacher_pool if t.lower() not in registered_teacher_names]
+
+                if available_teachers and st.session_state.subjects:
                     header_col, edit_col = st.columns([0.85, 0.15])
                     
                     with header_col:
@@ -1296,13 +1288,11 @@ elif st.session_state.active_page == "normal":
                     with edit_col:
                         with st.popover("✏️", help="Կառավարել ցանկը"):
                             st.write("🗑️ Ջնջել ցանկից")
-                            
                             teacher_to_del = st.selectbox(
                                 "Ընտրեք ջնջվողին", 
                                 options=st.session_state.teacher_pool, 
                                 key="del_teacher_from_pool_select" 
                             )
-                            
                             if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="unique_del_t_btn"):
                                 if teacher_to_del in st.session_state.teacher_pool:
                                     st.session_state.teacher_pool.remove(teacher_to_del)
@@ -1311,23 +1301,23 @@ elif st.session_state.active_page == "normal":
                                     st.rerun()
 
                     with st.form("register_teacher", clear_on_submit=True):
-                        sel_t = st.selectbox("Ընտրեք ուսուցչին", st.session_state.teacher_pool)
+                        # Օգտագործում ենք ֆիլտրված ցուցակը (available_teachers)
+                        sel_t = st.selectbox("Ընտրեք ուսուցչին", available_teachers)
                         sel_subjs = st.multiselect("Ընտրեք առարկաները", st.session_state.subjects, format_func=lambda x: x.name)
                         
                         if st.form_submit_button("Գրանցել", use_container_width=True):
                             clean_name = sel_t.strip()
                             
+                            # Կրկնակի ստուգում անվտանգության համար
                             if any(t.name.lower() == clean_name.lower() for t in st.session_state.teachers):
-                                st.error(f"❌ {clean_name}-ն արդեն գրանցված է որպես ուսուցիչ:")
+                                st.error(f"❌ {clean_name}-ն արդեն գրանցված է:")
                             elif not sel_subjs:
                                 st.warning("⚠️ Ընտրեք առնվազն մեկ առարկա:")
                             else:
-                                # Գրանցում ենք նոր ուսուցչին
                                 new_teacher = Teacher(id=str(uuid.uuid4()), name=clean_name, subject_ids=[s.id for s in sel_subjs])
                                 st.session_state.teachers.append(new_teacher)
                                 
-                                # --- ԼՈՒԾՈՒՄԸ ԱՅՍՏԵՂ Է ---
-                                # Հեռացնում ենք pool-ից, որպեսզի rerun-ից հետո selectbox-ում չլինի
+                                # Հեռացնում ենք pool-ից
                                 if sel_t in st.session_state.teacher_pool:
                                     st.session_state.teacher_pool.remove(sel_t)
                                 
