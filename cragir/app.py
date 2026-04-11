@@ -1546,45 +1546,49 @@ elif st.session_state.active_page == "normal":
             st.title("🚀 Դասացուցակի Գեներացում")
             
         with col_delete:
-            if st.button("🗑️ Ջնջել", use_container_width=True, help="Ջնջել գեներացված դասացուցակը"):
-                # Ստեղծում ենք դատարկ տեղ հաղորդագրության համար
-                placeholder = st.empty()
+            # Ստեղծում ենք popover, որը կծառայի որպես հաստատման պատուհան
+            with st.popover("🗑️ Ջնջել", use_container_width=True, help="Ջնջել դասացուցակը"):
+                st.warning("Վստա՞հ ես, որ ուզում ես ջնջել դասացուցակը:")
                 
-                if not st.session_state.schedule:
-                    # Ցույց ենք տալիս warning-ը դատարկ տեղում
-                    placeholder.warning("Դեռևս չկա գեներացված դասացուցակ ջնջելու համար:")
-                    time.sleep(1.5)
-                    # 1.5 վայրկյան հետո մաքրում ենք այդ տեղը
-                    placeholder.empty()
-                else:
-                    st.session_state.schedule = []
+                # Իրական ջնջելու կոճակը popover-ի ներսում
+                if st.button("Այո, ջնջել", type="primary", use_container_width=True):
+                    placeholder = st.empty()
                     
-                    headers = {
-                        "apikey": st.secrets["supabase_key"],
-                        "Authorization": f"Bearer {st.secrets['supabase_key']}",
-                        "Content-Type": "application/json",
-                        "Prefer": "return=minimal"
-                    }
-                    
-                    updated_payload = {
-                        "data": {
-                            "classes": [c.__dict__ if hasattr(c, '__dict__') else c for c in st.session_state.classes],
-                            "teachers": [t.__dict__ if hasattr(t, '__dict__') else t for t in st.session_state.teachers],
-                            "subjects": [s.__dict__ if hasattr(s, '__dict__') else s for s in st.session_state.subjects],
-                            "assignments": [a.__dict__ if hasattr(a, '__dict__') else a for a in st.session_state.assignments],
-                            "schedule": [], 
-                            "last_update": datetime.now().strftime("%d.%m.%Y | %H:%M")
-                        }
-                    }
-                    
-                    try:
-                        url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1"
-                        requests.patch(url, headers=headers, json=updated_payload)
-                        st.toast("✅ Դասացուցակը հեռացվեց", icon="🗑️")
+                    if not st.session_state.schedule:
+                        placeholder.warning("Դեռևս չկա գեներացված դասացուցակ ջնջելու համար:")
+                        import time
                         time.sleep(1.5)
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Սխալ ջնջելիս: {e}")
+                        placeholder.empty()
+                    else:
+                        st.session_state.schedule = []
+                        
+                        headers = {
+                            "apikey": st.secrets["supabase_key"],
+                            "Authorization": f"Bearer {st.secrets['supabase_key']}",
+                            "Content-Type": "application/json",
+                            "Prefer": "return=minimal"
+                        }
+                        
+                        updated_payload = {
+                            "data": {
+                                "classes": [c.__dict__ if hasattr(c, '__dict__') else c for c in st.session_state.classes],
+                                "teachers": [t.__dict__ if hasattr(t, '__dict__') else t for t in st.session_state.teachers],
+                                "subjects": [s.__dict__ if hasattr(s, '__dict__') else s for s in st.session_state.subjects],
+                                "assignments": [a.__dict__ if hasattr(a, '__dict__') else a for a in st.session_state.assignments],
+                                "schedule": [], 
+                                "last_update": datetime.now().strftime("%d.%m.%Y | %H:%M")
+                            }
+                        }
+                        
+                        try:
+                            url = f"{st.secrets['supabase_url']}/rest/v1/timetable_data?id=eq.1"
+                            requests.patch(url, headers=headers, json=updated_payload)
+                            st.toast("✅ Դասացուցակը հեռացվեց", icon="🗑️")
+                            import time
+                            time.sleep(1.5)
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Սխալ ջնջելիս: {e}")
 
         # --- ՔՈ ՕՐԻԳԻՆԱԼ CSS-Ը ---
         st.markdown("""
