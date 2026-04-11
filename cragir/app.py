@@ -1543,30 +1543,26 @@ elif st.session_state.active_page == "normal":
 
         st.markdown("""
             <style>
-                /* Թիրախավորում ենք թե՛ սովորական աղյուսակները, թե՛ Streamlit-ի հատուկ կոնտեյներները */
-                div[data-testid="stTable"] table, .stTable {
+                /* Ստիպում ենք աղյուսակին զբաղեցնել ողջ լայնությունը և ունենալ հավասար սյունակներ */
+                div[data-testid="stTable"] table {
                     width: 100% !important;
-                    table-layout: fixed !important;
+                    table-layout: fixed !important; 
                 }
                 
+                /* Բոլոր վանդակների (տողերի) համար */
                 div[data-testid="stTable"] td, div[data-testid="stTable"] th {
                     text-align: center !important;
                     vertical-align: middle !important;
-                    height: 50px !important;
+                    height: 50px !important; /* Տողերի հավասար բարձրություն */
                     border: 1px solid #444 !important;
-                    word-wrap: break-word !important;
-                }
-
-                /* Սյունակների հավասար լայնություն բոլորի համար */
-                th, td {
-                    width: auto !important;
+                    word-wrap: break-word !important; /* Եթե տեքստը երկար լինի, կտեղավորի */
                 }
 
                 /* Առաջին սյունակի (Ժամ) լայնությունը */
                 div[data-testid="stTable"] th:first-child, 
                 div[data-testid="stTable"] td:first-child {
                     width: 60px !important;
-                    background-color: #1e1e1e !important;
+                    background-color: #1e1e1e !important; /* Մի փոքր տարբերվող գույն */
                 }
             </style>
         """, unsafe_allow_html=True)
