@@ -1556,14 +1556,14 @@ elif st.session_state.active_page == "normal":
                     "Prefer": "return=minimal"
                 }
                 
-                # Պատրաստում ենք տվյալները՝ զրոյացնելով միայն schedule դաշտը
+                # Ուղղված տվյալների ձևավորումը
                 updated_payload = {
                     "data": {
-                        "classes": [c.__dict__ if hasattr(c, '__dict__') else c for cls in st.session_state.classes],
+                        "classes": [c.__dict__ if hasattr(c, '__dict__') else c for c in st.session_state.classes],
                         "teachers": [t.__dict__ if hasattr(t, '__dict__') else t for t in st.session_state.teachers],
                         "subjects": [s.__dict__ if hasattr(s, '__dict__') else s for s in st.session_state.subjects],
                         "assignments": [a.__dict__ if hasattr(a, '__dict__') else a for a in st.session_state.assignments],
-                        "schedule": [], # Զրոյացնում ենք միայն սա
+                        "schedule": [], 
                         "last_update": datetime.now().strftime("%d.%m.%Y | %H:%M")
                     }
                 }
@@ -1581,26 +1581,17 @@ elif st.session_state.active_page == "normal":
         # --- ՔՈ ՕՐԻԳԻՆԱԼ CSS-Ը ---
         st.markdown("""
             <style>
-                /* Ստիպում ենք աղյուսակին զբաղեցնել ողջ լայնությունը և ունենալ հավասար սյունակներ */
-                div[data-testid="stTable"] table {
-                    width: 100% !important;
-                    table-layout: fixed !important; 
-                }
-                
-                /* Բոլոր վանդակների (տողերի) համար */
+                div[data-testid="stTable"] table { width: 100% !important; table-layout: fixed !important; }
                 div[data-testid="stTable"] td, div[data-testid="stTable"] th {
                     text-align: center !important;
                     vertical-align: middle !important;
-                    height: 50px !important; /* Տողերի հավասար բարձրություն */
+                    height: 50px !important;
                     border: 1px solid #444 !important;
-                    word-wrap: break-word !important; /* Եթե տեքստը երկար լինի, կտեղավորի */
+                    word-wrap: break-word !important;
                 }
-
-                /* Առաջին սյունակի (Ժամ) լայնությունը */
-                div[data-testid="stTable"] th:first-child, 
-                div[data-testid="stTable"] td:first-child {
+                div[data-testid="stTable"] th:first-child, div[data-testid="stTable"] td:first-child {
                     width: 60px !important;
-                    background-color: #1e1e1e !important; /* Մի փոքր տարբերվող գույն */
+                    background-color: #1e1e1e !important;
                 }
             </style>
         """, unsafe_allow_html=True)
