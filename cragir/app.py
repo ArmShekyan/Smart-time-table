@@ -1375,10 +1375,14 @@ elif st.session_state.active_page == "normal":
                         with st.popover("✏️", help="Կառավարել ցանկը"):
                             st.write("🗑️ Ջնջել ցանկից")
                             teacher_to_del = st.selectbox(
-                                "Ընտրեք ջնջվողին", 
-                                options=st.session_state.teacher_pool, 
-                                key="del_teacher_from_pool_select" 
-                            )
+                                    "Ընտրեք ջնջվողին", 
+                                    options=sorted(
+                                        st.session_state.teacher_pool, 
+                                        key=lambda x: int(x.split('(')[-1].replace(')', '')) if '(' in x else 999
+                                    ), 
+                                    key="del_teacher_from_pool_select" 
+                                )
+
                             if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="unique_del_t_btn"):
                                 if teacher_to_del in st.session_state.teacher_pool:
                                     st.session_state.teacher_pool.remove(teacher_to_del)
