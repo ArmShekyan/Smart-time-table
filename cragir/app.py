@@ -662,7 +662,7 @@ if not st.session_state.get('logged_in', False):
                             st.session_state.active_tab = "📂 Վերջին պահպանվածը"
 
                         st.toast(f"🎉 Բարի վերադարձ, {username_input}!", icon="🚀")
-                        time.sleep(1.3)
+                        time.sleep(1.5)
                         st.rerun()
                     else:
                         error_placeholder = st.empty() # Ստեղծում ենք դատարկ տեղ
