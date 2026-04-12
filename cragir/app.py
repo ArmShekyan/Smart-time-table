@@ -1529,14 +1529,14 @@ elif st.session_state.active_page == "normal":
                     st.info(f"📊 {temp_c.grade}{temp_c.section} դասարանում լրացված է՝ {current_total} / {max_allowed} ժամ")
 
                     sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", 
-                                         st.session_state.teachers, 
-                                         format_func=lambda x: x.name, 
-                                         key="t_sel_main")
+                                        sorted(st.session_state.teachers, key=lambda x: int(x.name.split('(')[-1].replace(')', '')) if '(' in x.name else 999), 
+                                        format_func=lambda x: x.name, 
+                                        key="t_sel_main")
                     
                     sel_c = st.selectbox("🏫 Ընտրեք Դասարանը", 
-                                         st.session_state.classes, 
-                                         format_func=lambda x: f"{x.grade}{x.section}",
-                                         key="c_sel_main")
+                                        st.session_state.classes, 
+                                        format_func=lambda x: f"{x.grade}{x.section}",
+                                        key="c_sel_main")
 
                     all_teacher_subjs = [sub for sub in st.session_state.subjects if sub.id in sel_t.subject_ids]
                     assigned_subject_ids = [a.subject_id for a in st.session_state.assignments if a.class_id == sel_c.id]
