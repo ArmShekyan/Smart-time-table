@@ -1234,7 +1234,7 @@ elif st.session_state.active_page == "normal":
                                     st.session_state.subj_pool.remove(subject_to_del)
                                     save_to_disk(force_overwrite=True) 
                                     st.toast(f"🗑️ {subject_to_del}-ը հեռացվեց")
-                                    time.sleep(1)
+                                    time.sleep(2)
                                     st.rerun()
 
                     with st.form("register_subj", clear_on_submit=True):
@@ -1418,7 +1418,7 @@ elif st.session_state.active_page == "normal":
                                         st.session_state.teacher_pool = []
                                         save_to_disk(force_overwrite=True)
                                         st.toast("💥 Բոլոր ուսուցիչները հեռացվեցին")
-                                        time.sleep(1)
+                                        time.sleep(2)
                                         st.rerun()
                                 with col_n:
                                     if st.button("Ոչ", use_container_width=True):
@@ -1431,7 +1431,7 @@ elif st.session_state.active_page == "normal":
                                         st.session_state.teacher_pool.remove(teacher_to_del)
                                         save_to_disk(force_overwrite=True) 
                                         st.toast(f"🗑️ {teacher_to_del}-ը հեռացվեց")
-                                        time.sleep(1)
+                                        time.sleep(2)
                                         st.rerun()
 
 
