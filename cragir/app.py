@@ -1318,28 +1318,27 @@ elif st.session_state.active_page == "normal":
             st.markdown("<br>", unsafe_allow_html=True)
             
             with st.popover("💎 Հատուկ Արտոնությունների Բաժին", use_container_width=True):
-                # Ավելացնում ենք ևս մեկ սյունակ ✅ կոճակի համար
-                h_col, list_col, e_col = st.columns([0.75, 0.12, 0.13])
+                # Սյունակների բաշխումը ✅ և ✏️ կոճակների համար
+                h_col, list_col, e_col = st.columns([0.72, 0.14, 0.14])
                 
                 with h_col:
                     st.markdown("##### 🗓️ Ուսուցչի հարմար օրերը")
                     
-                # --- ՆՈՐ ԲԱԺԻՆ: ✅ Դիտելու կոճակը ---
+                # --- ✅ Դիտելու բաժինը ---
                 with list_col:
                     with st.popover("✅"):
                         st.write("📋 **Գրանցված արտոնություններ**")
                         prefs = st.session_state.get('teacher_preferences', {})
                         if prefs:
-                            # Օրերի կրճատման բազա
+                            # Օրերի կրճատման բառարան
                             short_days = {
                                 "Երկուշաբթի": "Երկ", "Երեքշաբթի": "Երեք", 
                                 "Չորեքշաբթի": "Չոր", "Հինգշաբթի": "Հինգ", "Ուրբաթ": "Ուրբ"
                             }
                             for t_name, days in prefs.items():
-                                # Հանում ենք միայն ազգանունը և կրճատում օրերը
-                                last_name = t_name.split()[0] 
+                                # Ցուցադրում ենք լրիվ անունը և կրճատված օրերը
                                 fmt_days = ", ".join([short_days.get(d, d) for d in days])
-                                st.caption(f"👤 {last_name} — {fmt_days}")
+                                st.caption(f"👤 {t_name} — {fmt_days}")
                         else:
                             st.caption("Դեռ գրանցում չկա")
 
@@ -1356,7 +1355,7 @@ elif st.session_state.active_page == "normal":
                             st.caption("Դատարկ է")
 
                 with st.form("pref_form", clear_on_submit=True):
-                    # Սորտավորում ենք ուսուցիչներին ըստ ID-ի (ինչպես նախորդ անգամ արեցինք)
+                    # Ուսուցիչների սորտավորված ցուցակը
                     sorted_ts = sorted(st.session_state.teachers, key=lambda x: int(x.name.split('(')[-1].replace(')', '')) if '(' in x.name else 999)
                     target_t = st.selectbox("Ընտրեք ուսուցչին", options=[t.name for t in sorted_ts])
                     
@@ -1367,7 +1366,7 @@ elif st.session_state.active_page == "normal":
                         existing_prefs = st.session_state.get('teacher_preferences', {})
                         
                         if target_t in existing_prefs:
-                            st.error(f"❌ {target_t}-ն արդեն ունի գրանցված արտոնություն:")
+                            st.error(f"❌ {target_t}-ն արդեն ունի գրանցված արտոնություն")
                         elif target_t and selected_days:
                             if 'teacher_preferences' not in st.session_state:
                                 st.session_state.teacher_preferences = {}
@@ -1377,7 +1376,7 @@ elif st.session_state.active_page == "normal":
                             st.toast(f"✅ {target_t}-ին հարմար օրերը գրանցվեցին")
                             st.rerun()
                         else:
-                            st.warning("⚠️ Ընտրեք ուսուցչին և օրերը:")
+                            st.warning("⚠️ Ընտրեք ուսուցչին և օրերը")
 
         # --- ԱՋ ՍՅՈՒՆ: Գրանցել Ուսուցչին (Առարկաների հետ) ---
         with col_r:
