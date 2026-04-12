@@ -1399,10 +1399,15 @@ elif st.session_state.active_page == "normal":
                                 key=lambda x: int(x.split('(')[-1].replace(')', '')) if '(' in x else 999
                             ) + ["🗑️ Ջնջել Բոլորին"]
 
+                            # Օգտագործում ենք դինամիկ key, որպեսզի "Ոչ"-ից հետո selectbox-ը թարմանա
+                            if "reset_del_select" not in st.session_state:
+                                st.session_state.reset_del_select = 0
+
                             teacher_to_del = st.selectbox(
                                     "Ընտրեք ջնջվողին", 
                                     options=del_options, 
-                                    key="del_teacher_from_pool_select" 
+                                    index=0,
+                                    key=f"del_select_{st.session_state.reset_del_select}" 
                                 )
 
                             if teacher_to_del == "🗑️ Ջնջել Բոլորին":
@@ -1417,9 +1422,8 @@ elif st.session_state.active_page == "normal":
                                         st.rerun()
                                 with col_n:
                                     if st.button("Ոչ", use_container_width=True):
-                                        # Մաքրում ենք ընտրությունը, որպեսզի վերադառնա առաջին տարբերակին
-                                        if "del_teacher_from_pool_select" in st.session_state:
-                                            del st.session_state["del_teacher_from_pool_select"]
+                                        # Փոխում ենք key-ը, որպեսզի selectbox-ը վերադառնա default վիճակի
+                                        st.session_state.reset_del_select += 1
                                         st.rerun()
                             else:
                                 if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="unique_del_t_btn"):
