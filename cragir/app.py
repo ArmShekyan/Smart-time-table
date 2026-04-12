@@ -464,12 +464,33 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* 1. ՖՈՆ ԵՎ ՍԱՅԴԲԱՐ (ԱՌԱՆՑ ԱՆԻՄԱՑԻԱՅԻ) */
-    .stApp { background-color: #02060c !important; }
+    /* 1. ՖՈՆ ԵՎ ՍԱՅԴԲԱՐ (ԱՎԵԼԱՑՎԱԾ Է ՇԱՐԺՎՈՂ ԳՐԱԴԻԵՆՏ ԵՎ ԼԵԴԵՐ) */
+    .stApp { 
+        background: linear-gradient(125deg, #02060c, #050a12, #001a3d, #02060c) !important;
+        background-size: 400% 400% !important;
+        animation: gradientAnimation 12s ease infinite !important;
+    }
+
+    /* Լեդերի էֆեկտ (կետիկավոր ցանց) */
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-image: radial-gradient(rgba(0, 119, 255, 0.07) 1.5px, transparent 1.5px);
+        background-size: 32px 32px;
+        z-index: -1;
+    }
+
+    @keyframes gradientAnimation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
     
     [data-testid="stSidebar"] {
-        background-color: #050a12 !important;
+        background-color: rgba(5, 10, 18, 0.9) !important;
         border-right: 1px solid rgba(0, 119, 255, 0.1) !important;
+        backdrop-filter: blur(10px);
     }
     [data-testid="stSidebarNav"] { background-color: transparent !important; }
     
@@ -553,12 +574,10 @@ st.markdown("""
         }
     }
 
-    /* Կիրառում ենք հիմնական կոնտեյների վրա */
     .stMainBlockContainer {
         animation: pageEntrance 1.5s ease-out;
     }
 
-    /* Սայդբարի տարրերի հերթականությամբ հայտնվելը */
     [data-testid="stSidebarUserContent"] {
         animation: pageEntrance 1s ease-in-out;
     }
