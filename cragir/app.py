@@ -1389,7 +1389,8 @@ elif st.session_state.active_page == "normal":
 
                     with st.form("register_teacher", clear_on_submit=True):
                         # Օգտագործում ենք ֆիլտրված ցուցակը (available_teachers)
-                        sel_t = st.selectbox("Ընտրեք ուսուցչին", available_teachers)
+                        # Վերցնում ենք փակագծից հետո եղած մասը, հանում ենք վերջին փակագիծը ու դարձնում թիվ
+                        sel_t = st.selectbox("Ընտրեք ուսուցչին", sorted(available_teachers, key=lambda x: int(x.split('(')[-1].replace(')', ''))))
                         sel_subjs = st.multiselect("Ընտրեք առարկաները", st.session_state.subjects, format_func=lambda x: x.name)
                         
                         if st.form_submit_button("Գրանցել", use_container_width=True):
