@@ -1438,7 +1438,7 @@ elif st.session_state.active_page == "normal":
                     with st.form("register_teacher", clear_on_submit=True):
                         # Օգտագործում ենք ֆիլտրված ցուցակը (available_teachers)
                         # Վերցնում ենք փակագծից հետո եղած մասը, հանում ենք վերջին փակագիծը ու դարձնում թիվ
-                        sel_t = st.selectbox("Ընտրեք ուսուցչին", sorted(available_teachers, key=lambda x: int(x.split('(')[-1].replace(')', ''))))
+                        sel_t = st.selectbox("Ընտրեք ուսուցչին", sorted(available_teachers, key=lambda x: int(x.split('(')[-1].replace(')', '')) if '(' in x and x.split('(')[-1].replace(')', '').isdigit() else 999))
                         sel_subjs = st.multiselect("Ընտրեք առարկաները", st.session_state.subjects, format_func=lambda x: x.name)
                         
                         if st.form_submit_button("Գրանցել", use_container_width=True):
@@ -1577,7 +1577,7 @@ elif st.session_state.active_page == "normal":
                     st.info(f"📊 {temp_c.grade}{temp_c.section} դասարանում լրացված է՝ {current_total} / {max_allowed} ժամ")
 
                     sel_t = st.selectbox("👩‍🏫 Ընտրեք Ուսուցչին", 
-                                        sorted(st.session_state.teachers, key=lambda x: int(x.name.split('(')[-1].replace(')', '')) if '(' in x.name else 999), 
+                                        sorted(st.session_state.teachers, key=lambda x: int(x.name.split('(')[-1].replace(')', '')) if '(' in x.name and x.name.split('(')[-1].replace(')', '').isdigit() else 999), 
                                         format_func=lambda x: x.name, 
                                         key="t_sel_main")
                     
