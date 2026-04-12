@@ -1394,22 +1394,43 @@ elif st.session_state.active_page == "normal":
                     with edit_col:
                         with st.popover("✏️", help="Կառավարել ցանկը"):
                             st.write("🗑️ Ջնջել ցանկից")
+                            
+                            # Ավելացնում ենք "🗑️ Ջնջել Բոլորին" տարբերակը ցուցակի վերջում
+                            del_options = sorted(
+                                st.session_state.teacher_pool, 
+                                key=lambda x: int(x.split('(')[-1].replace(')', '')) if '(' in x else 999
+                            ) + ["🗑️ Ջնջել Բոլորին"]
+
                             teacher_to_del = st.selectbox(
                                     "Ընտրեք ջնջվողին", 
-                                    options=sorted(
-                                        st.session_state.teacher_pool, 
-                                        key=lambda x: int(x.split('(')[-1].replace(')', '')) if '(' in x else 999
-                                    ), 
+                                    options=del_options, 
                                     key="del_teacher_from_pool_select" 
                                 )
 
-                            if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="unique_del_t_btn"):
-                                if teacher_to_del in st.session_state.teacher_pool:
-                                    st.session_state.teacher_pool.remove(teacher_to_del)
-                                    save_to_disk(force_overwrite=True) 
-                                    st.toast(f"🗑️ {teacher_to_del}-ը հեռացվեց")
-                                    time.sleep(1)
-                                    st.rerun()
+                            # Եթե ընտրված է "Ջնջել Բոլորին", ցույց ենք տալիս հաստատման հարցը
+                            if teacher_to_del == "🗑️ Ջնջել Բոլորին":
+                                st.warning("⚠️ Վստա՞հ եք, որ ուզում եք ջնջել ԲՈԼՈՐԻՆ:")
+                                col_y, col_n = st.columns(2)
+                                with col_y:
+                                    if st.button("Այո", type="primary", use_container_width=True):
+                                        st.session_state.teacher_pool = []
+                                        save_to_disk(force_overwrite=True)
+                                        st.toast("💥 Բոլոր ուսուցիչները հեռացվեցին")
+                                        time.sleep(1)
+                                        st.rerun()
+                                with col_n:
+                                    if st.button("Ոչ", use_container_width=True):
+                                        st.rerun()
+                            else:
+                                # Սովորական ջնջման կոճակը մեկ հոգու համար
+                                if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="unique_del_t_btn"):
+                                    if teacher_to_del in st.session_state.teacher_pool:
+                                        st.session_state.teacher_pool.remove(teacher_to_del)
+                                        save_to_disk(force_overwrite=True) 
+                                        st.toast(f"🗑️ {teacher_to_del}-ը հեռացվեց")
+                                        time.sleep(1)
+                                        st.rerun()
+                                        
 
                     with st.form("register_teacher", clear_on_submit=True):
                         # Օգտագործում ենք ֆիլտրված ցուցակը (available_teachers)
