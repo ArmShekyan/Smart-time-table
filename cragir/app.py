@@ -1381,7 +1381,6 @@ elif st.session_state.active_page == "normal":
         # --- ԱՋ ՍՅՈՒՆ: Գրանցել Ուսուցչին (Առարկաների հետ) ---
         with col_r:
             with st.container(border=True):
-                # Ֆիլտրում ենք pool-ը, որպեսզի ցույց տանք միայն չգրանցվածներին
                 registered_teacher_names = [t.name.lower() for t in st.session_state.teachers]
                 available_teachers = [t for t in st.session_state.teacher_pool if t.lower() not in registered_teacher_names]
 
@@ -1395,7 +1394,6 @@ elif st.session_state.active_page == "normal":
                         with st.popover("✏️", help="Կառավարել ցանկը"):
                             st.write("🗑️ Ջնջել ցանկից")
                             
-                            # Ավելացնում ենք "🗑️ Ջնջել Բոլորին" տարբերակը ցուցակի վերջում
                             del_options = sorted(
                                 st.session_state.teacher_pool, 
                                 key=lambda x: int(x.split('(')[-1].replace(')', '')) if '(' in x else 999
@@ -1407,7 +1405,6 @@ elif st.session_state.active_page == "normal":
                                     key="del_teacher_from_pool_select" 
                                 )
 
-                            # Եթե ընտրված է "Ջնջել Բոլորին", ցույց ենք տալիս հաստատման հարցը
                             if teacher_to_del == "🗑️ Ջնջել Բոլորին":
                                 st.warning("⚠️ Վստա՞հ եք, որ ուզում եք ջնջել ԲՈԼՈՐԻՆ:")
                                 col_y, col_n = st.columns(2)
@@ -1420,9 +1417,11 @@ elif st.session_state.active_page == "normal":
                                         st.rerun()
                                 with col_n:
                                     if st.button("Ոչ", use_container_width=True):
+                                        # Մաքրում ենք ընտրությունը, որպեսզի վերադառնա առաջին տարբերակին
+                                        if "del_teacher_from_pool_select" in st.session_state:
+                                            del st.session_state["del_teacher_from_pool_select"]
                                         st.rerun()
                             else:
-                                # Սովորական ջնջման կոճակը մեկ հոգու համար
                                 if st.button("Հաստատել ջնջումը", type="primary", use_container_width=True, key="unique_del_t_btn"):
                                     if teacher_to_del in st.session_state.teacher_pool:
                                         st.session_state.teacher_pool.remove(teacher_to_del)
@@ -1430,7 +1429,7 @@ elif st.session_state.active_page == "normal":
                                         st.toast(f"🗑️ {teacher_to_del}-ը հեռացվեց")
                                         time.sleep(1)
                                         st.rerun()
-                                        
+
 
                     with st.form("register_teacher", clear_on_submit=True):
                         # Օգտագործում ենք ֆիլտրված ցուցակը (available_teachers)
