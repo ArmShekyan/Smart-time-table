@@ -464,52 +464,14 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* 1. ՖՈՆԻ ՈՒՂՂՈՒՄ (Ավելի ուժեղ սելեկտորներով) */
+    /* 1. ՖՈՆ ԵՎ ՍԱՅԴԲԱՐ (ԱՌԱՆՑ ԱՆԻՄԱՑԻԱՅԻ) */
+    .stApp { background-color: #02060c !important; }
     
-    /* Սա հիմնական ֆոնն է */
-    html, body, [data-testid="stAppViewContainer"] {
-        background: linear-gradient(125deg, #02060c, #050a12, #001a3d, #02060c) !important;
-        background-size: 400% 400% !important;
-        animation: gradientAnimation 12s ease infinite !important;
-    }
-
-    /* Լեդերի էֆեկտը՝ առանձին շերտով */
-    [data-testid="stAppViewContainer"]::before {
-        content: "";
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background-image: radial-gradient(rgba(0, 119, 255, 0.1) 1.5px, transparent 1.5px) !important;
-        background-size: 30px 30px !important;
-        z-index: 0;
-        pointer-events: none;
-    }
-
-    @keyframes gradientAnimation {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
-    /* Սայդբարի թափանցիկությունն ու բլյուռը */
     [data-testid="stSidebar"] {
-        background-color: rgba(5, 10, 18, 0.8) !important;
-        backdrop-filter: blur(12px) !important;
+        background-color: #050a12 !important;
         border-right: 1px solid rgba(0, 119, 255, 0.1) !important;
     }
-
-    /* --- ՄՆԱՑԱԾ ՔՈ ՈՃԵՐԸ ԱՆՓՈՓՈԽ ԵՆ --- */
-    [data-testid="stMetricValue"] {
-        color: #0055ff !important; 
-        font-weight: 800 !important; 
-        font-size: 34px !important;
-    }
-    
-    div.stButton > button, div.stFormSubmitButton > button {
-        border-radius: 12px !important;
-        border: 1px solid rgba(0, 85, 255, 0.3) !important;
-        background-color: #0a121e !important;
-        color: #ccd6f6 !important;
-    }
+    [data-testid="stSidebarNav"] { background-color: transparent !important; }
     
     /* 2. ՄԵՏՐԻԿԱՆԵՐԻ ՄՈՒԳ ԿԱՊՈՒՅՏ ԹՎԵՐ */
     [data-testid="stMetricValue"] {
@@ -591,10 +553,12 @@ st.markdown("""
         }
     }
 
+    /* Կիրառում ենք հիմնական կոնտեյների վրա */
     .stMainBlockContainer {
         animation: pageEntrance 1.5s ease-out;
     }
 
+    /* Սայդբարի տարրերի հերթականությամբ հայտնվելը */
     [data-testid="stSidebarUserContent"] {
         animation: pageEntrance 1s ease-in-out;
     }
