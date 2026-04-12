@@ -464,38 +464,12 @@ st.set_page_config(page_title="Smart Time Table", layout="wide", page_icon="📅
 
 st.markdown("""
 <style>
-    /* 1. ՖՈՆ ԵՎ ՍԱՅԴԲԱՐ */
-    .stApp { 
-        background-color: #02060c !important; 
-    }
+    /* 1. ՖՈՆ ԵՎ ՍԱՅԴԲԱՐ (ԱՌԱՆՑ ԱՆԻՄԱՑԻԱՅԻ) */
+    .stApp { background-color: #02060c !important; }
     
-    /* ՇԱՐԺՎՈՂ ԵԶՐԱԳԾԵՐԻ ԷՖԵԿՏ (Էջի շուրջը պտտվող լույսեր) */
-    [data-testid="stAppViewContainer"]::after {
-        content: "";
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        border: 3px solid transparent;
-        background: linear-gradient(#02060c, #02060c) padding-box,
-                    conic-gradient(from var(--angle), #0055ff, transparent, #0055ff, transparent, #0055ff) border-box;
-        z-index: 9999;
-        pointer-events: none;
-        animation: rotateBorder 4s linear infinite;
-    }
-
-    @property --angle {
-        syntax: '<angle>';
-        initial-value: 0deg;
-        inherits: false;
-    }
-
-    @keyframes rotateBorder {
-        to { --angle: 360deg; }
-    }
-
     [data-testid="stSidebar"] {
         background-color: #050a12 !important;
         border-right: 1px solid rgba(0, 119, 255, 0.1) !important;
-        z-index: 10000; /* Որպեսզի սայդբարը լինի լույսից վերև */
     }
     [data-testid="stSidebarNav"] { background-color: transparent !important; }
     
@@ -507,7 +481,7 @@ st.markdown("""
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
     }
 
-    /* 3. ԿՈՃԱԿՆԵՐԻ ՈՃԸ */
+    /* 3. ԿՈՃԱԿՆԵՐԻ ՈՃԸ (ԼՈԳԻՆ + ՍՈՎՈՐԱԿԱՆ) */
     div.stButton > button, div.stFormSubmitButton > button {
         border-radius: 12px !important;
         border: 1px solid rgba(0, 85, 255, 0.3) !important;
@@ -518,7 +492,7 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* 4. ԿՈՃԱԿՆԵՐԻ ՀՈՎԵՐ (HOVER) */
+    /* 4. ԿՈՃԱԿՆԵՐԻ ՀՈՎԵՐ (HOVER) - ԼՈՒՍԱՎՈՐՎՈՂ ԵԶՐԱԳԾԵՐ */
     div.stButton > button:hover, div.stFormSubmitButton > button:hover {
         border: 1px solid #0055ff !important;
         color: #0055ff !important; 
@@ -565,7 +539,7 @@ st.markdown("""
         color: white !important;
     }
             
-    /* 8. ԷՋԻ ՍԱՀՈՒՆ ՀԱՅՏՆՎԵԼՈՒ ԱՆԻՄԱՑԻԱ */
+    /* 8. ԷՋԻ ՍԱՀՈՒՆ ՀԱՅՏՆՎԵԼՈՒ ԱՆԻՄԱՑԻԱ (1.5 վայրկյան) */
     @keyframes pageEntrance {
         from { 
             opacity: 0; 
@@ -579,10 +553,12 @@ st.markdown("""
         }
     }
 
+    /* Կիրառում ենք հիմնական կոնտեյների վրա */
     .stMainBlockContainer {
         animation: pageEntrance 1.5s ease-out;
     }
 
+    /* Սայդբարի տարրերի հերթականությամբ հայտնվելը */
     [data-testid="stSidebarUserContent"] {
         animation: pageEntrance 1s ease-in-out;
     }
